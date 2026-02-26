@@ -22,22 +22,22 @@
 
 ### 1.2 Autentikasi (Ref: `01-autentikasi-onboarding.md`)
 
-- [ ] **Model**: Buat schema `users`
-- [ ] **Model**: Buat schema `password_reset_tokens`
-- [ ] **API**: `POST /api/auth/register` — Registrasi user baru
-- [ ] **API**: `POST /api/auth/login` — Login (generate JWT)
-- [ ] **API**: `POST /api/auth/logout` — Logout
-- [ ] **API**: `POST /api/auth/refresh` — Refresh access token
-- [ ] **API**: `POST /api/auth/forgot-password` — Kirim email reset
-- [ ] **API**: `POST /api/auth/reset-password` — Reset password dengan token
-- [ ] **Middleware**: Auth middleware (verifikasi JWT)
-- [ ] **Service**: Email service (Nodemailer SMTP) untuk forgot password
-- [ ] **Frontend**: Halaman Register (`/register`)
-- [ ] **Frontend**: Halaman Login (`/login`)
-- [ ] **Frontend**: Halaman Lupa Password (`/forgot-password`)
-- [ ] **Frontend**: Halaman Reset Password (`/reset-password/:token`)
-- [ ] **Frontend**: Auth context/provider (state management)
-- [ ] **Frontend**: Protected route wrapper
+- [x] **Model**: Buat schema `users`
+- [x] **Model**: Buat schema `password_reset_tokens`
+- [x] **API**: `POST /api/auth/register` — Registrasi user baru
+- [x] **API**: `POST /api/auth/login` — Login (generate JWT)
+- [x] **API**: `POST /api/auth/logout` — Logout
+- [x] **API**: `POST /api/auth/refresh` — Refresh access token
+- [x] **API**: `POST /api/auth/forgot-password` — Kirim email reset
+- [x] **API**: `POST /api/auth/reset-password` — Reset password dengan token
+- [x] **Middleware**: Auth middleware (verifikasi JWT)
+- [x] **Service**: Email service (Nodemailer SMTP) untuk forgot password
+- [x] **Frontend**: Halaman Register (`/register`)
+- [x] **Frontend**: Halaman Login (`/login`)
+- [x] **Frontend**: Halaman Lupa Password (`/forgot-password`)
+- [x] **Frontend**: Halaman Reset Password (`/reset-password/:token`)
+- [x] **Frontend**: Auth context/provider (state management)
+- [x] **Frontend**: Protected route wrapper
 - [ ] **Test**: Unit test auth API
 - [ ] **Test**: Integration test auth flow
 

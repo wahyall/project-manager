@@ -53,8 +53,7 @@ app.get("/api/health", (req, res) => {
 // API Routes
 // ────────────────────────────────────────────────────
 
-// Route modules akan ditambahkan di fase berikutnya:
-// app.use('/api/auth', require('./routes/auth.routes'));
+app.use("/api/auth", require("./routes/auth.routes"));
 // app.use('/api/users', require('./routes/user.routes'));
 // app.use('/api/workspaces', require('./routes/workspace.routes'));
 // app.use('/api/notifications', require('./routes/notification.routes'));
