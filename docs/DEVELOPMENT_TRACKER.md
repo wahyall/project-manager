@@ -43,33 +43,33 @@
 
 ### 1.3 Kelola Workspace (Ref: `02-kelola-workspace.md`)
 
-- [ ] **Model**: Buat schema `workspaces`
-- [ ] **Model**: Buat schema `workspace_members`
-- [ ] **Model**: Buat schema `workspace_invitations`
-- [ ] **API**: `GET /api/workspaces` — Daftar workspace user
-- [ ] **API**: `POST /api/workspaces` — Buat workspace baru (+ default kanban columns)
-- [ ] **API**: `GET /api/workspaces/:id` — Detail workspace
-- [ ] **API**: `PUT /api/workspaces/:id` — Update workspace
-- [ ] **API**: `DELETE /api/workspaces/:id` — Hapus workspace (soft delete)
-- [ ] **API**: `POST /api/workspaces/:id/archive` — Arsipkan
-- [ ] **API**: `POST /api/workspaces/:id/unarchive` — Unarsipkan
-- [ ] **API**: `GET /api/workspaces/:id/members` — Daftar member
-- [ ] **API**: `POST /api/workspaces/:id/invite` — Undang via email
-- [ ] **API**: `POST /api/workspaces/:id/invite-link/regenerate` — Regenerate invite link
-- [ ] **API**: `POST /api/workspaces/join/:inviteCode` — Join via link
-- [ ] **API**: `PUT /api/workspaces/:id/members/:userId/role` — Ubah role
-- [ ] **API**: `DELETE /api/workspaces/:id/members/:userId` — Keluarkan member
-- [ ] **API**: `POST /api/workspaces/:id/leave` — Leave workspace
-- [ ] **API**: `POST /api/workspaces/:id/transfer-ownership` — Transfer ownership
-- [ ] **Middleware**: Role-based access control (RBAC) middleware
-- [ ] **Frontend**: Halaman Daftar Workspace (`/workspaces`)
-- [ ] **Frontend**: Form Buat Workspace (`/workspaces/new`)
-- [ ] **Frontend**: Halaman Pengaturan Workspace — Tab Umum
-- [ ] **Frontend**: Halaman Pengaturan Workspace — Tab Member
-- [ ] **Frontend**: Halaman Pengaturan Workspace — Tab Kolom Kanban
-- [ ] **Frontend**: Dialog Undang Member (email + invite link)
-- [ ] **Frontend**: Dialog Transfer Ownership
-- [ ] **Frontend**: Dialog Konfirmasi Hapus Workspace
+- [x] **Model**: Buat schema `workspaces`
+- [x] **Model**: Buat schema `workspace_members`
+- [x] **Model**: Buat schema `workspace_invitations`
+- [x] **API**: `GET /api/workspaces` — Daftar workspace user
+- [x] **API**: `POST /api/workspaces` — Buat workspace baru (+ default kanban columns)
+- [x] **API**: `GET /api/workspaces/:id` — Detail workspace
+- [x] **API**: `PUT /api/workspaces/:id` — Update workspace
+- [x] **API**: `DELETE /api/workspaces/:id` — Hapus workspace (soft delete)
+- [x] **API**: `POST /api/workspaces/:id/archive` — Arsipkan
+- [x] **API**: `POST /api/workspaces/:id/unarchive` — Unarsipkan
+- [x] **API**: `GET /api/workspaces/:id/members` — Daftar member
+- [x] **API**: `POST /api/workspaces/:id/invite` — Undang via email
+- [x] **API**: `POST /api/workspaces/:id/invite-link/regenerate` — Regenerate invite link
+- [x] **API**: `POST /api/workspaces/join/:inviteCode` — Join via link
+- [x] **API**: `PUT /api/workspaces/:id/members/:userId/role` — Ubah role
+- [x] **API**: `DELETE /api/workspaces/:id/members/:userId` — Keluarkan member
+- [x] **API**: `POST /api/workspaces/:id/leave` — Leave workspace
+- [x] **API**: `POST /api/workspaces/:id/transfer-ownership` — Transfer ownership
+- [x] **Middleware**: Role-based access control (RBAC) middleware
+- [x] **Frontend**: Halaman Daftar Workspace (`/workspaces`)
+- [x] **Frontend**: Form Buat Workspace (`/workspaces/new`)
+- [x] **Frontend**: Halaman Pengaturan Workspace — Tab Umum
+- [x] **Frontend**: Halaman Pengaturan Workspace — Tab Member
+- [x] **Frontend**: Halaman Pengaturan Workspace — Tab Kolom Kanban
+- [x] **Frontend**: Dialog Undang Member (email + invite link)
+- [x] **Frontend**: Dialog Transfer Ownership
+- [x] **Frontend**: Dialog Konfirmasi Hapus Workspace
 - [ ] **Test**: Unit test workspace API
 - [ ] **Test**: Unit test RBAC middleware
 
@@ -513,6 +513,74 @@
 - [ ] Accessibility audit (WCAG dasar)
 - [ ] Bug fixing dari semua fase
 - [ ] Final deployment preparation
+
+---
+
+## Fase 7 — AI Chat Agent (Estimasi 3–4 Minggu)
+
+### 7.1 RAG Infrastructure (Ref: `23-ai-chat-agent.md`)
+
+- [ ] **Model**: Buat schema `embeddings` (vector field 768 dimensi)
+- [ ] **Config**: Setup MongoDB Atlas Vector Search Index (`embedding_vector_index`)
+- [ ] **Service**: `EmbeddingService` — generate embedding via Google `text-embedding-004`
+- [ ] **Service**: `EmbeddingService.upsert()` — create/update embedding per dokumen
+- [ ] **Service**: `EmbeddingService.remove()` — hapus embedding saat dokumen dihapus
+- [ ] **Service**: `EmbeddingService.syncWorkspace()` — full re-index seluruh workspace
+- [ ] **Service**: `RAGService.retrieve()` — vector similarity search (workspace-scoped, top-K)
+- [ ] **Service**: `RAGService.buildContext()` — gabungkan dokumen relevan jadi context string
+- [ ] **Integrasi**: Hook embedding sync di Task controller (create, update, delete)
+- [ ] **Integrasi**: Hook embedding sync di Event controller (create, update, delete)
+- [ ] **Integrasi**: Hook embedding sync di Workspace controller (member join/leave/role change)
+- [ ] **Integrasi**: Hook embedding sync di Comment controller (create, edit, delete)
+- [ ] **Integrasi**: Hook embedding sync di Activity Log service (log created)
+- [ ] **Integrasi**: Hook embedding sync di Spreadsheet controller (sheet/column update)
+- [ ] **Cron**: Re-index workspace harian (opsional, fallback, 03:00)
+- [ ] **API**: `POST /api/workspaces/:id/embeddings/sync` — Trigger manual re-index (Admin+)
+- [ ] **API**: `GET /api/workspaces/:id/embeddings/stats` — Statistik embeddings per tipe (Admin+)
+- [ ] **Test**: Unit test embedding service
+- [ ] **Test**: Unit test RAG retrieval
+
+### 7.2 CopilotKit Runtime & Actions (Ref: `23-ai-chat-agent.md`)
+
+- [ ] **Config**: Setup Google Generative AI (Gemini 2.0 Flash) adapter
+- [ ] **Config**: Environment variables (GOOGLE_AI_API_KEY, GEMINI_MODEL, RAG_TOP_K, dll)
+- [ ] **Service**: `AIActionsService.createTask()` — buat task via AI
+- [ ] **Service**: `AIActionsService.updateTask()` — update task via AI
+- [ ] **Service**: `AIActionsService.createEvent()` — buat event via AI
+- [ ] **Service**: `AIActionsService.assignMember()` — assign/unassign member via AI
+- [ ] **Service**: `AIActionsService.searchData()` — cari data workspace via AI
+- [ ] **Service**: `AIActionsService.getWorkspaceSummary()` — ringkasan workspace
+- [ ] **Service**: `AIActionsService.suggestActions()` — saran cerdas (prioritas, distribusi, deadline)
+- [ ] **Controller**: `copilotkit.controller.js` — setup CopilotKit Runtime dengan Express adapter
+- [ ] **Route**: `POST /api/copilotkit` — CopilotKit Runtime endpoint (streaming, auth required)
+- [ ] **Middleware**: Rate limiting AI chat (30 msg/min, 500/day, 10 aksi/min per user)
+- [ ] **Middleware**: RBAC — block Guest dari AI Chat endpoint
+- [ ] **System Prompt**: Definisi system prompt dengan konteks workspace
+- [ ] **Test**: Unit test AI actions service
+- [ ] **Test**: Integration test CopilotKit endpoint
+
+### 7.3 Frontend AI Chat Page (Ref: `23-ai-chat-agent.md`)
+
+- [ ] **Frontend**: Halaman AI Chat (`/workspace/:id/ai-chat`)
+- [ ] **Frontend**: CopilotKit Provider wrapper di layout workspace (`runtimeUrl` ke backend)
+- [ ] **Frontend**: Chat UI menggunakan CopilotKit `<CopilotChat />` (kustomisasi styling shadcn/Tailwind)
+- [ ] **Frontend**: Welcome message dengan daftar kemampuan AI
+- [ ] **Frontend**: Suggestion chips (contoh pertanyaan yang bisa diklik)
+- [ ] **Frontend**: Streaming text response (karakter per karakter)
+- [ ] **Frontend**: Typing indicator ("AI sedang mengetik...")
+- [ ] **Frontend**: Action confirmation cards (preview task/event sebelum dibuat)
+- [ ] **Frontend**: `useCopilotReadable` — provide workspace context (nama, member, kolom kanban, event aktif)
+- [ ] **Frontend**: `useCopilotAction` — `createTask` (buat task baru)
+- [ ] **Frontend**: `useCopilotAction` — `updateTask` (update field task)
+- [ ] **Frontend**: `useCopilotAction` — `createEvent` (buat event baru)
+- [ ] **Frontend**: `useCopilotAction` — `assignMember` (assign/unassign member)
+- [ ] **Frontend**: `useCopilotAction` — `searchData` (cari task/event/member)
+- [ ] **Frontend**: `useCopilotAction` — `getWorkspaceSummary` (ringkasan workspace)
+- [ ] **Frontend**: `useCopilotAction` — `suggestActions` (saran cerdas)
+- [ ] **Frontend**: Link navigasi "AI Chat" di sidebar (ikon robot/sparkle)
+- [ ] **Frontend**: Rate limit feedback ("Batas penggunaan tercapai, coba lagi nanti")
+- [ ] **Frontend**: Empty state & error handling
+- [ ] **Test**: E2E test AI chat interaksi
 
 ---
 

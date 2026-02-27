@@ -54,6 +54,41 @@ class EmailService {
       html,
     });
   }
+  async sendWorkspaceInvitationEmail(
+    email,
+    inviterName,
+    workspaceName,
+    inviteUrl,
+    customMessage,
+  ) {
+    const messageBlock = customMessage
+      ? `<p style="background: #f8f9fa; padding: 12px 16px; border-left: 3px solid #1a73e8; border-radius: 4px; color: #444; font-style: italic; margin: 16px 0;">"${customMessage}"</p>`
+      : "";
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a73e8;">Undangan Workspace</h2>
+        <p>Hai,</p>
+        <p><strong>${inviterName}</strong> mengundang kamu untuk bergabung ke workspace <strong>"${workspaceName}"</strong> di YN Project Manager.</p>
+        ${messageBlock}
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${inviteUrl}" 
+             style="background-color: #1a73e8; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-size: 16px; display: inline-block;">
+            Bergabung Sekarang
+          </a>
+        </div>
+        <p style="color: #666; font-size: 14px;">Undangan ini berlaku selama <strong>7 hari</strong>. Jika kamu tidak mengenal pengirim, abaikan email ini.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #999; font-size: 12px;">YN Project Manager</p>
+      </div>
+    `;
+
+    return this.sendMail({
+      to: email,
+      subject: `Undangan Workspace "${workspaceName}" — YN Project Manager`,
+      html,
+    });
+  }
 }
 
 module.exports = new EmailService();

@@ -54,8 +54,8 @@ app.get("/api/health", (req, res) => {
 // ────────────────────────────────────────────────────
 
 app.use("/api/auth", require("./routes/auth.routes"));
+app.use("/api/workspaces", require("./routes/workspace.routes"));
 // app.use('/api/users', require('./routes/user.routes'));
-// app.use('/api/workspaces', require('./routes/workspace.routes'));
 // app.use('/api/notifications', require('./routes/notification.routes'));
 // app.use('/api/comments', require('./routes/comment.routes'));
 
