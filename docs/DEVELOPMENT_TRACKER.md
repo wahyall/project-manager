@@ -108,27 +108,27 @@
 
 ### 2.1 Kelola Task — CRUD (Ref: `06-kelola-task.md`)
 
-- [ ] **Model**: Buat schema `tasks`
-- [ ] **Model**: Buat schema `workspace_labels`
-- [ ] **API**: `GET /api/workspaces/:id/tasks` — Daftar task (filter, sort, paginate)
-- [ ] **API**: `POST /api/workspaces/:id/tasks` — Buat task
-- [ ] **API**: `GET /api/workspaces/:id/tasks/:taskId` — Detail task
-- [ ] **API**: `PUT /api/workspaces/:id/tasks/:taskId` — Update task
-- [ ] **API**: `DELETE /api/workspaces/:id/tasks/:taskId` — Hapus task (soft)
-- [ ] **API**: `POST /api/workspaces/:id/tasks/:taskId/archive` — Arsipkan
-- [ ] **API**: `POST /api/workspaces/:id/tasks/:taskId/unarchive` — Unarsipkan
-- [ ] **API**: `POST /api/workspaces/:id/tasks/archive-done` — Bulk arsipkan Done
-- [ ] **API**: `POST /api/workspaces/:id/tasks/:taskId/watch` — Watch task
-- [ ] **API**: `DELETE /api/workspaces/:id/tasks/:taskId/watch` — Unwatch
-- [ ] **API**: `POST /api/workspaces/:id/tasks/:taskId/attachments` — Upload lampiran
-- [ ] **API**: `DELETE /api/workspaces/:id/tasks/:taskId/attachments/:id` — Hapus lampiran
-- [ ] **API**: `GET /api/workspaces/:id/labels` — Daftar label
-- [ ] **API**: `POST /api/workspaces/:id/labels` — Buat label
-- [ ] **API**: `PUT /api/workspaces/:id/labels/:labelId` — Update label
-- [ ] **API**: `DELETE /api/workspaces/:id/labels/:labelId` — Hapus label
-- [ ] **Service**: Upload file ke Puter.js (validasi 1MB, gambar + PDF)
-- [ ] **Service**: Task dependency validation (no circular)
-- [ ] **Socket.io**: Task events (created, updated, moved, deleted, archived)
+- [x] **Model**: Buat schema `tasks`
+- [x] **Model**: Buat schema `workspace_labels`
+- [x] **API**: `GET /api/workspaces/:id/tasks` — Daftar task (filter, sort, paginate)
+- [x] **API**: `POST /api/workspaces/:id/tasks` — Buat task
+- [x] **API**: `GET /api/workspaces/:id/tasks/:taskId` — Detail task
+- [x] **API**: `PUT /api/workspaces/:id/tasks/:taskId` — Update task
+- [x] **API**: `DELETE /api/workspaces/:id/tasks/:taskId` — Hapus task (soft)
+- [x] **API**: `POST /api/workspaces/:id/tasks/:taskId/archive` — Arsipkan
+- [x] **API**: `POST /api/workspaces/:id/tasks/:taskId/unarchive` — Unarsipkan
+- [x] **API**: `POST /api/workspaces/:id/tasks/archive-done` — Bulk arsipkan Done
+- [x] **API**: `POST /api/workspaces/:id/tasks/:taskId/watch` — Watch task
+- [x] **API**: `DELETE /api/workspaces/:id/tasks/:taskId/watch` — Unwatch
+- [x] **API**: `POST /api/workspaces/:id/tasks/:taskId/attachments` — Upload lampiran
+- [x] **API**: `DELETE /api/workspaces/:id/tasks/:taskId/attachments/:id` — Hapus lampiran
+- [x] **API**: `GET /api/workspaces/:id/labels` — Daftar label
+- [x] **API**: `POST /api/workspaces/:id/labels` — Buat label
+- [x] **API**: `PUT /api/workspaces/:id/labels/:labelId` — Update label
+- [x] **API**: `DELETE /api/workspaces/:id/labels/:labelId` — Hapus label
+- [x] **Service**: Upload file ke Puter.js (validasi 1MB, gambar + PDF)
+- [x] **Service**: Task dependency validation (no circular)
+- [x] **Socket.io**: Task events (created, updated, moved, deleted, archived)
 - [ ] **Test**: Unit test task CRUD API
 
 ### 2.2 Kanban Board (Ref: `07-kanban-board.md`)
