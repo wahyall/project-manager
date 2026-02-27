@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/protected-route";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -27,12 +28,15 @@ import {
   LogOut,
   ChevronLeft,
   Loader2,
+  Settings,
+  User,
 } from "lucide-react";
 
 // ─── Topbar Component ───────────────────────────────
-function Topbar({ workspace }) {
+function Topbar({ workspace, workspaceId }) {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const id = workspaceId;
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
@@ -74,11 +78,20 @@ function Topbar({ workspace }) {
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <div className="px-3 py-2">
+          <DropdownMenuContent align="end" className="w-56">
+            <div className="px-3 py-2.5">
               <p className="text-sm font-medium">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/settings/account")}>
+              <Settings className="h-4 w-4 mr-2" />
+              Pengaturan Akun
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push(`/workspace/${id}/members/${user?._id}`)}>
+              <User className="h-4 w-4 mr-2" />
+              Lihat Profil
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push("/workspaces")}>
               <ChevronLeft className="h-4 w-4 mr-2" />
@@ -106,6 +119,7 @@ export default function WorkspaceLayout({ children, params }) {
     useWorkspace();
   const [initialLoading, setInitialLoading] = useState(true);
 
+  // Load workspace and connect socket
   useEffect(() => {
     async function load() {
       await setCurrentWorkspace(id);
@@ -113,6 +127,26 @@ export default function WorkspaceLayout({ children, params }) {
     }
     load();
   }, [id, setCurrentWorkspace]);
+
+  // Initialize socket connection for presence
+  useEffect(() => {
+    if (!currentWorkspace) return;
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const socket = connectSocket(token);
+    if (socket) {
+      socket.emit("workspace:join", id);
+    }
+
+    return () => {
+      const s = getSocket();
+      if (s) {
+        s.emit("workspace:leave", id);
+      }
+    };
+  }, [id, currentWorkspace]);
 
   if (initialLoading) {
     return (
@@ -150,7 +184,7 @@ export default function WorkspaceLayout({ children, params }) {
           workspace={currentWorkspace}
         />
         <SidebarInset>
-          <Topbar workspace={currentWorkspace} />
+          <Topbar workspace={currentWorkspace} workspaceId={id} />
           <div className="flex-1 overflow-y-auto">
             {children}
           </div>

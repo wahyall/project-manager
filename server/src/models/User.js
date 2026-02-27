@@ -62,6 +62,11 @@ const userSchema = new mongoose.Schema(
         whatsapp: { type: Boolean, default: false },
       },
     },
+    dueDateReminders: {
+      type: [String],
+      enum: ["H", "H-1", "H-3"],
+      default: ["H-1"],
+    },
     theme: {
       type: String,
       enum: ["light", "dark", "system"],

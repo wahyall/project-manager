@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { Button } from "@/components/ui/button";
@@ -70,8 +71,11 @@ import {
   Search,
   LogOut,
   Check,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AvatarWithStatus } from "@/components/online-indicator";
+import { usePresence } from "@/hooks/use-presence";
 
 const ROLE_CONFIG = {
   owner: {
@@ -98,7 +102,7 @@ const ROLE_CONFIG = {
   },
 };
 
-function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction }) {
+function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction, isOnline }) {
   const isCurrentUser = member.userId === currentUserId;
   const isOwner = member.role === "owner";
   const canManage =
@@ -112,28 +116,26 @@ function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction 
 
   return (
     <div className="flex items-center gap-3 py-3 px-1 group">
-      {/* Avatar */}
-      <div className="relative shrink-0">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-sm">
-          {member.avatar ? (
-            <img
-              src={member.avatar}
-              alt={member.name}
-              className="h-10 w-10 rounded-full object-cover"
-            />
-          ) : (
-            member.name?.charAt(0).toUpperCase() || "?"
-          )}
-        </div>
-        {/* Online indicator could go here */}
-      </div>
+      {/* Avatar with online indicator */}
+      <a href={`/workspace/${workspace._id}/members/${member.userId}`}>
+        <AvatarWithStatus
+          src={member.avatar}
+          name={member.name}
+          isOnline={isOnline}
+          size="md"
+          className="cursor-pointer hover:opacity-80 transition-opacity"
+        />
+      </a>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm text-foreground truncate">
+          <a
+            href={`/workspace/${workspace._id}/members/${member.userId}`}
+            className="font-medium text-sm text-foreground truncate hover:underline"
+          >
             {member.name}
-          </span>
+          </a>
           {isCurrentUser && (
             <span className="text-xs text-muted-foreground">(Kamu)</span>
           )}
@@ -456,6 +458,7 @@ export default function MembersTab({ workspace, isAdminOrOwner }) {
     transferOwnership,
   } = useWorkspace();
   const router = useRouter();
+  const { isUserOnline } = usePresence(workspace._id);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -610,6 +613,7 @@ export default function MembersTab({ workspace, isAdminOrOwner }) {
                   currentUserId={user?._id}
                   isAdminOrOwner={isAdminOrOwner}
                   onAction={handleAction}
+                  isOnline={isUserOnline(member.userId)}
                 />
               ))}
             </div>

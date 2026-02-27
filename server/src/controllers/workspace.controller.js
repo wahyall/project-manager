@@ -553,6 +553,151 @@ exports.leaveWorkspace = catchAsync(async (req, res, next) => {
 });
 
 // ──────────────────────────────────────────────
+// GET /api/workspaces/:id/members/:userId/profile
+// ──────────────────────────────────────────────
+exports.getMemberProfile = catchAsync(async (req, res, next) => {
+  const workspaceId = req.workspace._id;
+  const { userId: targetUserId } = req.params;
+  const viewerId = req.user.id;
+
+  // Cek target user ada dan merupakan member
+  const membership = await WorkspaceMember.findMembership(
+    workspaceId,
+    targetUserId,
+  );
+  if (!membership) {
+    return next(new AppError("User bukan member workspace ini", 404));
+  }
+
+  // Ambil data user
+  const targetUser = await User.findById(targetUserId).select(
+    "name email avatar whatsappNumber createdAt",
+  );
+  if (!targetUser) {
+    return next(new AppError("User tidak ditemukan", 404));
+  }
+
+  // Cari workspace yang sama-sama diikuti (shared workspaces)
+  const viewerMemberships = await WorkspaceMember.find({ userId: viewerId })
+    .select("workspaceId")
+    .lean();
+  const targetMemberships = await WorkspaceMember.find({
+    userId: targetUserId,
+  })
+    .select("workspaceId")
+    .lean();
+
+  const viewerWsIds = new Set(
+    viewerMemberships.map((m) => m.workspaceId.toString()),
+  );
+  const sharedWsIds = targetMemberships
+    .filter((m) => viewerWsIds.has(m.workspaceId.toString()))
+    .map((m) => m.workspaceId);
+
+  const Workspace = require("../models/Workspace");
+  const sharedWorkspaces = await Workspace.find({
+    _id: { $in: sharedWsIds },
+    isDeleted: { $ne: true },
+  })
+    .select("name logo")
+    .lean();
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      profile: {
+        _id: targetUser._id,
+        name: targetUser.name,
+        email: targetUser.email,
+        avatar: targetUser.avatar,
+        whatsappRegistered: !!targetUser.whatsappNumber,
+        role: membership.role,
+        joinedAt: membership.joinedAt,
+        sharedWorkspaces,
+      },
+    },
+  });
+});
+
+// ──────────────────────────────────────────────
+// GET /api/workspaces/:id/members/:userId/stats
+// ──────────────────────────────────────────────
+exports.getMemberStats = catchAsync(async (req, res, next) => {
+  const workspaceId = req.workspace._id;
+  const { userId: targetUserId } = req.params;
+
+  // Cek target user adalah member
+  const membership = await WorkspaceMember.findMembership(
+    workspaceId,
+    targetUserId,
+  );
+  if (!membership) {
+    return next(new AppError("User bukan member workspace ini", 404));
+  }
+
+  // Stats — akan diisi ketika Task, Event, Comment model sudah ada
+  // Untuk sekarang return data placeholder
+  const stats = {
+    tasksCompleted: 0,
+    tasksActive: 0,
+    eventsParticipated: 0,
+    commentsCreated: 0,
+  };
+
+  // Coba hitung jika model sudah ada
+  try {
+    const Task = mongoose.models.Task;
+    if (Task) {
+      stats.tasksCompleted = await Task.countDocuments({
+        workspaceId,
+        assignees: targetUserId,
+        status: "done",
+        isDeleted: { $ne: true },
+      });
+      stats.tasksActive = await Task.countDocuments({
+        workspaceId,
+        assignees: targetUserId,
+        status: { $ne: "done" },
+        isDeleted: { $ne: true },
+      });
+    }
+  } catch (e) {
+    // Model belum ada, gunakan default 0
+  }
+
+  try {
+    const Event = mongoose.models.Event;
+    if (Event) {
+      stats.eventsParticipated = await Event.countDocuments({
+        workspaceId,
+        participants: targetUserId,
+        isDeleted: { $ne: true },
+      });
+    }
+  } catch (e) {
+    // Model belum ada
+  }
+
+  try {
+    const Comment = mongoose.models.Comment;
+    if (Comment) {
+      stats.commentsCreated = await Comment.countDocuments({
+        workspaceId,
+        userId: targetUserId,
+        isDeleted: { $ne: true },
+      });
+    }
+  } catch (e) {
+    // Model belum ada
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: { stats },
+  });
+});
+
+// ──────────────────────────────────────────────
 // POST /api/workspaces/:id/transfer-ownership
 // ──────────────────────────────────────────────
 exports.transferOwnership = catchAsync(async (req, res, next) => {

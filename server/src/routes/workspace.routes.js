@@ -59,6 +59,18 @@ router.post(
   workspaceController.regenerateInviteLink,
 );
 
+// ── Member profile & stats ───────────────────────────────
+router.get(
+  "/:id/members/:userId/profile",
+  workspaceMember(),
+  workspaceController.getMemberProfile,
+);
+router.get(
+  "/:id/members/:userId/stats",
+  workspaceMember(),
+  workspaceController.getMemberStats,
+);
+
 // ── Member management ───────────────────────────────────
 router.put(
   "/:id/members/:userId/role",

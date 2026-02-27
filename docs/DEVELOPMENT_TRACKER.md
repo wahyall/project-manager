@@ -75,20 +75,20 @@
 
 ### 1.4 Kelola User & Profil (Ref: `03-kelola-user-profil.md`)
 
-- [ ] **API**: `GET /api/users/me` — Profil saat ini
-- [ ] **API**: `PUT /api/users/me` — Update profil
-- [ ] **API**: `PUT /api/users/me/password` — Ubah password
-- [ ] **API**: `PUT /api/users/me/avatar` — Upload avatar (Puter.js)
-- [ ] **API**: `PUT /api/users/me/notifications` — Update preferensi notifikasi
-- [ ] **API**: `GET /api/workspaces/:id/members/:userId/profile` — Profil member
-- [ ] **API**: `GET /api/workspaces/:id/members/:userId/stats` — Statistik kontribusi
-- [ ] **Socket.io**: Presence system (online/offline via heartbeat)
-- [ ] **Frontend**: Halaman Pengaturan Akun (`/settings/account`)
-- [ ] **Frontend**: Form ubah profil (nama, avatar, WhatsApp)
-- [ ] **Frontend**: Form ubah password
-- [ ] **Frontend**: Form preferensi notifikasi (toggle per tipe)
-- [ ] **Frontend**: Halaman Profil User (`/workspace/:id/members/:userId`)
-- [ ] **Frontend**: Online/offline indicator (titik hijau/abu)
+- [x] **API**: `GET /api/users/me` — Profil saat ini
+- [x] **API**: `PUT /api/users/me` — Update profil
+- [x] **API**: `PUT /api/users/me/password` — Ubah password
+- [x] **API**: `PUT /api/users/me/avatar` — Upload avatar (Puter.js)
+- [x] **API**: `PUT /api/users/me/notifications` — Update preferensi notifikasi
+- [x] **API**: `GET /api/workspaces/:id/members/:userId/profile` — Profil member
+- [x] **API**: `GET /api/workspaces/:id/members/:userId/stats` — Statistik kontribusi
+- [x] **Socket.io**: Presence system (online/offline via heartbeat)
+- [x] **Frontend**: Halaman Pengaturan Akun (`/settings/account`)
+- [x] **Frontend**: Form ubah profil (nama, avatar, WhatsApp)
+- [x] **Frontend**: Form ubah password
+- [x] **Frontend**: Form preferensi notifikasi (toggle per tipe)
+- [x] **Frontend**: Halaman Profil User (`/workspace/:id/members/:userId`)
+- [x] **Frontend**: Online/offline indicator (titik hijau/abu)
 - [ ] **Test**: Unit test user API
 
 ### 1.5 Onboarding (Ref: `01-autentikasi-onboarding.md`)

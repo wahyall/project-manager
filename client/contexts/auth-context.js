@@ -81,17 +81,67 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  // ─── Profile management ────────────────────────────
+
+  const updateProfile = async (profileData) => {
+    const { data } = await api.put("/users/me", profileData);
+    setUser(data.user);
+    return data.user;
+  };
+
+  const changePassword = async (currentPassword, newPassword, confirmPassword) => {
+    const { data } = await api.put("/users/me/password", {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+    return data;
+  };
+
+  const updateAvatar = async (avatarUrl) => {
+    const { data } = await api.put("/users/me/avatar", {
+      avatar: avatarUrl,
+    });
+    setUser(data.user);
+    return data.user;
+  };
+
+  const updateNotifications = async (notificationPreferences, dueDateReminders) => {
+    const { data } = await api.put("/users/me/notifications", {
+      notificationPreferences,
+      dueDateReminders,
+    });
+    setUser(data.user);
+    return data.user;
+  };
+
+  const refreshUser = async () => {
+    try {
+      const { data } = await api.get("/users/me");
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
+        setUser,
         login,
         register,
         logout,
         forgotPassword,
         resetPassword,
         checkAuth,
+        updateProfile,
+        changePassword,
+        updateAvatar,
+        updateNotifications,
+        refreshUser,
       }}
     >
       {children}
