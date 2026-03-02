@@ -163,6 +163,15 @@ const initializeSocket = (httpServer) => {
       socket.leave(`sheet:${sheetId}`);
     });
 
+    // ── Join workbook room (spreadsheet v2) ─────────
+    socket.on("workbook:join", (eventId) => {
+      socket.join(`workbook:${eventId}`);
+    });
+
+    socket.on("workbook:leave", (eventId) => {
+      socket.leave(`workbook:${eventId}`);
+    });
+
     // ── Presence heartbeat ─────────────────────────
     socket.on("presence:heartbeat", (data) => {
       const presence = presenceMap.get(userId);

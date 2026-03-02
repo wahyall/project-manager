@@ -23,7 +23,6 @@ import {
   AlertCircle,
   Eye,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 // Dynamic import FortuneSheet (client-only, no SSR)
@@ -38,22 +37,13 @@ const Workbook = dynamic(
 
 export function EventSpreadsheetTab({ event, workspaceId }) {
   const {
-    sheetsWithData,
-    fortuneSheetData,
+    workbookData,
+    setWorkbookData,
+    version,
     loading,
     error,
-    sheetIdMap,
-    getBackendId,
-    getSheetContext,
-    createSheetInBackend,
-    deleteSheetInBackend,
-    renameSheetInBackend,
-    updateRowInBackend,
-    addRowInBackend,
-    deleteRowInBackend,
-    addColumnInBackend,
-    deleteColumnInBackend,
-    fetchAllData,
+    fetchWorkbook,
+    saveWorkbook,
     exportCSV,
     exportXLSX,
   } = useSpreadsheet(workspaceId, event._id);
@@ -67,146 +57,37 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
   // Track the currently active sheet for export
   const [activeFortuneSheetId, setActiveFortuneSheetId] = useState(null);
 
-  // Debounce timer for onChange saves
+  // Debounce timer for saving full workbook (native FortuneSheet structure)
   const saveTimeoutRef = useRef(null);
   const lastSavedDataRef = useRef(null);
 
-  // ── Handle onChange: debounced save of cell data ──
+  // ── Handle onChange: keep workbook controlled + debounced PUT ──
   const handleChange = useCallback(
     async (newData) => {
-      if (isReadOnly || !newData || !sheetsWithData.length) return;
+      if (isReadOnly || !Array.isArray(newData)) return;
 
-      // Clear existing timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
+      // Control the Workbook so it never snaps back on rerender
+      setWorkbookData(newData);
 
-      // Debounce: wait 500ms after last change before saving
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(async () => {
         try {
-          // Compare newData with last saved data to find changes
-          const lastSaved = lastSavedDataRef.current;
-          if (!lastSaved) {
-            lastSavedDataRef.current = JSON.parse(JSON.stringify(newData));
-            return; // First load, don't save
+          // Avoid saving if nothing actually changed since last save
+          const serialized = JSON.stringify(newData);
+          if (lastSavedDataRef.current === serialized) {
+            return;
           }
 
-          // Process each sheet
-          for (const fsSheet of newData) {
-            const backendId = getBackendId(String(fsSheet.id));
-            const ctx = getSheetContext(String(fsSheet.id));
-            if (!ctx) continue;
-
-            const columns = [...(ctx.sheet.columns || [])].sort(
-              (a, b) => a.order - b.order,
-            );
-
-            // Extract cell data from FortuneSheet format
-            const celldata = fsSheet.celldata || [];
-            const cellMap = new Map();
-            celldata.forEach((cell) => {
-              if (cell.r === 0) return; // Skip header row
-              const key = `${cell.r}_${cell.c}`;
-              cellMap.set(key, cell);
-            });
-
-            // Compare with last saved state
-            const lastSheet = lastSaved.find((s) => s.id === fsSheet.id);
-            if (!lastSheet) continue;
-
-            const lastCellMap = new Map();
-            (lastSheet.celldata || []).forEach((cell) => {
-              if (cell.r === 0) return;
-              const key = `${cell.r}_${cell.c}`;
-              lastCellMap.set(key, cell);
-            });
-
-            // Find changed cells
-            const changedCells = [];
-            cellMap.forEach((cell, key) => {
-              const lastCell = lastCellMap.get(key);
-              const newValue =
-                cell.v?.v !== undefined ? cell.v.v : cell.v?.m || "";
-              const oldValue =
-                lastCell?.v?.v !== undefined
-                  ? lastCell.v.v
-                  : lastCell?.v?.m || "";
-
-              if (newValue !== oldValue) {
-                changedCells.push({ cell, key });
-              }
-            });
-
-            // Also check for deleted cells
-            lastCellMap.forEach((lastCell, key) => {
-              if (!cellMap.has(key)) {
-                changedCells.push({ cell: null, key, deleted: true });
-              }
-            });
-
-            // Batch update changed cells
-            if (changedCells.length > 0) {
-              const rowUpdates = new Map(); // rowIndex → { rowId, cells: {} }
-
-              for (const { cell, key, deleted } of changedCells) {
-                const [rowIdx, colIdx] = key.split("_").map(Number);
-                const dataRowIndex = rowIdx - 1; // offset for header
-                const row = ctx.rows[dataRowIndex];
-                const column = columns[colIdx];
-
-                if (!row || !column) continue;
-
-                if (!rowUpdates.has(dataRowIndex)) {
-                  rowUpdates.set(dataRowIndex, {
-                    rowId: row._id,
-                    cells: {},
-                  });
-                }
-
-                const update = rowUpdates.get(dataRowIndex);
-                if (deleted) {
-                  update.cells[column._id] = null; // Delete cell
-                } else {
-                  const value =
-                    cell.v?.v !== undefined ? cell.v.v : cell.v?.m || "";
-                  update.cells[column._id] = value;
-                }
-              }
-
-              // Save all row updates
-              for (const update of rowUpdates.values()) {
-                await updateRowInBackend(backendId, update.rowId, {
-                  cells: update.cells,
-                });
-              }
-            }
-          }
-
-          // Update last saved reference
-          lastSavedDataRef.current = JSON.parse(JSON.stringify(newData));
+          await saveWorkbook(newData);
+          lastSavedDataRef.current = serialized;
         } catch (err) {
-          console.error("Failed to save changes:", err);
+          console.error("Failed to save workbook:", err);
           toast.error("Failed to save changes");
         }
-      }, 500); // 500ms debounce
+      }, 200);
     },
-    [
-      isReadOnly,
-      sheetsWithData,
-      getBackendId,
-      getSheetContext,
-      updateRowInBackend,
-    ],
+    [isReadOnly, setWorkbookData, saveWorkbook],
   );
-
-  // Initialize lastSavedDataRef when data loads
-  useEffect(() => {
-    if (fortuneSheetData && !lastSavedDataRef.current) {
-      lastSavedDataRef.current = JSON.parse(
-        JSON.stringify(fortuneSheetData),
-      );
-    }
-  }, [fortuneSheetData]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -217,145 +98,21 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
     };
   }, []);
 
-  // ── Handle operations from FortuneSheet → sync structural changes immediately ──
-  const handleOp = useCallback(
-    async (ops) => {
-      if (isReadOnly) return;
-
-      for (const op of ops) {
-        try {
-          switch (op.op) {
-            // ── Row/Column insert ──
-            case "insertRowCol": {
-              const sheetId = op.id || activeFortuneSheetId;
-              const backendId = getBackendId(sheetId);
-              const ctx = getSheetContext(sheetId);
-
-              if (!ctx) continue;
-
-              if (op.value?.type === "row") {
-                await addRowInBackend(backendId);
-              } else if (op.value?.type === "column") {
-                const columns = ctx.sheet.columns || [];
-                await addColumnInBackend(backendId, {
-                  name: `Column ${columns.length + 1}`,
-                  type: "text",
-                });
-              }
-              break;
-            }
-
-            // ── Row/Column delete ──
-            case "deleteRowCol": {
-              const sheetId = op.id || activeFortuneSheetId;
-              const backendId = getBackendId(sheetId);
-              const ctx = getSheetContext(sheetId);
-
-              if (!ctx) continue;
-
-              if (op.value?.type === "row" && op.value?.start != null) {
-                const rowIdx = op.value.start - 1; // offset for header
-                const row = ctx.rows[rowIdx];
-                if (row) {
-                  await deleteRowInBackend(backendId, row._id);
-                }
-              } else if (
-                op.value?.type === "column" &&
-                op.value?.start != null
-              ) {
-                const columns = [...(ctx.sheet.columns || [])].sort(
-                  (a, b) => a.order - b.order,
-                );
-                const col = columns[op.value.start];
-                if (col) {
-                  await deleteColumnInBackend(backendId, col._id);
-                }
-              }
-              break;
-            }
-
-            // ── Sheet added via FortuneSheet "+" button ──
-            case "addSheet": {
-              const fsSheet = op.value;
-              if (fsSheet) {
-                const backendSheet = await createSheetInBackend(
-                  fsSheet.name || "New Sheet",
-                );
-                // Map FortuneSheet's generated ID → our backend ID
-                sheetIdMap.current.set(
-                  String(fsSheet.id),
-                  backendSheet._id,
-                );
-              }
-              break;
-            }
-
-            // ── Sheet deleted via FortuneSheet tab context menu ──
-            case "deleteSheet": {
-              const fsId = op.id;
-              if (fsId) {
-                const backendId = getBackendId(String(fsId));
-                await deleteSheetInBackend(backendId);
-                sheetIdMap.current.delete(String(fsId));
-              }
-              break;
-            }
-
-            default:
-              break;
-          }
-        } catch (err) {
-          console.error("Failed to sync op to backend:", err);
-        }
-      }
-    },
-    [
-      isReadOnly,
-      activeFortuneSheetId,
-      getBackendId,
-      getSheetContext,
-      sheetIdMap,
-      addRowInBackend,
-      deleteRowInBackend,
-      addColumnInBackend,
-      deleteColumnInBackend,
-      createSheetInBackend,
-      deleteSheetInBackend,
-    ],
-  );
-
   // ── FortuneSheet hooks — handle sheet lifecycle events ──
   const fortuneHooks = useMemo(
     () => ({
-      // Protect header row from edits
-      beforeUpdateCell: (r, c, value) => {
-        if (r === 0) return false;
-        return true;
-      },
-
       // Track active sheet for export
       afterActivateSheet: (id) => {
         setActiveFortuneSheetId(String(id));
       },
-
-      // Sync sheet rename to backend
-      afterUpdateSheetName: (id, oldName, newName) => {
-        const backendId = getBackendId(String(id));
-        renameSheetInBackend(backendId, newName).catch((err) => {
-          console.error("Failed to rename sheet:", err);
-          toast.error("Failed to rename sheet");
-        });
-      },
     }),
-    [getBackendId, renameSheetInBackend],
+    [],
   );
 
   // ── Export ──
   const handleExportCSV = async () => {
     // Find the active sheet's backend ID
-    const backendId = activeFortuneSheetId
-      ? getBackendId(activeFortuneSheetId)
-      : sheetsWithData[0]?.sheet?._id;
+    const backendId = activeFortuneSheetId || workbookData?.[0]?.id;
 
     if (!backendId) return;
 
@@ -397,7 +154,7 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
           variant="outline"
           size="sm"
           className="mt-3"
-          onClick={() => fetchAllData()}
+          onClick={() => fetchWorkbook()}
         >
           Try Again
         </Button>
@@ -457,12 +214,11 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
 
       {/* ── FortuneSheet ─────────────────────────────── */}
       <div className="relative" style={{ height: "650px", width: "100%" }}>
-        {fortuneSheetData ? (
+        {workbookData ? (
           <Workbook
             ref={workbookRef}
-            data={fortuneSheetData}
+            data={workbookData}
             onChange={handleChange}
-            onOp={handleOp}
             showToolbar={!isReadOnly}
             showFormulaBar={!isReadOnly}
             showSheetTabs={true}

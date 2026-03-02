@@ -131,7 +131,7 @@ export function QuickCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[780px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -171,7 +171,6 @@ export function QuickCreateModal({
               <AlignLeft className="h-3 w-3" />
               Deskripsi
             </Label>
-            <div className="rounded-md border bg-background min-h-[100px] max-h-[200px] overflow-y-auto">
               {open && (
                 <Suspense
                   fallback={
@@ -186,11 +185,9 @@ export function QuickCreateModal({
                     onChange={setDescription}
                     placeholder="Deskripsi task (opsional)..."
                     className="blocknote-compact"
-                    minimal
                   />
                 </Suspense>
               )}
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

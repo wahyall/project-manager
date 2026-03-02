@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
 const Event = require("../models/Event");
 const Task = require("../models/Task");
-const SpreadsheetSheet = require("../models/SpreadsheetSheet");
-const SpreadsheetRow = require("../models/SpreadsheetRow");
+const SpreadsheetWorkbook = require("../models/SpreadsheetWorkbook");
 const WorkspaceMember = require("../models/WorkspaceMember");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
@@ -196,24 +195,21 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     createdBy: userId,
   });
 
-  // Auto-create default spreadsheet sheet
-  const defaultSheet = await SpreadsheetSheet.create({
-    eventId: event._id,
-    name: "Sheet 1",
-    order: 0,
-    columns: [
-      { name: "Kolom 1", type: "text", order: 0, width: 200 },
-      { name: "Kolom 2", type: "text", order: 1, width: 200 },
-      { name: "Kolom 3", type: "text", order: 2, width: 200 },
-    ],
-  });
-
-  // Create 3 empty rows in the default sheet
-  await SpreadsheetRow.insertMany([
-    { sheetId: defaultSheet._id, order: 0, cells: {} },
-    { sheetId: defaultSheet._id, order: 1, cells: {} },
-    { sheetId: defaultSheet._id, order: 2, cells: {} },
-  ]);
+  // Auto-create default FortuneSheet workbook for this event
+  // Using native sheet structure: https://ruilisi.github.io/fortune-sheet-docs/guide/sheet.html
+  // await SpreadsheetWorkbook.create({
+  //   eventId: event._id,
+  //   data: [
+  //     {
+  //       name: "Sheet 1",
+  //       id: new mongoose.Types.ObjectId().toString(), // local sheet id
+  //       status: 1,
+  //       celldata: [{ r: 0, c: 0, v: null }],
+  //     },
+  //   ],
+  //   version: 1,
+  //   updatedBy: userId,
+  // });
 
   // Populate for response
   const populatedEvent = await populateEvent(

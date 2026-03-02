@@ -12,6 +12,11 @@ const canView = workspaceMember();
 // ── Sheet CRUD ───────────────────────────────────
 router.get("/", canView, spreadsheetController.listSheets);
 router.get("/all-data", canView, spreadsheetController.getAllSheetsWithData);
+
+// ── Workbook (FortuneSheet native) ───────────────
+router.get("/workbook", canView, spreadsheetController.getWorkbook);
+router.put("/workbook", canEdit, spreadsheetController.updateWorkbook);
+
 router.post("/", canEdit, spreadsheetController.createSheet);
 router.put("/reorder", canEdit, spreadsheetController.reorderSheets);
 
