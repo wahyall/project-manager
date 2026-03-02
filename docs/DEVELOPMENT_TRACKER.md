@@ -156,20 +156,20 @@
 
 ### 2.3 Kalender View (Ref: `08-kalender-view.md`)
 
-- [ ] **API**: `GET /api/workspaces/:id/calendar` — Data kalender (task + event)
-- [ ] **Frontend**: Halaman Kalender (`/workspace/:id/tasks/calendar`)
-- [ ] **Frontend**: Integrasi FullCalendar (mode bulanan, mingguan, harian)
-- [ ] **Frontend**: Tampilkan task pada due date (dot/chip)
-- [ ] **Frontend**: Tampilkan task dengan start+due sebagai bar rentang waktu
-- [ ] **Frontend**: Tampilkan event sebagai bar warna di area all-day
-- [ ] **Frontend**: Warna task berdasarkan prioritas / warna event
-- [ ] **Frontend**: Klik tanggal kosong → buat task baru (due date otomatis)
-- [ ] **Frontend**: Klik task/event → buka detail
-- [ ] **Frontend**: Drag task → ubah due date
-- [ ] **Frontend**: Extend/resize task bar → ubah start/due date
-- [ ] **Frontend**: Filter toggle (semua, per event, event saja, assignee, prioritas)
-- [ ] **Frontend**: Tooltip on hover (judul, assignee, due date, status)
-- [ ] **Frontend**: Real-time sync dengan Kanban Board
+- [x] **API**: `GET /api/workspaces/:id/calendar` — Data kalender (task + event)
+- [x] **Frontend**: Halaman Kalender (`/workspace/:id/tasks/calendar`)
+- [x] **Frontend**: Integrasi FullCalendar (mode bulanan, mingguan, harian)
+- [x] **Frontend**: Tampilkan task pada due date (dot/chip)
+- [x] **Frontend**: Tampilkan task dengan start+due sebagai bar rentang waktu
+- [x] **Frontend**: Tampilkan event sebagai bar warna di area all-day
+- [x] **Frontend**: Warna task berdasarkan prioritas / warna event
+- [x] **Frontend**: Klik tanggal kosong → buat task baru (due date otomatis)
+- [x] **Frontend**: Klik task/event → buka detail
+- [x] **Frontend**: Drag task → ubah due date
+- [x] **Frontend**: Extend/resize task bar → ubah start/due date
+- [x] **Frontend**: Filter toggle (semua, per event, event saja, assignee, prioritas)
+- [x] **Frontend**: Tooltip on hover (judul, assignee, due date, status)
+- [x] **Frontend**: Real-time sync dengan Kanban Board
 - [ ] **Test**: E2E test kalender interaksi
 
 ### 2.4 Kelola Event — Dasar (Ref: `04-kelola-event.md`)

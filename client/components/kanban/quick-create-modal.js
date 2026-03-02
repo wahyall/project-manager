@@ -56,6 +56,7 @@ export function QuickCreateModal({
   members,
   events,
   defaultColumnId,
+  defaultDueDate,
   onCreateTask,
   onCreateAndOpen,
 }) {
@@ -80,13 +81,13 @@ export function QuickCreateModal({
       setColumnId(defaultColumnId || columns?.[0]?._id || "");
       setPriority("medium");
       setStartDate(null);
-      setDueDate(null);
+      setDueDate(defaultDueDate ? new Date(defaultDueDate) : null);
       setSelectedAssignees([]);
       setEventId("");
       setEditorKey((k) => k + 1); // Force fresh editor instance
       setTimeout(() => titleInputRef.current?.focus(), 100);
     }
-  }, [open, defaultColumnId, columns]);
+  }, [open, defaultColumnId, defaultDueDate, columns]);
 
   const toggleAssignee = (memberId) => {
     setSelectedAssignees((prev) =>

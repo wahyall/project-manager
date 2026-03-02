@@ -148,3 +148,211 @@
 .blocknote-wrapper .bn-block-group > .bn-block-outer:last-child {
   margin-bottom: 0;
 }
+
+/* ── FullCalendar custom styles ──────────────── */
+.calendar-wrapper {
+  --fc-border-color: var(--border);
+  --fc-today-bg-color: oklch(0.95 0.02 250 / 40%);
+  --fc-neutral-bg-color: transparent;
+  --fc-page-bg-color: transparent;
+  --fc-event-border-color: transparent;
+}
+
+.dark .calendar-wrapper {
+  --fc-today-bg-color: oklch(0.3 0.02 250 / 30%);
+}
+
+/* Day headers */
+.calendar-wrapper .fc .fc-col-header-cell {
+  padding: 8px 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+  background: transparent;
+  border-bottom: 2px solid var(--border);
+}
+
+.calendar-wrapper .fc .fc-col-header-cell-cushion {
+  padding: 6px 4px;
+}
+
+/* Day cells */
+.calendar-wrapper .fc .fc-daygrid-day {
+  transition: background-color 0.15s ease;
+}
+
+.calendar-wrapper .fc .fc-daygrid-day:hover {
+  background-color: oklch(0.97 0 0);
+}
+
+.dark .calendar-wrapper .fc .fc-daygrid-day:hover {
+  background-color: oklch(0.22 0 0);
+}
+
+/* Day number */
+.calendar-wrapper .fc .fc-daygrid-day-number {
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+/* Today highlight */
+.calendar-wrapper .fc .fc-day-today .fc-daygrid-day-number {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 9999px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* Weekend cells */
+.calendar-wrapper .fc .fc-day-sat,
+.calendar-wrapper .fc .fc-day-sun {
+  background-color: oklch(0.98 0 0);
+}
+
+.dark .calendar-wrapper .fc .fc-day-sat,
+.dark .calendar-wrapper .fc .fc-day-sun {
+  background-color: oklch(0.17 0 0);
+}
+
+/* Events */
+.calendar-wrapper .fc .fc-event {
+  border-radius: 4px !important;
+  border: none !important;
+  margin: 1px 2px;
+  padding: 0;
+  font-size: 11px;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.calendar-wrapper .fc .fc-event:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.calendar-wrapper .fc .fc-event .fc-event-main {
+  padding: 0;
+}
+
+/* More link */
+.calendar-wrapper .fc .fc-daygrid-more-link {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 2px 4px;
+  margin-top: 2px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.calendar-wrapper .fc .fc-daygrid-more-link:hover {
+  background-color: oklch(0.95 0 0);
+}
+
+.dark .calendar-wrapper .fc .fc-daygrid-more-link:hover {
+  background-color: oklch(0.25 0 0);
+}
+
+/* Popover for "more" events */
+.calendar-wrapper .fc .fc-popover {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.calendar-wrapper .fc .fc-popover-header {
+  background-color: var(--muted);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.calendar-wrapper .fc .fc-popover-body {
+  padding: 4px;
+}
+
+/* Time grid */
+.calendar-wrapper .fc .fc-timegrid-slot {
+  height: 48px;
+}
+
+.calendar-wrapper .fc .fc-timegrid-slot-label {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  vertical-align: top;
+  padding-top: 2px;
+}
+
+.calendar-wrapper .fc .fc-timegrid-now-indicator-line {
+  border-color: var(--destructive);
+  border-width: 2px;
+}
+
+.calendar-wrapper .fc .fc-timegrid-now-indicator-arrow {
+  border-color: var(--destructive);
+}
+
+/* All day area */
+.calendar-wrapper .fc .fc-daygrid-body-natural {
+  min-height: 0;
+}
+
+/* Scrollbar styling */
+.calendar-wrapper .fc .fc-scroller {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.calendar-wrapper .fc .fc-scroller::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.calendar-wrapper .fc .fc-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.calendar-wrapper .fc .fc-scroller::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 3px;
+}
+
+/* Remove default FC header toolbar (we use our own) */
+.calendar-wrapper .fc .fc-toolbar {
+  display: none !important;
+}
+
+/* Other day cells in month grid */
+.calendar-wrapper .fc .fc-day-other .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
+/* Drag mirror */
+.calendar-wrapper .fc .fc-event-mirror {
+  opacity: 0.7;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Selection highlight */
+.calendar-wrapper .fc .fc-highlight {
+  background-color: oklch(0.92 0.02 250 / 50%);
+  border-radius: 4px;
+}
+
+.dark .calendar-wrapper .fc .fc-highlight {
+  background-color: oklch(0.28 0.02 250 / 50%);
+}
