@@ -133,25 +133,25 @@
 
 ### 2.2 Kanban Board (Ref: `07-kanban-board.md`)
 
-- [ ] **Frontend**: Halaman Kanban Board (`/workspace/:id/tasks/kanban`)
-- [ ] **Frontend**: Render kolom kanban dari data workspace
-- [ ] **Frontend**: Kartu task (judul, assignee avatar, due date, prioritas, label, subtask progress)
-- [ ] **Frontend**: Drag & drop task antar kolom (@hello-pangea/dnd)
-- [ ] **Frontend**: Drag & drop reorder task dalam kolom
-- [ ] **Frontend**: Quick create task (modal ringkas dari tombol "+")
-- [ ] **Frontend**: Filter toolbar (event, assignee, label, prioritas, due date, keyword, arsip)
-- [ ] **Frontend**: Panel detail task (slide-in dari kanan)
-- [ ] **Frontend**: Detail task — semua field editable inline
-- [ ] **Frontend**: Detail task — Tab Detail
-- [ ] **Frontend**: Detail task — Tab Komentar (placeholder, implementasi di Fase 4)
-- [ ] **Frontend**: Detail task — Tab Activity (placeholder, implementasi di Fase 3)
-- [ ] **Frontend**: Subtask checklist (reorder, toggle, CRUD)
-- [ ] **Frontend**: Dependency indicator (🔒 ikon di kartu)
-- [ ] **Frontend**: Watcher toggle (ikon mata)
-- [ ] **Frontend**: Lampiran upload & preview (gambar thumbnail, PDF ikon)
-- [ ] **Frontend**: Bulk actions (select, pindah kolom, ubah assignee/prioritas, arsip, hapus)
-- [ ] **Frontend**: Real-time sync via Socket.io (task CRUD oleh user lain)
-- [ ] **Frontend**: Keyboard shortcuts (N, F, Escape, arrow keys)
+- [x] **Frontend**: Halaman Kanban Board (`/workspace/:id/tasks/kanban`)
+- [x] **Frontend**: Render kolom kanban dari data workspace
+- [x] **Frontend**: Kartu task (judul, assignee avatar, due date, prioritas, label, subtask progress)
+- [x] **Frontend**: Drag & drop task antar kolom (@hello-pangea/dnd)
+- [x] **Frontend**: Drag & drop reorder task dalam kolom
+- [x] **Frontend**: Quick create task (modal ringkas dari tombol "+")
+- [x] **Frontend**: Filter toolbar (event, assignee, label, prioritas, due date, keyword, arsip)
+- [x] **Frontend**: Panel detail task (slide-in dari kanan)
+- [x] **Frontend**: Detail task — semua field editable inline
+- [x] **Frontend**: Detail task — Tab Detail
+- [x] **Frontend**: Detail task — Tab Komentar (placeholder, implementasi di Fase 4)
+- [x] **Frontend**: Detail task — Tab Activity (placeholder, implementasi di Fase 3)
+- [x] **Frontend**: Subtask checklist (reorder, toggle, CRUD)
+- [x] **Frontend**: Dependency indicator (🔒 ikon di kartu)
+- [x] **Frontend**: Watcher toggle (ikon mata)
+- [x] **Frontend**: Lampiran upload & preview (gambar thumbnail, PDF ikon)
+- [x] **Frontend**: Bulk actions (select, pindah kolom, ubah assignee/prioritas, arsip, hapus)
+- [x] **Frontend**: Real-time sync via Socket.io (task CRUD oleh user lain)
+- [x] **Frontend**: Keyboard shortcuts (N, F, Escape, arrow keys)
 - [ ] **Test**: E2E test drag & drop kanban
 
 ### 2.3 Kalender View (Ref: `08-kalender-view.md`)
