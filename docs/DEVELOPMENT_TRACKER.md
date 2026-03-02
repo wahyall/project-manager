@@ -200,34 +200,34 @@
 
 ### 3.1 Spreadsheet Event (Ref: `05-spreadsheet-event.md`)
 
-- [ ] **Model**: Buat schema `spreadsheet_sheets`
-- [ ] **Model**: Buat schema `spreadsheet_rows`
-- [ ] **Model**: Buat schema `spreadsheet_row_groups`
-- [ ] **API**: CRUD sheet (`GET/POST/PUT/DELETE /api/events/:eventId/sheets`)
-- [ ] **API**: `POST /api/events/:eventId/sheets/:sheetId/duplicate` — Duplikasi
-- [ ] **API**: `PUT /api/events/:eventId/sheets/reorder` — Reorder
-- [ ] **API**: `GET /api/events/:eventId/sheets/:sheetId/data` — Ambil semua data
-- [ ] **API**: CRUD kolom (tambah, update, hapus, reorder)
-- [ ] **API**: CRUD baris (tambah, update cell, hapus, batch update untuk paste)
-- [ ] **API**: CRUD row group (buat, update, hapus)
-- [ ] **API**: Export CSV (`GET /api/events/:eventId/sheets/:sheetId/export/csv`)
-- [ ] **API**: Export Excel (`GET /api/events/:eventId/sheets/export/xlsx`)
-- [ ] **Socket.io**: Spreadsheet events (cell update, row/column CRUD)
-- [ ] **Frontend**: Integrasi Luckysheet di Tab Spreadsheet event
-- [ ] **Frontend**: Multi-sheet tab navigation
-- [ ] **Frontend**: Semua tipe kolom (Teks, Angka, Tanggal, Checkbox, Dropdown, User, URL)
-- [ ] **Frontend**: Formula footer (SUM, AVERAGE, COUNT, MIN, MAX)
-- [ ] **Frontend**: Manajemen kolom (tambah, hapus, rename, reorder, resize, ubah tipe)
-- [ ] **Frontend**: Manajemen baris (tambah, hapus, insert above/below)
-- [ ] **Frontend**: Row grouping (collapsible groups)
-- [ ] **Frontend**: Filter & sorting per kolom
-- [ ] **Frontend**: Undo/Redo (Ctrl+Z / Ctrl+Y)
-- [ ] **Frontend**: Copy-paste dari/ke Excel dan Google Sheets
-- [ ] **Frontend**: Freeze kolom pertama
-- [ ] **Frontend**: Komentar per cell (indikator titik, panel thread)
-- [ ] **Frontend**: Kolaborasi real-time (sync data antar user)
-- [ ] **Frontend**: Read-only mode untuk Guest
-- [ ] **Frontend**: Export dialog (CSV / Excel)
+- [x] **Model**: Buat schema `spreadsheet_sheets`
+- [x] **Model**: Buat schema `spreadsheet_rows`
+- [x] **Model**: Buat schema `spreadsheet_row_groups`
+- [x] **API**: CRUD sheet (`GET/POST/PUT/DELETE /api/events/:eventId/sheets`)
+- [x] **API**: `POST /api/events/:eventId/sheets/:sheetId/duplicate` — Duplikasi
+- [x] **API**: `PUT /api/events/:eventId/sheets/reorder` — Reorder
+- [x] **API**: `GET /api/events/:eventId/sheets/:sheetId/data` — Ambil semua data
+- [x] **API**: CRUD kolom (tambah, update, hapus, reorder)
+- [x] **API**: CRUD baris (tambah, update cell, hapus, batch update untuk paste)
+- [x] **API**: CRUD row group (buat, update, hapus)
+- [x] **API**: Export CSV (`GET /api/events/:eventId/sheets/:sheetId/export/csv`)
+- [x] **API**: Export Excel (`GET /api/events/:eventId/sheets/export/xlsx`)
+- [x] **Socket.io**: Spreadsheet events (cell update, row/column CRUD)
+- [x] **Frontend**: Integrasi FortuneSheet di Tab Spreadsheet event
+- [x] **Frontend**: Multi-sheet tab navigation
+- [x] **Frontend**: Semua tipe kolom (Teks, Angka, Tanggal, Checkbox, Dropdown, User, URL)
+- [x] **Frontend**: Formula footer (SUM, AVERAGE, COUNT, MIN, MAX)
+- [x] **Frontend**: Manajemen kolom (tambah, hapus, rename, reorder, resize, ubah tipe)
+- [x] **Frontend**: Manajemen baris (tambah, hapus, insert above/below)
+- [x] **Frontend**: Row grouping (collapsible groups)
+- [x] **Frontend**: Filter & sorting per kolom (via FortuneSheet built-in)
+- [x] **Frontend**: Undo/Redo (Ctrl+Z / Ctrl+Y) (via FortuneSheet built-in)
+- [x] **Frontend**: Copy-paste dari/ke Excel dan Google Sheets (via FortuneSheet built-in)
+- [x] **Frontend**: Freeze kolom pertama (via FortuneSheet built-in)
+- [ ] **Frontend**: Komentar per cell (indikator titik, panel thread) — Fase 4
+- [x] **Frontend**: Kolaborasi real-time (sync data antar user via Socket.io)
+- [x] **Frontend**: Read-only mode untuk Guest
+- [x] **Frontend**: Export dialog (CSV / Excel)
 - [ ] **Test**: Unit test spreadsheet API
 - [ ] **Test**: E2E test spreadsheet interaksi
 

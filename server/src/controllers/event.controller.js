@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const Event = require("../models/Event");
 const Task = require("../models/Task");
+const SpreadsheetSheet = require("../models/SpreadsheetSheet");
+const SpreadsheetRow = require("../models/SpreadsheetRow");
 const WorkspaceMember = require("../models/WorkspaceMember");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
@@ -193,6 +195,25 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     participants: participants || [],
     createdBy: userId,
   });
+
+  // Auto-create default spreadsheet sheet
+  const defaultSheet = await SpreadsheetSheet.create({
+    eventId: event._id,
+    name: "Sheet 1",
+    order: 0,
+    columns: [
+      { name: "Kolom 1", type: "text", order: 0, width: 200 },
+      { name: "Kolom 2", type: "text", order: 1, width: 200 },
+      { name: "Kolom 3", type: "text", order: 2, width: 200 },
+    ],
+  });
+
+  // Create 3 empty rows in the default sheet
+  await SpreadsheetRow.insertMany([
+    { sheetId: defaultSheet._id, order: 0, cells: {} },
+    { sheetId: defaultSheet._id, order: 1, cells: {} },
+    { sheetId: defaultSheet._id, order: 2, cells: {} },
+  ]);
 
   // Populate for response
   const populatedEvent = await populateEvent(

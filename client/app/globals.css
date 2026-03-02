@@ -356,3 +356,59 @@
 .dark .calendar-wrapper .fc .fc-highlight {
   background-color: oklch(0.28 0.02 250 / 50%);
 }
+
+/* ── FortuneSheet custom overrides ───────────── */
+.fortune-sheet-container {
+  border: none !important;
+}
+
+.fortune-sheet-container .luckysheet-grid-window {
+  border-radius: 0;
+}
+
+/* Make FortuneSheet toolbar blend with our UI */
+.fortune-sheet-container .fortune-sheet-toolbar {
+  background: var(--background) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 2px 4px !important;
+}
+
+.fortune-sheet-container .fortune-sheet-toolbar .fortune-sheet-toolbar-button {
+  border-radius: 4px !important;
+}
+
+.fortune-sheet-container
+  .fortune-sheet-toolbar
+  .fortune-sheet-toolbar-button:hover {
+  background: var(--accent) !important;
+}
+
+/* Sheet tab area (hidden since we have our own) */
+.fortune-sheet-container .luckysheet-sheet-area {
+  display: none !important;
+}
+
+/* Custom scrollbar for spreadsheet */
+.fortune-sheet-container ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.fortune-sheet-container ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.fortune-sheet-container ::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 4px;
+}
+.fortune-sheet-container ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}
+
+/* Dark mode adjustments for fortune-sheet */
+.dark .fortune-sheet-container .fortune-sheet-toolbar {
+  background: var(--card) !important;
+}
+
+.dark .fortune-sheet-container .luckysheet-cell-input {
+  color: var(--foreground) !important;
+}

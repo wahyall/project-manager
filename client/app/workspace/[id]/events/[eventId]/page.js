@@ -7,6 +7,7 @@ import { useWorkspace } from "@/contexts/workspace-context";
 import { useEvents } from "@/hooks/use-events";
 import { EventOverviewTab } from "@/components/events/event-overview-tab";
 import { EventTasksTab } from "@/components/events/event-tasks-tab";
+import { EventSpreadsheetTab } from "@/components/spreadsheet/event-spreadsheet-tab";
 import { DeleteEventDialog } from "@/components/events/delete-event-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -286,23 +287,9 @@ export default function EventDetailPage({ params }) {
           />
         </TabsContent>
 
-        {/* Tab: Spreadsheet — Placeholder */}
+        {/* Tab: Spreadsheet */}
         <TabsContent value="spreadsheet" className="mt-0">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 mb-5">
-                <Construction className="h-8 w-8 text-amber-500/70" />
-              </div>
-              <h3 className="font-semibold text-foreground mb-1.5">
-                Spreadsheet - Coming Soon
-              </h3>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                Fitur spreadsheet event sedang dalam pengembangan (Fase 3).
-                Kamu akan bisa mengelola data tabular seperti rundown, anggaran,
-                dan checklist langsung di sini.
-              </p>
-            </CardContent>
-          </Card>
+          <EventSpreadsheetTab event={event} workspaceId={id} />
         </TabsContent>
 
         {/* Tab: Activity — Placeholder */}

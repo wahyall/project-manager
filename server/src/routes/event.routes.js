@@ -43,5 +43,8 @@ router.delete(
 // ── Event Tasks ─────────────────────────────────────
 router.get("/:eventId/tasks", workspaceMember(), eventController.getEventTasks);
 
+// ── Spreadsheet (sub-router) ────────────────────────
+router.use("/:eventId/sheets", require("./spreadsheet.routes"));
+
 module.exports = router;
 
