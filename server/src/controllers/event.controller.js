@@ -1,0 +1,524 @@
+const mongoose = require("mongoose");
+const Event = require("../models/Event");
+const Task = require("../models/Task");
+const WorkspaceMember = require("../models/WorkspaceMember");
+const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/AppError");
+
+// Helper: get Socket.io instance (safe)
+const getIO = () => {
+  try {
+    return require("../config/socket").getIO();
+  } catch {
+    return null;
+  }
+};
+
+// Helper: emit event to workspace room
+const emitEventEvent = (workspaceId, event, data) => {
+  const io = getIO();
+  if (io) {
+    io.to(`workspace:${workspaceId}`).emit(event, data);
+  }
+};
+
+// Helper: populate event fields
+const populateEvent = (query) => {
+  return query
+    .populate("participants", "name email avatar")
+    .populate("createdBy", "name email avatar");
+};
+
+// ──────────────────────────────────────────────
+// GET /api/workspaces/:id/events — Daftar event
+// ──────────────────────────────────────────────
+exports.listEvents = catchAsync(async (req, res) => {
+  const { id: workspaceId } = req.params;
+  const {
+    status,
+    participant,
+    startDateFrom,
+    startDateTo,
+    keyword,
+    sortBy = "startDate",
+    sortOrder = "desc",
+    page = 1,
+    limit = 50,
+  } = req.query;
+
+  // Build filter
+  const filter = { workspaceId };
+
+  // Status filter (supports comma-separated for multiselect)
+  if (status) {
+    const statuses = status.split(",").filter(Boolean);
+    if (statuses.length > 0) {
+      filter.status = { $in: statuses };
+    }
+  }
+
+  // Participant filter
+  if (participant) {
+    filter.participants = participant;
+  }
+
+  // Date range filter
+  if (startDateFrom || startDateTo) {
+    filter.startDate = {};
+    if (startDateFrom) filter.startDate.$gte = new Date(startDateFrom);
+    if (startDateTo) filter.startDate.$lte = new Date(startDateTo);
+  }
+
+  // Keyword search (title)
+  if (keyword) {
+    filter.title = { $regex: keyword, $options: "i" };
+  }
+
+  // Sort
+  const allowedSortFields = [
+    "startDate",
+    "endDate",
+    "title",
+    "status",
+    "createdAt",
+  ];
+  const sortField = allowedSortFields.includes(sortBy) ? sortBy : "startDate";
+  const sort = { [sortField]: sortOrder === "asc" ? 1 : -1 };
+
+  // Pagination
+  const pageNum = Math.max(1, parseInt(page));
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [events, total] = await Promise.all([
+    populateEvent(Event.find(filter)).sort(sort).skip(skip).limit(limitNum).lean(),
+    Event.countDocuments(filter),
+  ]);
+
+  // Attach task counts for each event
+  const eventIds = events.map((e) => e._id);
+  const taskCounts = await Task.aggregate([
+    {
+      $match: {
+        eventId: { $in: eventIds },
+        isDeleted: { $ne: true },
+      },
+    },
+    {
+      $group: {
+        _id: "$eventId",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+  const taskCountMap = {};
+  taskCounts.forEach((tc) => {
+    taskCountMap[tc._id.toString()] = tc.count;
+  });
+
+  const eventsWithCounts = events.map((e) => ({
+    ...e,
+    taskCount: taskCountMap[e._id.toString()] || 0,
+  }));
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      events: eventsWithCounts,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    },
+  });
+});
+
+// ──────────────────────────────────────────────
+// POST /api/workspaces/:id/events — Buat event
+// ──────────────────────────────────────────────
+exports.createEvent = catchAsync(async (req, res, next) => {
+  const workspace = req.workspace;
+  const userId = req.user.id;
+
+  const { title, description, startDate, endDate, color, status, participants } =
+    req.body;
+
+  if (!title || !title.trim()) {
+    return next(new AppError("Judul event harus diisi", 400));
+  }
+
+  if (!startDate) {
+    return next(new AppError("Tanggal mulai harus diisi", 400));
+  }
+
+  if (!endDate) {
+    return next(new AppError("Tanggal selesai harus diisi", 400));
+  }
+
+  if (new Date(endDate) < new Date(startDate)) {
+    return next(
+      new AppError(
+        "Tanggal selesai harus sama atau setelah tanggal mulai",
+        400,
+      ),
+    );
+  }
+
+  // Validate participants are workspace members
+  if (participants && participants.length > 0) {
+    const validMembers = await WorkspaceMember.find({
+      workspaceId: workspace._id,
+      userId: { $in: participants },
+    }).select("userId");
+    if (validMembers.length !== participants.length) {
+      return next(
+        new AppError(
+          "Beberapa peserta bukan member workspace ini",
+          400,
+        ),
+      );
+    }
+  }
+
+  const event = await Event.create({
+    workspaceId: workspace._id,
+    title: title.trim(),
+    description: description || "",
+    startDate: new Date(startDate),
+    endDate: new Date(endDate),
+    color: color || "#8B5CF6",
+    status: status || "upcoming",
+    participants: participants || [],
+    createdBy: userId,
+  });
+
+  // Populate for response
+  const populatedEvent = await populateEvent(
+    Event.findById(event._id),
+  ).lean();
+
+  // Emit Socket.io event
+  emitEventEvent(workspace._id.toString(), "event:created", {
+    event: populatedEvent,
+    userId,
+  });
+
+  res.status(201).json({
+    status: "success",
+    data: { event: populatedEvent },
+  });
+});
+
+// ──────────────────────────────────────────────
+// GET /api/workspaces/:id/events/:eventId — Detail
+// ──────────────────────────────────────────────
+exports.getEvent = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const workspace = req.workspace;
+
+  const event = await populateEvent(
+    Event.findOne({
+      _id: eventId,
+      workspaceId: workspace._id,
+    }),
+  ).lean();
+
+  if (!event) {
+    return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  // Attach task count
+  const taskCount = await Task.countDocuments({
+    eventId: event._id,
+    isDeleted: { $ne: true },
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: { event: { ...event, taskCount } },
+  });
+});
+
+// ──────────────────────────────────────────────
+// PUT /api/workspaces/:id/events/:eventId — Update
+// ──────────────────────────────────────────────
+exports.updateEvent = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const workspace = req.workspace;
+  const userId = req.user.id;
+
+  const event = await Event.findOne({
+    _id: eventId,
+    workspaceId: workspace._id,
+  });
+
+  if (!event) {
+    return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  const { title, description, startDate, endDate, color, status } = req.body;
+
+  // Title
+  if (title !== undefined) {
+    if (!title.trim()) {
+      return next(new AppError("Judul event tidak boleh kosong", 400));
+    }
+    event.title = title.trim();
+  }
+
+  // Description
+  if (description !== undefined) {
+    event.description = description;
+  }
+
+  // Dates
+  if (startDate !== undefined) {
+    event.startDate = new Date(startDate);
+  }
+  if (endDate !== undefined) {
+    event.endDate = new Date(endDate);
+  }
+
+  // Validate dates after updates
+  if (event.endDate < event.startDate) {
+    return next(
+      new AppError(
+        "Tanggal selesai harus sama atau setelah tanggal mulai",
+        400,
+      ),
+    );
+  }
+
+  // Color
+  if (color !== undefined) {
+    event.color = color;
+  }
+
+  // Status
+  if (status !== undefined) {
+    if (!["upcoming", "ongoing", "completed"].includes(status)) {
+      return next(new AppError("Status tidak valid", 400));
+    }
+    event.status = status;
+  }
+
+  await event.save();
+
+  // Populate for response
+  const populatedEvent = await populateEvent(
+    Event.findById(event._id),
+  ).lean();
+
+  // Attach task count
+  const taskCount = await Task.countDocuments({
+    eventId: event._id,
+    isDeleted: { $ne: true },
+  });
+
+  // Emit Socket.io event
+  emitEventEvent(workspace._id.toString(), "event:updated", {
+    event: { ...populatedEvent, taskCount },
+    userId,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: { event: { ...populatedEvent, taskCount } },
+  });
+});
+
+// ──────────────────────────────────────────────
+// DELETE /api/workspaces/:id/events/:eventId — Soft delete
+// ──────────────────────────────────────────────
+exports.deleteEvent = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const workspace = req.workspace;
+  const userId = req.user.id;
+  const memberRole = req.workspaceMember.role;
+
+  const event = await Event.findOne({
+    _id: eventId,
+    workspaceId: workspace._id,
+  });
+
+  if (!event) {
+    return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  // Permission check: creator, admin, or owner
+  const isCreator = event.createdBy.toString() === userId;
+  const isAdminOrOwner = ["owner", "admin"].includes(memberRole);
+
+  if (!isCreator && !isAdminOrOwner) {
+    return next(
+      new AppError("Kamu tidak memiliki izin untuk menghapus event ini", 403),
+    );
+  }
+
+  // Soft delete event
+  event.isDeleted = true;
+  event.deletedAt = new Date();
+  await event.save();
+
+  // Nullify eventId on all related tasks
+  await Task.updateMany(
+    { eventId: event._id, isDeleted: { $ne: true } },
+    { $set: { eventId: null } },
+  );
+
+  // Emit Socket.io event
+  emitEventEvent(workspace._id.toString(), "event:deleted", {
+    eventId: event._id,
+    userId,
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Event berhasil dihapus",
+  });
+});
+
+// ──────────────────────────────────────────────
+// POST /api/workspaces/:id/events/:eventId/participants — Tambah peserta
+// ──────────────────────────────────────────────
+exports.addParticipant = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const workspace = req.workspace;
+  const userId = req.user.id;
+
+  const { participantId } = req.body;
+
+  if (!participantId) {
+    return next(new AppError("ID peserta harus diisi", 400));
+  }
+
+  const event = await Event.findOne({
+    _id: eventId,
+    workspaceId: workspace._id,
+  });
+
+  if (!event) {
+    return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  // Validate participant is a workspace member
+  const membership = await WorkspaceMember.findMembership(
+    workspace._id,
+    participantId,
+  );
+  if (!membership) {
+    return next(new AppError("User bukan member workspace ini", 400));
+  }
+
+  // Check already a participant
+  const alreadyParticipant = event.participants.some(
+    (p) => p.toString() === participantId,
+  );
+  if (alreadyParticipant) {
+    return next(new AppError("User sudah menjadi peserta event ini", 400));
+  }
+
+  event.participants.push(participantId);
+  await event.save();
+
+  // Populate for response
+  const populatedEvent = await populateEvent(
+    Event.findById(event._id),
+  ).lean();
+
+  // Emit Socket.io event
+  emitEventEvent(workspace._id.toString(), "event:participant:added", {
+    eventId: event._id,
+    participantId,
+    event: populatedEvent,
+    userId,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: { event: populatedEvent },
+  });
+});
+
+// ──────────────────────────────────────────────
+// DELETE /api/workspaces/:id/events/:eventId/participants/:userId — Hapus peserta
+// ──────────────────────────────────────────────
+exports.removeParticipant = catchAsync(async (req, res, next) => {
+  const { eventId, userId: targetUserId } = req.params;
+  const workspace = req.workspace;
+  const userId = req.user.id;
+
+  const event = await Event.findOne({
+    _id: eventId,
+    workspaceId: workspace._id,
+  });
+
+  if (!event) {
+    return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  const isParticipant = event.participants.some(
+    (p) => p.toString() === targetUserId,
+  );
+  if (!isParticipant) {
+    return next(new AppError("User bukan peserta event ini", 400));
+  }
+
+  event.participants = event.participants.filter(
+    (p) => p.toString() !== targetUserId,
+  );
+  await event.save();
+
+  // Populate for response
+  const populatedEvent = await populateEvent(
+    Event.findById(event._id),
+  ).lean();
+
+  // Emit Socket.io event
+  emitEventEvent(workspace._id.toString(), "event:participant:removed", {
+    eventId: event._id,
+    participantId: targetUserId,
+    event: populatedEvent,
+    userId,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: { event: populatedEvent },
+  });
+});
+
+// ──────────────────────────────────────────────
+// GET /api/workspaces/:id/events/:eventId/tasks — Task terkait
+// ──────────────────────────────────────────────
+exports.getEventTasks = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const workspace = req.workspace;
+
+  const event = await Event.findOne({
+    _id: eventId,
+    workspaceId: workspace._id,
+  });
+
+  if (!event) {
+    return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  const tasks = await Task.find({
+    eventId: event._id,
+    workspaceId: workspace._id,
+  })
+    .populate("assignees", "name email avatar")
+    .populate("labels", "name color")
+    .populate("createdBy", "name email avatar")
+    .sort({ columnId: 1, columnOrder: 1 })
+    .lean();
+
+  res.status(200).json({
+    status: "success",
+    data: { tasks },
+  });
+});
+

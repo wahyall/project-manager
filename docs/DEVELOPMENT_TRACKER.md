@@ -174,24 +174,24 @@
 
 ### 2.4 Kelola Event — Dasar (Ref: `04-kelola-event.md`)
 
-- [ ] **Model**: Buat schema `events`
-- [ ] **API**: `GET /api/workspaces/:id/events` — Daftar event (filter, sort)
-- [ ] **API**: `POST /api/workspaces/:id/events` — Buat event
-- [ ] **API**: `GET /api/workspaces/:id/events/:eventId` — Detail event
-- [ ] **API**: `PUT /api/workspaces/:id/events/:eventId` — Update event
-- [ ] **API**: `DELETE /api/workspaces/:id/events/:eventId` — Hapus (soft)
-- [ ] **API**: `POST /api/workspaces/:id/events/:eventId/participants` — Tambah peserta
-- [ ] **API**: `DELETE /api/workspaces/:id/events/:eventId/participants/:userId` — Hapus peserta
-- [ ] **API**: `GET /api/workspaces/:id/events/:eventId/tasks` — Task terkait
-- [ ] **Socket.io**: Event events (created, updated, deleted, participant changes)
-- [ ] **Frontend**: Halaman Daftar Event (`/workspace/:id/events`)
-- [ ] **Frontend**: Filter (status, tanggal, peserta) & sorting
-- [ ] **Frontend**: Dialog Buat Event Baru
-- [ ] **Frontend**: Halaman Detail Event — Tab Overview (semua field editable)
-- [ ] **Frontend**: Halaman Detail Event — Tab Task Terkait (list + mini kanban)
-- [ ] **Frontend**: Halaman Detail Event — Tab Spreadsheet (placeholder, Fase 3)
-- [ ] **Frontend**: Halaman Detail Event — Tab Activity (placeholder, Fase 3)
-- [ ] **Frontend**: Relasi task-event (field event di task, warna di kalender)
+- [x] **Model**: Buat schema `events`
+- [x] **API**: `GET /api/workspaces/:id/events` — Daftar event (filter, sort)
+- [x] **API**: `POST /api/workspaces/:id/events` — Buat event
+- [x] **API**: `GET /api/workspaces/:id/events/:eventId` — Detail event
+- [x] **API**: `PUT /api/workspaces/:id/events/:eventId` — Update event
+- [x] **API**: `DELETE /api/workspaces/:id/events/:eventId` — Hapus (soft)
+- [x] **API**: `POST /api/workspaces/:id/events/:eventId/participants` — Tambah peserta
+- [x] **API**: `DELETE /api/workspaces/:id/events/:eventId/participants/:userId` — Hapus peserta
+- [x] **API**: `GET /api/workspaces/:id/events/:eventId/tasks` — Task terkait
+- [x] **Socket.io**: Event events (created, updated, deleted, participant changes)
+- [x] **Frontend**: Halaman Daftar Event (`/workspace/:id/events`)
+- [x] **Frontend**: Filter (status, tanggal, peserta) & sorting
+- [x] **Frontend**: Dialog Buat Event Baru
+- [x] **Frontend**: Halaman Detail Event — Tab Overview (semua field editable)
+- [x] **Frontend**: Halaman Detail Event — Tab Task Terkait (list + mini kanban)
+- [x] **Frontend**: Halaman Detail Event — Tab Spreadsheet (placeholder, Fase 3)
+- [x] **Frontend**: Halaman Detail Event — Tab Activity (placeholder, Fase 3)
+- [x] **Frontend**: Relasi task-event (field event di task, warna di kalender)
 - [ ] **Test**: Unit test event API
 
 ---

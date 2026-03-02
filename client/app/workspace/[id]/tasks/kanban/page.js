@@ -4,6 +4,7 @@ import { use, useRef, useCallback, useEffect, useState } from "react";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useKanban } from "@/hooks/use-kanban";
+import api from "@/lib/api";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { FilterToolbar } from "@/components/kanban/filter-toolbar";
 import { QuickCreateModal } from "@/components/kanban/quick-create-modal";
@@ -43,10 +44,18 @@ export default function KanbanPage({ params }) {
   // ── Search input ref (for keyboard shortcut) ─────
   const searchInputRef = useRef(null);
 
-  // ── Fetch members on mount ───────────────────────
+  // ── Events list for selectors ──────────────────────
+  const [events, setEvents] = useState([]);
+
+  // ── Fetch members & events on mount ───────────────
   useEffect(() => {
     if (workspaceId) {
       fetchMembers(workspaceId);
+      // Fetch events for event selector (non-deleted, all statuses)
+      api
+        .get(`/workspaces/${workspaceId}/events?limit=200&sortBy=startDate&sortOrder=desc`)
+        .then((res) => setEvents(res.data?.data?.events || []))
+        .catch(() => {});
     }
   }, [workspaceId, fetchMembers]);
 
@@ -387,6 +396,7 @@ export default function KanbanPage({ params }) {
         onOpenChange={setQuickCreateOpen}
         columns={columns}
         members={members}
+        events={events}
         defaultColumnId={quickCreateColumnId}
         onCreateTask={handleCreateTask}
         onCreateAndOpen={(taskId) => kanban.setActiveTaskId(taskId)}
@@ -400,6 +410,7 @@ export default function KanbanPage({ params }) {
         columns={columns}
         members={members}
         labels={kanban.labels}
+        events={events}
         currentUserId={user?._id}
         workspaceId={workspaceId}
         onUpdate={handleUpdateTask}

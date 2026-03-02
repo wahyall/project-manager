@@ -10,6 +10,7 @@ import {
   User,
   AlertTriangle,
   AlignLeft,
+  CalendarDays,
 } from "lucide-react";
 import {
   Dialog,
@@ -53,6 +54,7 @@ export function QuickCreateModal({
   onOpenChange,
   columns,
   members,
+  events,
   defaultColumnId,
   onCreateTask,
   onCreateAndOpen,
@@ -64,6 +66,7 @@ export function QuickCreateModal({
   const [startDate, setStartDate] = useState(null);
   const [dueDate, setDueDate] = useState(null);
   const [selectedAssignees, setSelectedAssignees] = useState([]);
+  const [eventId, setEventId] = useState("");
   const [creating, setCreating] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
@@ -79,6 +82,7 @@ export function QuickCreateModal({
       setStartDate(null);
       setDueDate(null);
       setSelectedAssignees([]);
+      setEventId("");
       setEditorKey((k) => k + 1); // Force fresh editor instance
       setTimeout(() => titleInputRef.current?.focus(), 100);
     }
@@ -104,6 +108,7 @@ export function QuickCreateModal({
         startDate: startDate ? startDate.toISOString() : null,
         dueDate: dueDate ? dueDate.toISOString() : null,
         assignees: selectedAssignees,
+        eventId: eventId && eventId !== "none" ? eventId : null,
       };
       const task = await onCreateTask(taskData);
       onOpenChange(false);
@@ -359,6 +364,51 @@ export function QuickCreateModal({
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* Event (optional) */}
+          {(events || []).length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <CalendarDays className="h-3 w-3" />
+                Event
+                <span className="text-muted-foreground font-normal">(opsional)</span>
+              </Label>
+              <Select value={eventId} onValueChange={setEventId}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Tidak terkait event" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-muted-foreground">Tidak terkait event</span>
+                  </SelectItem>
+                  {(events || []).map((evt) => (
+                    <SelectItem key={evt._id} value={evt._id}>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{ backgroundColor: evt.color || "#8B5CF6" }}
+                        />
+                        <span className="truncate">{evt.title}</span>
+                        {evt.status && (
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[9px] h-4 px-1 ml-auto shrink-0",
+                              evt.status === "ongoing" && "border-green-300 text-green-600",
+                              evt.status === "upcoming" && "border-blue-300 text-blue-600",
+                              evt.status === "completed" && "border-gray-300 text-gray-500"
+                            )}
+                          >
+                            {evt.status}
+                          </Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">

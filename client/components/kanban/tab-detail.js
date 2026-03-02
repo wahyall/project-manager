@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import {
   CalendarIcon,
+  CalendarDays,
   User,
   Tag,
   AlertTriangle,
@@ -77,6 +78,7 @@ export function TabDetail({
   columns,
   members,
   labels,
+  events,
   currentUserId,
   onUpdate,
   onWatch,
@@ -457,6 +459,55 @@ export function TabDetail({
               />
             </PopoverContent>
           </Popover>
+        </FieldRow>
+
+        {/* Event (optional) */}
+        <FieldRow icon={CalendarDays} label="Event">
+          <Select
+            value={
+              task.eventId
+                ? typeof task.eventId === "string"
+                  ? task.eventId
+                  : task.eventId._id
+                : "none"
+            }
+            onValueChange={(val) =>
+              onUpdate({ eventId: val === "none" ? null : val })
+            }
+          >
+            <SelectTrigger className="h-8 text-xs w-auto min-w-[160px]">
+              <SelectValue placeholder="Tidak terkait event" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">
+                <span className="text-muted-foreground">Tidak terkait event</span>
+              </SelectItem>
+              {(events || []).map((evt) => (
+                <SelectItem key={evt._id} value={evt._id}>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: evt.color || "#8B5CF6" }}
+                    />
+                    <span className="truncate">{evt.title}</span>
+                    {evt.status && (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[9px] h-4 px-1 ml-auto shrink-0",
+                          evt.status === "ongoing" && "border-green-300 text-green-600",
+                          evt.status === "upcoming" && "border-blue-300 text-blue-600",
+                          evt.status === "completed" && "border-gray-300 text-gray-500"
+                        )}
+                      >
+                        {evt.status}
+                      </Badge>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </FieldRow>
 
         {/* Dependencies (read-only display) */}
