@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useEvents } from "@/hooks/use-events";
+import { useExport } from "@/hooks/use-export";
 import { EventOverviewTab } from "@/components/events/event-overview-tab";
 import { EventTasksTab } from "@/components/events/event-tasks-tab";
 import { EventSpreadsheetTab } from "@/components/spreadsheet/event-spreadsheet-tab";
@@ -33,6 +34,7 @@ import {
   History,
   Loader2,
   FileText,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -76,6 +78,7 @@ export default function EventDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const { exporting, exportEventPDF } = useExport();
 
   // Fetch event detail
   const fetchEventDetail = useCallback(async () => {
@@ -223,6 +226,15 @@ export default function EventDetailPage({ params }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => exportEventPDF(id, eventId)}
+                disabled={exporting}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {exporting ? "Mengekspor..." : "Export PDF"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={() => setDeleteDialogOpen(true)}

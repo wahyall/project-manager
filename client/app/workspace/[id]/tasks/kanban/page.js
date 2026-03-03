@@ -4,12 +4,14 @@ import { use, useRef, useCallback, useEffect, useState } from "react";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useKanban } from "@/hooks/use-kanban";
+import { useExport } from "@/hooks/use-export";
 import api from "@/lib/api";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { FilterToolbar } from "@/components/kanban/filter-toolbar";
 import { QuickCreateModal } from "@/components/kanban/quick-create-modal";
 import { TaskDetailPanel } from "@/components/kanban/task-detail-panel";
 import { BulkActionBar } from "@/components/kanban/bulk-action-bar";
+import { ExportMenu } from "@/components/export-menu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +38,8 @@ export default function KanbanPage({ params }) {
 
   // ── Kanban hook ──────────────────────────────────
   const kanban = useKanban(workspaceId, currentWorkspace);
+  const { exporting, exportTaskCSV, exportTaskXLSX, exportTaskPDF } =
+    useExport();
 
   // ── Quick create modal state ─────────────────────
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
@@ -53,7 +57,9 @@ export default function KanbanPage({ params }) {
       fetchMembers(workspaceId);
       // Fetch events for event selector (non-deleted, all statuses)
       api
-        .get(`/workspaces/${workspaceId}/events?limit=200&sortBy=startDate&sortOrder=desc`)
+        .get(
+          `/workspaces/${workspaceId}/events?limit=200&sortBy=startDate&sortOrder=desc`,
+        )
         .then((res) => setEvents(res.data?.data?.events || []))
         .catch(() => {});
     }
@@ -70,7 +76,7 @@ export default function KanbanPage({ params }) {
     (taskId) => {
       kanban.setActiveTaskId(taskId);
     },
-    [kanban]
+    [kanban],
   );
 
   // ── Create task ──────────────────────────────────
@@ -85,7 +91,7 @@ export default function KanbanPage({ params }) {
         throw err;
       }
     },
-    [kanban]
+    [kanban],
   );
 
   // ── Update task ──────────────────────────────────
@@ -98,7 +104,7 @@ export default function KanbanPage({ params }) {
         throw err;
       }
     },
-    [kanban]
+    [kanban],
   );
 
   // ── Delete task ──────────────────────────────────
@@ -111,7 +117,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal menghapus task");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   // ── Archive/Unarchive task ───────────────────────
@@ -124,7 +130,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal mengarsipkan task");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   const handleUnarchiveTask = useCallback(
@@ -136,7 +142,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal membatalkan arsip");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   // ── Watch/Unwatch task ───────────────────────────
@@ -149,7 +155,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal menjadi watcher");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   const handleUnwatchTask = useCallback(
@@ -161,7 +167,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal berhenti menjadi watcher");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   // ── Bulk action handlers ─────────────────────────
@@ -174,7 +180,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal memindahkan task");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   const handleBulkChangePriority = useCallback(
@@ -186,7 +192,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal mengubah prioritas");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   const handleBulkArchive = useCallback(
@@ -198,7 +204,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal mengarsipkan task");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   const handleBulkDelete = useCallback(
@@ -210,7 +216,7 @@ export default function KanbanPage({ params }) {
         toast.error("Gagal menghapus task");
       }
     },
-    [kanban]
+    [kanban],
   );
 
   // ── Keyboard shortcuts ───────────────────────────
@@ -282,9 +288,18 @@ export default function KanbanPage({ params }) {
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs max-w-[200px]">
                 <p className="font-semibold mb-1">Keyboard Shortcuts</p>
-                <p><kbd className="px-1 rounded bg-muted text-[10px]">N</kbd> Buat task baru</p>
-                <p><kbd className="px-1 rounded bg-muted text-[10px]">F</kbd> Fokus pencarian</p>
-                <p><kbd className="px-1 rounded bg-muted text-[10px]">Esc</kbd> Tutup panel</p>
+                <p>
+                  <kbd className="px-1 rounded bg-muted text-[10px]">N</kbd>{" "}
+                  Buat task baru
+                </p>
+                <p>
+                  <kbd className="px-1 rounded bg-muted text-[10px]">F</kbd>{" "}
+                  Fokus pencarian
+                </p>
+                <p>
+                  <kbd className="px-1 rounded bg-muted text-[10px]">Esc</kbd>{" "}
+                  Tutup panel
+                </p>
               </TooltipContent>
             </Tooltip>
 
@@ -302,6 +317,15 @@ export default function KanbanPage({ params }) {
               </TooltipTrigger>
               <TooltipContent>Refresh data</TooltipContent>
             </Tooltip>
+
+            {/* Export */}
+            <ExportMenu
+              exporting={exporting}
+              onExportCSV={() => exportTaskCSV(workspaceId, kanban.filters)}
+              onExportXLSX={() => exportTaskXLSX(workspaceId, kanban.filters)}
+              onExportPDF={() => exportTaskPDF(workspaceId, kanban.filters)}
+              pdfLabel="Export Kanban PDF"
+            />
 
             {/* New task button */}
             <Button

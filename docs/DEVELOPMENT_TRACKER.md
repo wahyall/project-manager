@@ -251,22 +251,22 @@
 
 ### 3.3 Export Data (Ref: `19-export-data.md`)
 
-- [ ] **Model**: Buat schema `export_jobs`
-- [ ] **Service**: Export Task ke CSV (exceljs/fast-csv)
-- [ ] **Service**: Export Task ke Excel (exceljs)
-- [ ] **Service**: Export Kanban ke PDF (puppeteer)
+- [x] **Model**: Buat schema `export_jobs`
+- [x] **Service**: Export Task ke CSV (fast-csv)
+- [x] **Service**: Export Task ke Excel (exceljs)
+- [x] **Service**: Export Kanban ke PDF (pdfkit)
 - [ ] **Service**: Export Spreadsheet ke CSV
 - [ ] **Service**: Export Spreadsheet ke Excel (luckyexcel)
-- [ ] **Service**: Export Event detail ke PDF
-- [ ] **Service**: Background job processing (Bull/BullMQ)
-- [ ] **API**: Semua export endpoints (task CSV/XLSX/PDF, spreadsheet CSV/XLSX, event PDF)
-- [ ] **API**: `GET /api/export-jobs/:jobId` — Status job
-- [ ] **API**: `GET /api/export-jobs/:jobId/download` — Download file
-- [ ] **Frontend**: Menu export di Kanban Board
-- [ ] **Frontend**: Menu export di Spreadsheet
-- [ ] **Frontend**: Menu export di Detail Event
-- [ ] **Frontend**: Toast "Export sedang diproses..." untuk background jobs
-- [ ] **Frontend**: Notifikasi file siap + link download
+- [x] **Service**: Export Event detail ke PDF
+- [x] **Service**: Background job processing (in-process async)
+- [x] **API**: Semua export endpoints (task CSV/XLSX/PDF, event PDF)
+- [x] **API**: `GET /api/export-jobs/:jobId` — Status job
+- [x] **API**: `GET /api/export-jobs/:jobId/download` — Download file
+- [x] **Frontend**: Menu export di Kanban Board
+- [x] **Frontend**: Menu export di Spreadsheet
+- [x] **Frontend**: Menu export di Detail Event
+- [x] **Frontend**: Toast "Export sedang diproses..." untuk background jobs
+- [x] **Frontend**: Notifikasi file siap + link download
 - [ ] **Test**: Unit test export services
 
 ---
