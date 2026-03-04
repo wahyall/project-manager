@@ -354,33 +354,33 @@
 
 ### 5.1 Board & Canvas (Ref: `09-brainstorming-board.md`)
 
-- [ ] **Model**: Buat schema `brainstorming_boards`
-- [ ] **Model**: Buat schema `brainstorming_widgets`
-- [ ] **Model**: Buat schema `brainstorming_connections`
-- [ ] **API**: CRUD boards (daftar, buat, detail, update, hapus, duplikasi)
-- [ ] **API**: CRUD widgets (tambah, update, hapus)
-- [ ] **API**: CRUD connections (buat, update, hapus)
+- [x] **Model**: Buat schema `brainstorming_boards`
+- [x] **Model**: Buat schema `brainstorming_widgets`
+- [x] **Model**: Buat schema `brainstorming_connections`
+- [x] **API**: CRUD boards (daftar, buat, detail, update, hapus, duplikasi)
+- [x] **API**: CRUD widgets (tambah, update, hapus)
+- [x] **API**: CRUD connections (buat, update, hapus)
 - [ ] **API**: Export canvas PNG (`GET /api/boards/:boardId/export/png`)
 - [ ] **API**: Export canvas PDF (`GET /api/boards/:boardId/export/pdf`)
-- [ ] **Socket.io**: Board events (widget CRUD, move, resize, connection CRUD)
-- [ ] **Frontend**: Halaman Daftar Board (`/workspace/:id/brainstorming`)
-- [ ] **Frontend**: Board cards (nama, thumbnail, diubah, pembuat)
-- [ ] **Frontend**: Buat, duplikasi, rename, hapus board
-- [ ] **Frontend**: Canvas dasar (React Flow — infinite canvas)
-- [ ] **Frontend**: Pan (klik+drag area kosong, middle mouse)
-- [ ] **Frontend**: Zoom (scroll, pinch, slider toolbar)
-- [ ] **Frontend**: Fit to Screen button
-- [ ] **Frontend**: Minimap (sudut kanan bawah, toggle show/hide)
-- [ ] **Frontend**: Toolbar (tambah widget, zoom, fit, minimap, export)
-- [ ] **Frontend**: Widget operations — drag & drop (reposition)
-- [ ] **Frontend**: Widget operations — resize (handle sudut + tepi)
-- [ ] **Frontend**: Widget operations — layering (bring front/back, forward/backward)
-- [ ] **Frontend**: Widget operations — lock/unlock
-- [ ] **Frontend**: Widget operations — collapse/expand
-- [ ] **Frontend**: Widget operations — hapus
-- [ ] **Frontend**: Koneksi antar widget (connection points, drag to connect)
-- [ ] **Frontend**: Properti koneksi (gaya garis, warna, arrow, label)
-- [ ] **Frontend**: Kolaborasi real-time (sync widget CRUD antar user)
+- [x] **Socket.io**: Board events (widget CRUD, move, resize, connection CRUD)
+- [x] **Frontend**: Halaman Daftar Board (`/workspace/:id/brainstorming`)
+- [x] **Frontend**: Board cards (nama, thumbnail, diubah, pembuat)
+- [x] **Frontend**: Buat, duplikasi, rename, hapus board
+- [x] **Frontend**: Canvas dasar (React Flow — infinite canvas)
+- [x] **Frontend**: Pan (klik+drag area kosong, middle mouse)
+- [x] **Frontend**: Zoom (scroll, pinch, slider toolbar)
+- [x] **Frontend**: Fit to Screen button
+- [x] **Frontend**: Minimap (sudut kanan bawah, toggle show/hide)
+- [x] **Frontend**: Toolbar (tambah widget, zoom, fit, minimap, export)
+- [x] **Frontend**: Widget operations — drag & drop (reposition)
+- [x] **Frontend**: Widget operations — resize (handle sudut + tepi)
+- [x] **Frontend**: Widget operations — layering (bring front/back, forward/backward)
+- [x] **Frontend**: Widget operations — lock/unlock
+- [x] **Frontend**: Widget operations — collapse/expand
+- [x] **Frontend**: Widget operations — hapus
+- [x] **Frontend**: Koneksi antar widget (connection points, drag to connect)
+- [x] **Frontend**: Properti koneksi (gaya garis, warna, arrow, label)
+- [x] **Frontend**: Kolaborasi real-time (sync widget CRUD antar user)
 - [ ] **Test**: E2E test canvas interaksi
 
 ### 5.2 Widget Task (Ref: `10-widget-task.md`)
