@@ -98,16 +98,17 @@ export function CreateEventDialog({
   }, [open]);
 
   // Filtered members for autocomplete
-  const filteredMembers = members.filter(
-    (m) =>
-      !selectedParticipants.some((sp) => sp._id === m.userId?._id) &&
-      (m.userId?.name
-        ?.toLowerCase()
-        .includes(participantSearch.toLowerCase()) ||
-        m.userId?.email
-          ?.toLowerCase()
-          .includes(participantSearch.toLowerCase())),
-  );
+  const filteredMembers = members.filter((m) => {
+    const userId = typeof m.userId === "object" ? m.userId?._id : m.userId;
+    const userName = typeof m.userId === "object" ? m.userId?.name : m.name;
+    const userEmail = typeof m.userId === "object" ? m.userId?.email : m.email;
+
+    return (
+      !selectedParticipants.some((sp) => sp._id === userId) &&
+      (userName?.toLowerCase().includes(participantSearch.toLowerCase()) ||
+        userEmail?.toLowerCase().includes(participantSearch.toLowerCase()))
+    );
+  });
 
   const validate = () => {
     const newErrors = {};
@@ -147,13 +148,25 @@ export function CreateEventDialog({
   };
 
   const toggleParticipant = (member) => {
-    const user = member.userId;
-    if (!user) return;
-    const exists = selectedParticipants.some((p) => p._id === user._id);
+    const userId =
+      typeof member.userId === "object" ? member.userId?._id : member.userId;
+    const userName =
+      typeof member.userId === "object" ? member.userId?.name : member.name;
+    const userEmail =
+      typeof member.userId === "object" ? member.userId?.email : member.email;
+    const userAvatar =
+      typeof member.userId === "object" ? member.userId?.avatar : member.avatar;
+
+    if (!userId) return;
+
+    const exists = selectedParticipants.some((p) => p._id === userId);
     if (exists) {
-      setSelectedParticipants((prev) => prev.filter((p) => p._id !== user._id));
+      setSelectedParticipants((prev) => prev.filter((p) => p._id !== userId));
     } else {
-      setSelectedParticipants((prev) => [...prev, user]);
+      setSelectedParticipants((prev) => [
+        ...prev,
+        { _id: userId, name: userName, email: userEmail, avatar: userAvatar },
+      ]);
     }
     setParticipantSearch("");
   };
@@ -414,22 +427,31 @@ export function CreateEventDialog({
               <div className="border rounded-lg max-h-36 overflow-y-auto bg-popover shadow-sm">
                 {filteredMembers.slice(0, 8).map((m) => (
                   <button
-                    key={m.userId?._id}
+                    key={
+                      typeof m.userId === "object" ? m.userId?._id : m.userId
+                    }
                     type="button"
                     onClick={() => toggleParticipant(m)}
                     className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-accent transition-colors text-sm"
                   >
                     <Avatar className="h-6 w-6">
                       <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                        {m.userId?.name?.charAt(0).toUpperCase()}
+                        {(typeof m.userId === "object"
+                          ? m.userId?.name
+                          : m.name
+                        )
+                          ?.charAt(0)
+                          .toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium truncate text-sm">
-                        {m.userId?.name}
+                        {typeof m.userId === "object" ? m.userId?.name : m.name}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {m.userId?.email}
+                        {typeof m.userId === "object"
+                          ? m.userId?.email
+                          : m.email}
                       </p>
                     </div>
                     <Badge variant="outline" className="text-[10px] shrink-0">

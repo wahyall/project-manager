@@ -168,16 +168,17 @@ export function EventOverviewTab({
 
   // Non-participant members for adding
   const participantIds = event.participants?.map((p) => p._id) || [];
-  const availableMembers = members.filter(
-    (m) =>
-      !participantIds.includes(m.userId?._id) &&
-      (m.userId?.name
-        ?.toLowerCase()
-        .includes(participantSearch.toLowerCase()) ||
-        m.userId?.email
-          ?.toLowerCase()
-          .includes(participantSearch.toLowerCase())),
-  );
+  const availableMembers = members.filter((m) => {
+    const userId = typeof m.userId === "object" ? m.userId?._id : m.userId;
+    const userName = typeof m.userId === "object" ? m.userId?.name : m.name;
+    const userEmail = typeof m.userId === "object" ? m.userId?.email : m.email;
+
+    return (
+      !participantIds.includes(userId) &&
+      (userName?.toLowerCase().includes(participantSearch.toLowerCase()) ||
+        userEmail?.toLowerCase().includes(participantSearch.toLowerCase()))
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -461,18 +462,33 @@ export function EventOverviewTab({
                 <div className="max-h-36 overflow-y-auto space-y-0.5">
                   {availableMembers.slice(0, 8).map((m) => (
                     <button
-                      key={m.userId?._id}
-                      onClick={() => handleAddParticipant(m.userId?._id)}
+                      key={
+                        typeof m.userId === "object" ? m.userId?._id : m.userId
+                      }
+                      onClick={() =>
+                        handleAddParticipant(
+                          typeof m.userId === "object"
+                            ? m.userId?._id
+                            : m.userId,
+                        )
+                      }
                       className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-left hover:bg-accent transition-colors"
                     >
                       <Avatar className="h-6 w-6">
                         <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
-                          {m.userId?.name?.charAt(0).toUpperCase()}
+                          {(typeof m.userId === "object"
+                            ? m.userId?.name
+                            : m.name
+                          )
+                            ?.charAt(0)
+                            .toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate">
-                          {m.userId?.name}
+                          {typeof m.userId === "object"
+                            ? m.userId?.name
+                            : m.name}
                         </p>
                       </div>
                       <Plus className="h-3.5 w-3.5 text-muted-foreground" />

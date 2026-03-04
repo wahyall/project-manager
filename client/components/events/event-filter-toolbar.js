@@ -87,9 +87,7 @@ export function EventFilterToolbar({
           />
           {filters.keyword && (
             <button
-              onClick={() =>
-                setFilters((prev) => ({ ...prev, keyword: "" }))
-              }
+              onClick={() => setFilters((prev) => ({ ...prev, keyword: "" }))}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
@@ -116,10 +114,7 @@ export function EventFilterToolbar({
         </Button>
 
         {/* Sort */}
-        <Select
-          value={sortBy}
-          onValueChange={(val) => setSortBy(val)}
-        >
+        <Select value={sortBy} onValueChange={(val) => setSortBy(val)}>
           <SelectTrigger className="w-[140px] h-9">
             <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
             <SelectValue />
@@ -161,9 +156,7 @@ export function EventFilterToolbar({
                 }
                 className={cn(
                   "cursor-pointer transition-colors text-xs h-6",
-                  filters.status.includes(opt.value)
-                    ? ""
-                    : "hover:bg-accent",
+                  filters.status.includes(opt.value) ? "" : "hover:bg-accent",
                 )}
                 onClick={() => toggleStatus(opt.value)}
               >
@@ -182,7 +175,11 @@ export function EventFilterToolbar({
             <span className="text-xs text-muted-foreground">Dari:</span>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-6 text-xs gap-1 px-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs gap-1 px-2"
+                >
                   <CalendarIcon className="h-3 w-3" />
                   {filters.startDateFrom
                     ? format(new Date(filters.startDateFrom), "dd MMM yy", {
@@ -212,7 +209,11 @@ export function EventFilterToolbar({
             <span className="text-xs text-muted-foreground">s/d:</span>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-6 text-xs gap-1 px-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-xs gap-1 px-2"
+                >
                   <CalendarIcon className="h-3 w-3" />
                   {filters.startDateTo
                     ? format(new Date(filters.startDateTo), "dd MMM yy", {
@@ -257,11 +258,17 @@ export function EventFilterToolbar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Semua Peserta</SelectItem>
-              {members.map((m) => (
-                <SelectItem key={m.userId?._id} value={m.userId?._id}>
-                  {m.userId?.name}
-                </SelectItem>
-              ))}
+              {members.map((m) => {
+                const userId =
+                  typeof m.userId === "object" ? m.userId?._id : m.userId;
+                const userName =
+                  typeof m.userId === "object" ? m.userId?.name : m.name;
+                return (
+                  <SelectItem key={userId} value={userId}>
+                    {userName}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
 
@@ -285,4 +292,3 @@ export function EventFilterToolbar({
     </div>
   );
 }
-

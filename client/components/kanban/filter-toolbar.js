@@ -55,7 +55,7 @@ function FilterPopover({
                 key={option.id}
                 className={cn(
                   "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors text-left",
-                  selected.includes(option.id) && "bg-accent"
+                  selected.includes(option.id) && "bg-accent",
                 )}
                 onClick={() => onToggle(option.id)}
               >
@@ -63,7 +63,11 @@ function FilterPopover({
                   checked={selected.includes(option.id)}
                   className="h-3.5 w-3.5 pointer-events-none"
                 />
-                {renderOption ? renderOption(option) : <span>{option.label}</span>}
+                {renderOption ? (
+                  renderOption(option)
+                ) : (
+                  <span>{option.label}</span>
+                )}
               </button>
             ))
           )}
@@ -81,14 +85,17 @@ function FilterButton({ icon: Icon, label, count, active, ...props }) {
       size="sm"
       className={cn(
         "gap-1.5 h-8 text-xs font-medium",
-        active && "border-primary/30"
+        active && "border-primary/30",
       )}
       {...props}
     >
       <Icon className="h-3.5 w-3.5" />
       {label}
       {count > 0 && (
-        <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px] rounded-full">
+        <Badge
+          variant="secondary"
+          className="h-4 min-w-4 px-1 text-[10px] rounded-full"
+        >
           {count}
         </Badge>
       )}
@@ -118,7 +125,7 @@ export function FilterToolbar({
 
   // Members as options
   const memberOptions = (members || []).map((m) => ({
-    id: m.userId?._id || m._id,
+    id: m.userId?._id || m.userId || m._id,
     label: m.userId?.name || m.name || "Member",
     name: m.userId?.name || m.name,
   }));
@@ -172,9 +179,7 @@ export function FilterToolbar({
         />
         {filters.keyword && (
           <button
-            onClick={() =>
-              setFilters((prev) => ({ ...prev, keyword: "" }))
-            }
+            onClick={() => setFilters((prev) => ({ ...prev, keyword: "" }))}
             className="absolute right-2 top-1/2 -translate-y-1/2"
           >
             <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
@@ -293,4 +298,3 @@ export function FilterToolbar({
     </div>
   );
 }
-

@@ -227,32 +227,51 @@ export function TaskDetailPanel({
               </TabsList>
             </div>
 
-            <ScrollArea className="flex-1">
-              <div className="px-4 pb-6">
-                <TabsContent value="detail" className="mt-0 outline-none">
-                  <TabDetail
-                    task={task}
-                    columns={columns}
-                    members={members}
-                    labels={labels}
-                    events={events}
-                    currentUserId={currentUserId}
-                    onUpdate={handleUpdate}
-                    onWatch={() => onWatch?.(task._id)}
-                    onUnwatch={() => onUnwatch?.(task._id)}
-                    onUploadAttachment={handleUploadAttachment}
-                    onDeleteAttachment={handleDeleteAttachment}
-                    workspaceId={workspaceId}
-                  />
-                </TabsContent>
-                <TabsContent value="comment" className="mt-0 outline-none">
-                  <TabComment />
-                </TabsContent>
-                <TabsContent value="activity" className="mt-0 outline-none">
-                  <TabActivity workspaceId={workspaceId} taskId={task._id} />
-                </TabsContent>
-              </div>
-            </ScrollArea>
+            <div className="flex-1 overflow-hidden">
+              <TabsContent value="detail" className="h-full mt-0 outline-none">
+                <ScrollArea className="h-full">
+                  <div className="px-4 pb-6">
+                    <TabDetail
+                      task={task}
+                      columns={columns}
+                      members={members}
+                      labels={labels}
+                      events={events}
+                      currentUserId={currentUserId}
+                      onUpdate={handleUpdate}
+                      onWatch={() => onWatch?.(task._id)}
+                      onUnwatch={() => onUnwatch?.(task._id)}
+                      onUploadAttachment={handleUploadAttachment}
+                      onDeleteAttachment={handleDeleteAttachment}
+                      workspaceId={workspaceId}
+                    />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+
+              <TabsContent
+                value="comment"
+                className="h-full mt-0 outline-none overflow-hidden"
+              >
+                <TabComment
+                  workspaceId={workspaceId}
+                  taskId={task._id}
+                  currentUserId={currentUserId}
+                  members={members}
+                />
+              </TabsContent>
+
+              <TabsContent
+                value="activity"
+                className="h-full mt-0 outline-none"
+              >
+                <ScrollArea className="h-full">
+                  <div className="px-4 pb-6">
+                    <TabActivity workspaceId={workspaceId} taskId={task._id} />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </div>
           </Tabs>
 
           {/* Footer with meta info */}

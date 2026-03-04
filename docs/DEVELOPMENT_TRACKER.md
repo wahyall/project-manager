@@ -275,28 +275,28 @@
 
 ### 4.1 Comment Thread & Reaction (Ref: `15-comment-thread-reaction.md`)
 
-- [ ] **Model**: Buat schema `comments`
-- [ ] **API**: `GET /api/comments` — Daftar komentar (by targetType & targetId)
-- [ ] **API**: `POST /api/comments` — Buat komentar / reply
-- [ ] **API**: `PUT /api/comments/:commentId` — Edit komentar
-- [ ] **API**: `DELETE /api/comments/:commentId` — Hapus komentar
-- [ ] **API**: `POST /api/comments/:commentId/reactions` — Tambah reaction
-- [ ] **API**: `DELETE /api/comments/:commentId/reactions/:emoji` — Hapus reaction
-- [ ] **API**: `POST /api/comments/:commentId/resolve` — Resolve thread
-- [ ] **API**: `POST /api/comments/:commentId/unresolve` — Unresolve
-- [ ] **Socket.io**: Comment events (created, updated, deleted, reaction, resolve)
-- [ ] **Frontend**: Komponen CommentThread (reusable)
-- [ ] **Frontend**: Tulis komentar baru (BlockNote ringan + mention)
-- [ ] **Frontend**: Reply ke komentar (nested 1 level)
-- [ ] **Frontend**: Edit komentar (inline, label "diedit")
-- [ ] **Frontend**: Hapus komentar (placeholder text)
-- [ ] **Frontend**: Emoji reaction picker (emoji-mart)
-- [ ] **Frontend**: Reaction badges (counter, hover tooltip)
-- [ ] **Frontend**: Resolve/unresolve thread
-- [ ] **Frontend**: Toggle tampilkan resolved threads
-- [ ] **Frontend**: Integrasi di Tab Komentar detail task
+- [x] **Model**: Buat schema `comments`
+- [x] **API**: `GET /api/comments` — Daftar komentar (by targetType & targetId)
+- [x] **API**: `POST /api/comments` — Buat komentar / reply
+- [x] **API**: `PUT /api/comments/:commentId` — Edit komentar
+- [x] **API**: `DELETE /api/comments/:commentId` — Hapus komentar
+- [x] **API**: `POST /api/comments/:commentId/reactions` — Tambah reaction
+- [x] **API**: `DELETE /api/comments/:commentId/reactions/:emoji` — Hapus reaction
+- [x] **API**: `POST /api/comments/:commentId/resolve` — Resolve thread
+- [x] **API**: `POST /api/comments/:commentId/unresolve` — Unresolve
+- [x] **Socket.io**: Comment events (created, updated, deleted, reaction, resolve)
+- [x] **Frontend**: Komponen CommentThread (reusable)
+- [x] **Frontend**: Tulis komentar baru (BlockNote ringan + mention)
+- [x] **Frontend**: Reply ke komentar (nested 1 level)
+- [x] **Frontend**: Edit komentar (inline, label "diedit")
+- [x] **Frontend**: Hapus komentar (placeholder text)
+- [x] **Frontend**: Emoji reaction picker (emoji-mart)
+- [x] **Frontend**: Reaction badges (counter, hover tooltip)
+- [x] **Frontend**: Resolve/unresolve thread
+- [x] **Frontend**: Toggle tampilkan resolved threads
+- [x] **Frontend**: Integrasi di Tab Komentar detail task
 - [ ] **Frontend**: Integrasi di panel komentar cell spreadsheet
-- [ ] **Test**: Unit test comment API
+- [x] **Test**: Unit test comment API
 
 ### 4.2 Mention User (Ref: `14-mention-user.md`)
 

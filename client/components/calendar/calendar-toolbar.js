@@ -71,10 +71,10 @@ export function CalendarToolbar({
   const memberList = useMemo(
     () =>
       (members || []).map((m) => ({
-        id: m.userId?._id || m._id,
+        id: m.userId?._id || m.userId || m._id,
         name: m.userId?.name || m.name || "Member",
       })),
-    [members]
+    [members],
   );
 
   const toggleFilter = (key, value) => {
@@ -162,7 +162,7 @@ export function CalendarToolbar({
                         "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all",
                         isActive
                           ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent",
                       )}
                       onClick={() => onViewChange(opt.value)}
                     >
@@ -214,7 +214,7 @@ export function CalendarToolbar({
               className={cn(
                 "h-8 text-xs gap-1.5",
                 filters.assignee.length > 0 &&
-                  "border-primary/50 bg-primary/5 text-primary"
+                  "border-primary/50 bg-primary/5 text-primary",
               )}
             >
               <Users className="h-3.5 w-3.5" />
@@ -236,7 +236,7 @@ export function CalendarToolbar({
                   key={member.id}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                    filters.assignee.includes(member.id) && "bg-accent"
+                    filters.assignee.includes(member.id) && "bg-accent",
                   )}
                   onClick={() => toggleFilter("assignee", member.id)}
                 >
@@ -270,7 +270,7 @@ export function CalendarToolbar({
               className={cn(
                 "h-8 text-xs gap-1.5",
                 filters.priority.length > 0 &&
-                  "border-primary/50 bg-primary/5 text-primary"
+                  "border-primary/50 bg-primary/5 text-primary",
               )}
             >
               <AlertTriangle className="h-3.5 w-3.5" />
@@ -292,7 +292,7 @@ export function CalendarToolbar({
                   key={p.value}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                    filters.priority.includes(p.value) && "bg-accent"
+                    filters.priority.includes(p.value) && "bg-accent",
                   )}
                   onClick={() => toggleFilter("priority", p.value)}
                 >
@@ -318,7 +318,7 @@ export function CalendarToolbar({
                 className={cn(
                   "h-8 text-xs gap-1.5",
                   filters.label.length > 0 &&
-                    "border-primary/50 bg-primary/5 text-primary"
+                    "border-primary/50 bg-primary/5 text-primary",
                 )}
               >
                 <Tag className="h-3.5 w-3.5" />
@@ -340,7 +340,7 @@ export function CalendarToolbar({
                     key={label._id}
                     className={cn(
                       "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                      filters.label.includes(label._id) && "bg-accent"
+                      filters.label.includes(label._id) && "bg-accent",
                     )}
                     onClick={() => toggleFilter("label", label._id)}
                   >
@@ -382,4 +382,3 @@ export function CalendarToolbar({
     </div>
   );
 }
-

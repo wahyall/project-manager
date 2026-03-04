@@ -58,12 +58,18 @@ const activityLogSchema = new mongoose.Schema(
         "workspace.member_removed",
         "workspace.role_changed",
         "workspace.ownership_transferred",
+        // Comment
+        "comment.created",
+        "comment.updated",
+        "comment.deleted",
+        "comment.resolved",
+        "comment.unresolved",
       ],
     },
     targetType: {
       type: String,
       required: true,
-      enum: ["task", "event", "spreadsheet", "workspace", "board"],
+      enum: ["task", "event", "spreadsheet", "workspace", "board", "comment"],
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,

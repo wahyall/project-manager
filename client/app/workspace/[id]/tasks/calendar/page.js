@@ -267,6 +267,23 @@ export default function CalendarPage({ params }) {
   const taskCount = calendar.tasks.length;
   const eventCount = calendar.events.length;
 
+  // ── Events list for selectors ──────────────────────
+  const [events, setEvents] = useState([]);
+
+  // ── Fetch members & events on mount ───────────────
+  useEffect(() => {
+    if (workspaceId) {
+      fetchMembers(workspaceId);
+      // Fetch events for event selector (non-deleted, all statuses)
+      api
+        .get(
+          `/workspaces/${workspaceId}/events?limit=200&sortBy=startDate&sortOrder=desc`,
+        )
+        .then((res) => setEvents(res.data?.data?.events || []))
+        .catch(() => {});
+    }
+  }, [workspaceId, fetchMembers]);
+
   return (
     <div className="flex flex-col h-full">
       {/* ── Page Header ──────────────────────────── */}
@@ -452,6 +469,7 @@ export default function CalendarPage({ params }) {
         onUnarchive={handleUnarchiveTask}
         onWatch={handleWatchTask}
         onUnwatch={handleUnwatchTask}
+        events={events}
       />
     </div>
   );

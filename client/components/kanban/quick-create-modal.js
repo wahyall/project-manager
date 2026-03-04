@@ -46,7 +46,7 @@ import { getInitials } from "./task-card";
 const BlockNoteEditor = lazy(() =>
   import("@/components/blocknote-editor").then((m) => ({
     default: m.BlockNoteEditor,
-  }))
+  })),
 );
 
 export function QuickCreateModal({
@@ -93,7 +93,7 @@ export function QuickCreateModal({
     setSelectedAssignees((prev) =>
       prev.includes(memberId)
         ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
+        : [...prev, memberId],
     );
   };
 
@@ -125,7 +125,7 @@ export function QuickCreateModal({
 
   // Get member list
   const memberList = (members || []).map((m) => ({
-    id: m.userId?._id || m._id,
+    id: m.userId?._id || m.userId || m._id,
     name: m.userId?.name || m.name || "Member",
   }));
 
@@ -228,7 +228,11 @@ export function QuickCreateModal({
                     { value: "low", label: "Low", color: "bg-slate-400" },
                     { value: "medium", label: "Medium", color: "bg-amber-400" },
                     { value: "high", label: "High", color: "bg-orange-500" },
-                    { value: "critical", label: "Critical", color: "bg-red-500" },
+                    {
+                      value: "critical",
+                      label: "Critical",
+                      color: "bg-red-500",
+                    },
                   ].map((p) => (
                     <SelectItem key={p.value} value={p.value}>
                       <div className="flex items-center gap-2">
@@ -253,7 +257,7 @@ export function QuickCreateModal({
                     variant="outline"
                     className={cn(
                       "w-full h-9 justify-start text-left text-xs font-normal",
-                      !startDate && "text-muted-foreground"
+                      !startDate && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
@@ -282,7 +286,7 @@ export function QuickCreateModal({
                     variant="outline"
                     className={cn(
                       "w-full h-9 justify-start text-left text-xs font-normal",
-                      !dueDate && "text-muted-foreground"
+                      !dueDate && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
@@ -312,7 +316,7 @@ export function QuickCreateModal({
                   variant="outline"
                   className={cn(
                     "w-full h-auto min-h-9 justify-start text-left text-xs font-normal flex-wrap gap-1 py-1.5",
-                    selectedAssignees.length === 0 && "text-muted-foreground"
+                    selectedAssignees.length === 0 && "text-muted-foreground",
                   )}
                 >
                   <User className="mr-1 h-3.5 w-3.5 shrink-0" />
@@ -323,7 +327,11 @@ export function QuickCreateModal({
                       {selectedAssignees.map((id) => {
                         const member = memberList.find((m) => m.id === id);
                         return (
-                          <Badge key={id} variant="secondary" className="text-[10px] h-5 px-1.5">
+                          <Badge
+                            key={id}
+                            variant="secondary"
+                            className="text-[10px] h-5 px-1.5"
+                          >
                             {member?.name || "Member"}
                           </Badge>
                         );
@@ -339,7 +347,7 @@ export function QuickCreateModal({
                       key={member.id}
                       className={cn(
                         "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                        selectedAssignees.includes(member.id) && "bg-accent"
+                        selectedAssignees.includes(member.id) && "bg-accent",
                       )}
                       onClick={() => toggleAssignee(member.id)}
                     >
@@ -371,7 +379,9 @@ export function QuickCreateModal({
               <Label className="text-xs font-medium flex items-center gap-1.5">
                 <CalendarDays className="h-3 w-3" />
                 Event
-                <span className="text-muted-foreground font-normal">(opsional)</span>
+                <span className="text-muted-foreground font-normal">
+                  (opsional)
+                </span>
               </Label>
               <Select value={eventId} onValueChange={setEventId}>
                 <SelectTrigger className="h-9 text-xs">
@@ -379,7 +389,9 @@ export function QuickCreateModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">
-                    <span className="text-muted-foreground">Tidak terkait event</span>
+                    <span className="text-muted-foreground">
+                      Tidak terkait event
+                    </span>
                   </SelectItem>
                   {(events || []).map((evt) => (
                     <SelectItem key={evt._id} value={evt._id}>
@@ -394,9 +406,12 @@ export function QuickCreateModal({
                             variant="outline"
                             className={cn(
                               "text-[9px] h-4 px-1 ml-auto shrink-0",
-                              evt.status === "ongoing" && "border-green-300 text-green-600",
-                              evt.status === "upcoming" && "border-blue-300 text-blue-600",
-                              evt.status === "completed" && "border-gray-300 text-gray-500"
+                              evt.status === "ongoing" &&
+                                "border-green-300 text-green-600",
+                              evt.status === "upcoming" &&
+                                "border-blue-300 text-blue-600",
+                              evt.status === "completed" &&
+                                "border-gray-300 text-gray-500",
                             )}
                           >
                             {evt.status}

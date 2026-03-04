@@ -50,12 +50,12 @@ import { AttachmentSection } from "./attachment-section";
 const BlockNoteEditor = lazy(() =>
   import("@/components/blocknote-editor").then((m) => ({
     default: m.BlockNoteEditor,
-  }))
+  })),
 );
 const BlockNoteReadOnly = lazy(() =>
   import("@/components/blocknote-editor").then((m) => ({
     default: m.BlockNoteReadOnly,
-  }))
+  })),
 );
 // Static import for the helper
 import { isBlockNoteEmpty } from "@/components/blocknote-editor";
@@ -66,7 +66,9 @@ function FieldRow({ icon: Icon, label, children }) {
     <div className="flex items-start gap-3 py-2.5">
       <div className="flex items-center gap-2 w-28 shrink-0 pt-0.5">
         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="text-xs font-medium text-muted-foreground">
+          {label}
+        </span>
       </div>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
@@ -95,7 +97,7 @@ export function TabDetail({
   const descTimerRef = useRef(null);
 
   const isWatching = (task.watchers || []).some(
-    (w) => (typeof w === "string" ? w : w._id) === currentUserId
+    (w) => (typeof w === "string" ? w : w._id) === currentUserId,
   );
 
   // Title save
@@ -117,7 +119,7 @@ export function TabDetail({
         }
       }, 800);
     },
-    [task.description, onUpdate]
+    [task.description, onUpdate],
   );
 
   // Save immediately when leaving edit mode
@@ -131,13 +133,13 @@ export function TabDetail({
 
   // Member list
   const memberList = (members || []).map((m) => ({
-    id: m.userId?._id || m._id,
+    id: m.userId?._id || m.userId || m._id,
     name: m.userId?.name || m.name || "Member",
   }));
 
   // Current assignee IDs
   const assigneeIds = (task.assignees || []).map((a) =>
-    typeof a === "string" ? a : a._id
+    typeof a === "string" ? a : a._id,
   );
 
   const toggleAssignee = (memberId) => {
@@ -149,7 +151,7 @@ export function TabDetail({
 
   // Current label IDs
   const labelIds = (task.labels || []).map((l) =>
-    typeof l === "string" ? l : l._id
+    typeof l === "string" ? l : l._id,
   );
 
   const toggleLabel = (labelId) => {
@@ -210,7 +212,10 @@ export function TabDetail({
           )}
         </Button>
         {task.isArchived && (
-          <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-600">
+          <Badge
+            variant="outline"
+            className="text-[10px] border-amber-300 text-amber-600"
+          >
             Diarsipkan
           </Badge>
         )}
@@ -223,7 +228,11 @@ export function TabDetail({
         {/* Status / Column */}
         <FieldRow icon={Columns3} label="Status">
           <Select
-            value={typeof task.columnId === "string" ? task.columnId : task.columnId?.toString()}
+            value={
+              typeof task.columnId === "string"
+                ? task.columnId
+                : task.columnId?.toString()
+            }
             onValueChange={(val) => onUpdate({ columnId: val })}
           >
             <SelectTrigger className="h-8 text-xs w-auto min-w-[140px]">
@@ -282,13 +291,20 @@ export function TabDetail({
                 className="h-auto min-h-8 px-2 text-xs font-normal flex-wrap gap-1 justify-start"
               >
                 {assigneeIds.length === 0 ? (
-                  <span className="text-muted-foreground">Tambah assignee...</span>
+                  <span className="text-muted-foreground">
+                    Tambah assignee...
+                  </span>
                 ) : (
                   <div className="flex flex-wrap gap-1">
                     {(task.assignees || []).map((a) => {
-                      const user = typeof a === "string" ? { _id: a, name: "?" } : a;
+                      const user =
+                        typeof a === "string" ? { _id: a, name: "?" } : a;
                       return (
-                        <Badge key={user._id} variant="secondary" className="text-[10px] h-5 gap-1 px-1.5">
+                        <Badge
+                          key={user._id}
+                          variant="secondary"
+                          className="text-[10px] h-5 gap-1 px-1.5"
+                        >
                           <Avatar className="h-3.5 w-3.5">
                             <AvatarFallback className="text-[7px] bg-primary/10 text-primary">
                               {getInitials(user.name)}
@@ -313,7 +329,7 @@ export function TabDetail({
                     key={member.id}
                     className={cn(
                       "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                      assigneeIds.includes(member.id) && "bg-accent"
+                      assigneeIds.includes(member.id) && "bg-accent",
                     )}
                     onClick={() => toggleAssignee(member.id)}
                   >
@@ -348,7 +364,10 @@ export function TabDetail({
                 ) : (
                   <div className="flex flex-wrap gap-1">
                     {(task.labels || []).map((l) => {
-                      const label = typeof l === "string" ? { _id: l, name: "?", color: "#6B7280" } : l;
+                      const label =
+                        typeof l === "string"
+                          ? { _id: l, name: "?", color: "#6B7280" }
+                          : l;
                       return (
                         <Badge
                           key={label._id}
@@ -378,7 +397,7 @@ export function TabDetail({
                     key={label._id}
                     className={cn(
                       "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                      labelIds.includes(label._id) && "bg-accent"
+                      labelIds.includes(label._id) && "bg-accent",
                     )}
                     onClick={() => toggleLabel(label._id)}
                   >
@@ -412,11 +431,13 @@ export function TabDetail({
                 size="sm"
                 className={cn(
                   "h-8 text-xs font-normal justify-start px-2",
-                  !task.startDate && "text-muted-foreground"
+                  !task.startDate && "text-muted-foreground",
                 )}
               >
                 {task.startDate
-                  ? format(new Date(task.startDate), "d MMMM yyyy", { locale: localeId })
+                  ? format(new Date(task.startDate), "d MMMM yyyy", {
+                      locale: localeId,
+                    })
                   : "Belum ditentukan"}
               </Button>
             </PopoverTrigger>
@@ -441,11 +462,13 @@ export function TabDetail({
                 size="sm"
                 className={cn(
                   "h-8 text-xs font-normal justify-start px-2",
-                  !task.dueDate && "text-muted-foreground"
+                  !task.dueDate && "text-muted-foreground",
                 )}
               >
                 {task.dueDate
-                  ? format(new Date(task.dueDate), "d MMMM yyyy", { locale: localeId })
+                  ? format(new Date(task.dueDate), "d MMMM yyyy", {
+                      locale: localeId,
+                    })
                   : "Belum ditentukan"}
               </Button>
             </PopoverTrigger>
@@ -480,7 +503,9 @@ export function TabDetail({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">
-                <span className="text-muted-foreground">Tidak terkait event</span>
+                <span className="text-muted-foreground">
+                  Tidak terkait event
+                </span>
               </SelectItem>
               {(events || []).map((evt) => (
                 <SelectItem key={evt._id} value={evt._id}>
@@ -495,9 +520,12 @@ export function TabDetail({
                         variant="outline"
                         className={cn(
                           "text-[9px] h-4 px-1 ml-auto shrink-0",
-                          evt.status === "ongoing" && "border-green-300 text-green-600",
-                          evt.status === "upcoming" && "border-blue-300 text-blue-600",
-                          evt.status === "completed" && "border-gray-300 text-gray-500"
+                          evt.status === "ongoing" &&
+                            "border-green-300 text-green-600",
+                          evt.status === "upcoming" &&
+                            "border-blue-300 text-blue-600",
+                          evt.status === "completed" &&
+                            "border-gray-300 text-gray-500",
                         )}
                       >
                         {evt.status}
@@ -515,9 +543,14 @@ export function TabDetail({
           <FieldRow icon={Lock} label="Diblokir oleh">
             <div className="flex flex-wrap gap-1">
               {task.blockedBy.map((dep) => {
-                const d = typeof dep === "string" ? { _id: dep, title: "Task" } : dep;
+                const d =
+                  typeof dep === "string" ? { _id: dep, title: "Task" } : dep;
                 return (
-                  <Badge key={d._id} variant="outline" className="text-[10px] h-5 gap-1">
+                  <Badge
+                    key={d._id}
+                    variant="outline"
+                    className="text-[10px] h-5 gap-1"
+                  >
                     <Lock className="h-2.5 w-2.5" />
                     {d.title}
                   </Badge>
@@ -552,7 +585,7 @@ export function TabDetail({
         </div>
 
         {editingDesc ? (
-          <div className="rounded-md border bg-background min-h-[120px] max-h-[300px] overflow-y-auto focus-within:ring-1 focus-within:ring-ring transition-shadow">
+          <div className="rounded-md border bg-background min-h-[120px] max-h-[300px] overflow-y-auto focus-within:ring-1 focus-within:ring-ring transition-shadow py-2 px-6">
             <Suspense
               fallback={
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
@@ -582,7 +615,9 @@ export function TabDetail({
             {!isBlockNoteEmpty(task.description) ? (
               <Suspense
                 fallback={
-                  <div className="text-sm text-muted-foreground">Loading...</div>
+                  <div className="text-sm text-muted-foreground">
+                    Loading...
+                  </div>
                 }
               >
                 <BlockNoteReadOnly
@@ -624,4 +659,3 @@ export function TabDetail({
     </div>
   );
 }
-
