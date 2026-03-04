@@ -8,6 +8,7 @@ const logger = require("./src/utils/logger");
 
 const startDueDateReminderJob = require("./src/jobs/dueDateReminder.job");
 const startEventReminderJob = require("./src/jobs/eventStartReminder.job");
+const whatsappService = require("./src/services/whatsapp.service");
 
 const PORT = process.env.PORT || 5000;
 
@@ -20,6 +21,11 @@ const startServer = async () => {
 
   // Inisialisasi Socket.io
   initializeSocket(server);
+
+  // Inisialisasi WhatsApp Service
+  if (process.env.WHATSAPP_ENABLED === "true") {
+    whatsappService.initialize();
+  }
 
   // Start server
   server.listen(PORT, () => {

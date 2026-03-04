@@ -355,8 +355,9 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   } = req.body;
 
   // Track if column changed (for "moved" event)
-  const oldColumnId = task.columnId?.toString();
   let columnChanged = false;
+  let datesChanged = false;
+  let priorityChanged = false;
 
   // Title
   if (title !== undefined) {

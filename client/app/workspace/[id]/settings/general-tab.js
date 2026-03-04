@@ -33,8 +33,10 @@ import {
   Save,
   Trash2,
   AlertTriangle,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 export default function GeneralTab({ workspace, isAdminOrOwner }) {
   const router = useRouter();
@@ -172,6 +174,33 @@ export default function GeneralTab({ workspace, isAdminOrOwner }) {
         </CardContent>
       </Card>
 
+      {/* WhatsApp Admin - Owner Only */}
+      {workspace.role === "owner" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-green-500" />
+              Notifikasi WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Kelola koneksi WhatsApp untuk mengirim notifikasi in-app langsung
+              ke WhatsApp anggota workspace.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href={`/workspace/${workspace._id}/admin/whatsapp`}>
+              <Button
+                variant="outline"
+                className="gap-2 border-green-200 hover:border-green-300 hover:bg-green-50 text-green-700 dark:hover:bg-green-950/30 dark:text-green-400"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Buka Admin WhatsApp
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Archive */}
       {isAdminOrOwner && (
         <Card>
@@ -200,7 +229,9 @@ export default function GeneralTab({ workspace, isAdminOrOwner }) {
               ) : (
                 <Archive className="h-4 w-4" />
               )}
-              {workspace.isArchived ? "Unarsipkan Workspace" : "Arsipkan Workspace"}
+              {workspace.isArchived
+                ? "Unarsipkan Workspace"
+                : "Arsipkan Workspace"}
             </Button>
           </CardContent>
         </Card>
@@ -258,9 +289,7 @@ export default function GeneralTab({ workspace, isAdminOrOwner }) {
                   <Button
                     variant="destructive"
                     onClick={handleDelete}
-                    disabled={
-                      deleting || deleteConfirmName !== workspace.name
-                    }
+                    disabled={deleting || deleteConfirmName !== workspace.name}
                   >
                     {deleting ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -278,4 +307,3 @@ export default function GeneralTab({ workspace, isAdminOrOwner }) {
     </div>
   );
 }
-

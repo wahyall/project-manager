@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   User,
   Camera,
@@ -108,9 +109,7 @@ function ProfileSection() {
       });
       toast.success("Profil berhasil diperbarui");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Gagal memperbarui profil",
-      );
+      toast.error(error.response?.data?.message || "Gagal memperbarui profil");
     } finally {
       setSaving(false);
     }
@@ -139,7 +138,7 @@ function ProfileSection() {
           file,
           { createMissingParents: true },
         );
-        const url = await uploaded.toURL?.() || uploaded.path;
+        const url = (await uploaded.toURL?.()) || uploaded.path;
         await updateAvatar(url);
       } else {
         // Fallback: convert to base64 data URL
@@ -223,9 +222,7 @@ function ProfileSection() {
                 size="sm"
                 className="gap-2"
                 disabled={avatarUploading}
-                onClick={() =>
-                  document.getElementById("avatar-upload").click()
-                }
+                onClick={() => document.getElementById("avatar-upload").click()}
               >
                 <Camera className="h-3.5 w-3.5" />
                 {user?.avatar ? "Ganti Foto" : "Upload Foto"}
@@ -294,7 +291,10 @@ function ProfileSection() {
 
         {/* WhatsApp */}
         <div className="space-y-2">
-          <Label htmlFor="whatsapp" className="text-sm font-medium flex items-center gap-2">
+          <Label
+            htmlFor="whatsapp"
+            className="text-sm font-medium flex items-center gap-2"
+          >
             <Phone className="h-3.5 w-3.5" />
             Nomor WhatsApp
           </Label>
@@ -354,7 +354,11 @@ function PasswordSection() {
     newPassword && confirmPassword && newPassword === confirmPassword;
   const passwordLongEnough = newPassword.length >= 8;
   const canSubmit =
-    currentPassword && newPassword && confirmPassword && passwordsMatch && passwordLongEnough;
+    currentPassword &&
+    newPassword &&
+    confirmPassword &&
+    passwordsMatch &&
+    passwordLongEnough;
 
   const handleChangePassword = async () => {
     if (!canSubmit) return;
@@ -367,9 +371,7 @@ function PasswordSection() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Gagal mengubah password",
-      );
+      toast.error(error.response?.data?.message || "Gagal mengubah password");
     } finally {
       setSaving(false);
     }
@@ -641,9 +643,7 @@ function NotificationSection() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <Label className="text-sm font-medium">
-              Pengingat Due Date
-            </Label>
+            <Label className="text-sm font-medium">Pengingat Due Date</Label>
           </div>
           <p className="text-xs text-muted-foreground">
             Pilih kapan kamu ingin diingatkan tentang deadline task
@@ -712,17 +712,38 @@ function NotificationSection() {
 // MAIN PAGE
 // ═══════════════════════════════════════════════════════
 export default function AccountSettingsPage() {
+  const { user } = useAuth();
+
+  const wantsWa = Object.values(user?.notificationPreferences || {}).some(
+    (p) => p.whatsapp,
+  );
+  const missingWa = wantsWa && !user?.whatsappNumber;
+
   return (
     <div className="space-y-8">
       {/* Page title */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Pengaturan Akun
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">Pengaturan Akun</h1>
         <p className="text-muted-foreground mt-1">
           Kelola profil, keamanan, dan preferensi notifikasi akunmu
         </p>
       </div>
+
+      {/* WhatsApp Reminder Banner */}
+      {missingWa && (
+        <Alert
+          variant="destructive"
+          className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900"
+        >
+          <Phone className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertTitle>Perhatian</AlertTitle>
+          <AlertDescription>
+            Kamu mengaktifkan notifikasi WhatsApp, tetapi belum melengkapi{" "}
+            <strong>Nomor WhatsApp</strong>. Silakan lengkapi nomor WhatsApp di
+            bagian Profil agar notifikasi dapat dikirimkan.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Quick nav pills */}
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -764,4 +785,3 @@ export default function AccountSettingsPage() {
     </div>
   );
 }
-

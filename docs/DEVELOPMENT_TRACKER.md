@@ -332,20 +332,20 @@
 
 ### 4.4 Notifikasi WhatsApp (Ref: `17-notifikasi-whatsapp.md`)
 
-- [ ] **Model**: Buat schema `whatsapp_logs`
-- [ ] **Service**: WhatsAppService singleton (Baileys)
-- [ ] **Service**: Inisialisasi Baileys (QR code, auth state persist)
-- [ ] **Service**: Auto-reconnect handler
-- [ ] **Service**: sendMessage function (format nomor → JID)
-- [ ] **Service**: Message queue untuk rate limiting (30/menit, delay 1-3 detik)
-- [ ] **Integrasi**: Cek preferensi user → kirim WA setelah notifikasi in-app
-- [ ] **API**: `GET /api/admin/whatsapp/status` — Status koneksi
-- [ ] **API**: `GET /api/admin/whatsapp/qr` — QR code
-- [ ] **API**: `POST /api/admin/whatsapp/reconnect` — Reconnect
-- [ ] **API**: `POST /api/admin/whatsapp/test` — Test kirim
-- [ ] **API**: `GET /api/admin/whatsapp/logs` — Log pengiriman
-- [ ] **Frontend**: Admin panel WhatsApp (status, QR, reconnect, test, logs)
-- [ ] **Frontend**: Banner reminder "Lengkapi nomor WhatsApp" di dashboard
+- [x] **Model**: Buat schema `whatsapp_logs`
+- [x] **Service**: WhatsAppService singleton (Baileys)
+- [x] **Service**: Inisialisasi Baileys (QR code, auth state persist)
+- [x] **Service**: Auto-reconnect handler
+- [x] **Service**: sendMessage function (format nomor → JID)
+- [x] **Service**: Message queue untuk rate limiting (30/menit, delay 1-3 detik)
+- [x] **Integrasi**: Cek preferensi user → kirim WA setelah notifikasi in-app
+- [x] **API**: `GET /api/admin/whatsapp/status` — Status koneksi
+- [x] **API**: `GET /api/admin/whatsapp/qr` — QR code
+- [x] **API**: `POST /api/admin/whatsapp/reconnect` — Reconnect
+- [x] **API**: `POST /api/admin/whatsapp/test` — Test kirim
+- [x] **API**: `GET /api/admin/whatsapp/logs` — Log pengiriman
+- [x] **Frontend**: Admin panel WhatsApp (status, QR, reconnect, test, logs)
+- [x] **Frontend**: Banner reminder "Lengkapi nomor WhatsApp" di dashboard
 - [ ] **Test**: Unit test WhatsApp service
 
 ---

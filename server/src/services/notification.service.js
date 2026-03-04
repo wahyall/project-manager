@@ -25,6 +25,28 @@ const _wantsInAppNotification = (user, type) => {
 };
 
 /**
+ * Helper to check if a user wants to receive this type of WA notification
+ */
+const _wantsWhatsAppNotification = (user, type) => {
+  if (!user || !user.notificationPreferences) return false; // Default false
+
+  const prefMap = {
+    mention: "mention",
+    assign_task: "assignTask",
+    due_date: "dueDate",
+    new_comment: "newComment",
+    new_member: "newMember",
+    event_start: "eventStart",
+    task_update: "taskUpdate",
+  };
+
+  const prefKey = prefMap[type];
+  if (!prefKey) return false;
+
+  return user.notificationPreferences[prefKey]?.whatsapp === true;
+};
+
+/**
  * Service untuk membuat notifikasi in-app
  *
  * @param {Object} params
@@ -53,9 +75,9 @@ const create = async ({
       return null;
     }
 
-    // Ambil user preferences
+    // Ambil user preferences & WA number
     const user = await User.findById(recipientId).select(
-      "notificationPreferences",
+      "notificationPreferences whatsappNumber",
     );
     if (!user) return null;
 
@@ -73,6 +95,28 @@ const create = async ({
       message,
       url,
     });
+
+    // Kirim WhatsApp jika diaktifkan
+    if (
+      process.env.WHATSAPP_ENABLED === "true" &&
+      user.whatsappNumber &&
+      _wantsWhatsAppNotification(user, type)
+    ) {
+      const whatsappService = require("./whatsapp.service");
+      const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000";
+      const targetUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+
+      const waMessage = `🔔 *Notifikasi Baru*\n${message}\n\n🔗 ${targetUrl}`;
+
+      whatsappService
+        .queueMessage({
+          recipientId: user._id,
+          recipientNumber: user.whatsappNumber,
+          type,
+          message: waMessage,
+        })
+        .catch((err) => console.error("[WA] Queue error:", err));
+    }
 
     return notification;
   } catch (error) {
@@ -117,9 +161,9 @@ const createForMany = async ({
 
     if (targetRecipients.length === 0) return [];
 
-    // Fetch preferences for all recipients
+    // Fetch preferences and WA numbers for all recipients
     const users = await User.find({ _id: { $in: targetRecipients } }).select(
-      "_id notificationPreferences",
+      "_id notificationPreferences whatsappNumber",
     );
 
     // Filter members based on their preferences
@@ -143,6 +187,33 @@ const createForMany = async ({
     }));
 
     const result = await Notification.insertMany(payload);
+
+    // Queue pesan WA
+    if (process.env.WHATSAPP_ENABLED === "true") {
+      const whatsappService = require("./whatsapp.service");
+      const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000";
+      const targetUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+
+      const waMessage = `🔔 *Notifikasi Baru*\n${message}\n\n🔗 ${targetUrl}`;
+
+      for (const u of users) {
+        if (
+          validRecipients.some((id) => id.toString() === u._id.toString()) &&
+          u.whatsappNumber &&
+          _wantsWhatsAppNotification(u, type)
+        ) {
+          whatsappService
+            .queueMessage({
+              recipientId: u._id,
+              recipientNumber: u.whatsappNumber,
+              type,
+              message: waMessage,
+            })
+            .catch((err) => console.error("[WA] Queue error:", err));
+        }
+      }
+    }
+
     return result;
   } catch (error) {
     console.error(
