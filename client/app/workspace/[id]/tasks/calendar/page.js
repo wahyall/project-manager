@@ -42,15 +42,6 @@ export default function CalendarPage({ params }) {
   const [currentView, setCurrentView] = useState("dayGridMonth");
   const [calendarTitle, setCalendarTitle] = useState("");
 
-  // Initialize view based on mobile breakpoint
-  useEffect(() => {
-    if (isMobile) {
-      setCurrentView("timeGridDay");
-    } else {
-      setCurrentView("dayGridMonth");
-    }
-  }, [isMobile]);
-
   // ── Calendar component ref ─────────────────────
   const calendarViewRef = useRef(null);
 
