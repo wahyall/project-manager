@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +31,9 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  Moon,
+  Sun,
+  Monitor,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -709,6 +713,86 @@ function NotificationSection() {
 }
 
 // ═══════════════════════════════════════════════════════
+// SECTION: Theme Preferences
+// ═══════════════════════════════════════════════════════
+function ThemeSection() {
+  const { theme, setTheme } = useTheme();
+  const { updateProfile, user } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleThemeChange = async (newTheme) => {
+    setTheme(newTheme);
+    if (user) {
+      try {
+        await updateProfile({ theme: newTheme });
+      } catch (error) {
+        console.error("Gagal menyimpan tema", error);
+      }
+    }
+  };
+
+  if (!mounted) {
+    return null;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+            {theme === "dark" ? (
+              <Moon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            ) : theme === "light" ? (
+              <Sun className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            ) : (
+              <Monitor className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            )}
+          </div>
+          <div>
+            <CardTitle>Tema Aplikasi</CardTitle>
+            <CardDescription>
+              Pilih tema visual untuk pengalaman yang lebih nyaman
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-4">
+          <Button
+            variant={theme === "light" ? "default" : "outline"}
+            className="gap-2"
+            onClick={() => handleThemeChange("light")}
+          >
+            <Sun className="h-4 w-4" />
+            Terang
+          </Button>
+          <Button
+            variant={theme === "dark" ? "default" : "outline"}
+            className="gap-2"
+            onClick={() => handleThemeChange("dark")}
+          >
+            <Moon className="h-4 w-4" />
+            Gelap
+          </Button>
+          <Button
+            variant={theme === "system" ? "default" : "outline"}
+            className="gap-2"
+            onClick={() => handleThemeChange("system")}
+          >
+            <Monitor className="h-4 w-4" />
+            Sistem
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
 // MAIN PAGE
 // ═══════════════════════════════════════════════════════
 export default function AccountSettingsPage() {
@@ -768,6 +852,13 @@ export default function AccountSettingsPage() {
           <Bell className="h-3 w-3" />
           Notifikasi
         </a>
+        <a
+          href="#tema"
+          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors shrink-0"
+        >
+          <Monitor className="h-3 w-3" />
+          Tema
+        </a>
       </div>
 
       {/* Sections */}
@@ -781,6 +872,10 @@ export default function AccountSettingsPage() {
 
       <div id="notifikasi">
         <NotificationSection />
+      </div>
+
+      <div id="tema">
+        <ThemeSection />
       </div>
     </div>
   );

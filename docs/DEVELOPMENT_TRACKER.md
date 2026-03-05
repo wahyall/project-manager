@@ -482,13 +482,13 @@
 
 ### 6.4 Dark Mode (Ref: `22-dark-mode-keyboard-shortcuts.md`)
 
-- [ ] **Frontend**: CSS custom properties (semua token warna)
-- [ ] **Frontend**: Palet gelap (bg, text, border, accent, dll)
-- [ ] **Frontend**: Toggle di topbar profil dropdown + Pengaturan Akun
-- [ ] **Frontend**: Pilihan: Terang / Gelap / Sistem
-- [ ] **Frontend**: Simpan di localStorage + database user
-- [ ] **Frontend**: Transisi smooth (300ms)
-- [ ] **Frontend**: Pastikan semua komponen menggunakan token warna
+- [x] **Frontend**: CSS custom properties (semua token warna)
+- [x] **Frontend**: Palet gelap (bg, text, border, accent, dll)
+- [x] **Frontend**: Toggle di topbar profil dropdown + Pengaturan Akun
+- [x] **Frontend**: Pilihan: Terang / Gelap / Sistem
+- [x] **Frontend**: Simpan di localStorage + database user
+- [x] **Frontend**: Transisi smooth (300ms)
+- [x] **Frontend**: Pastikan semua komponen menggunakan token warna
 - [ ] **Test**: Visual testing dark mode
 
 ### 6.5 Keyboard Shortcuts & Command Palette (Ref: `22-dark-mode-keyboard-shortcuts.md`)

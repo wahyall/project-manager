@@ -83,9 +83,7 @@ function WorkspaceCard({ workspace, onArchive, onLeave }) {
       onClick={() => router.push(`/workspace/${workspace._id}`)}
     >
       {/* Top gradient strip */}
-      <div
-        className={`h-2 rounded-t-xl bg-gradient-to-r ${gradientColor}`}
-      />
+      <div className={`h-2 rounded-t-xl bg-gradient-to-r ${gradientColor}`} />
 
       <div className="flex flex-col gap-4 p-5">
         {/* Header: Logo + Name + Actions */}
@@ -141,9 +139,7 @@ function WorkspaceCard({ workspace, onArchive, onLeave }) {
                 Pengaturan
               </DropdownMenuItem>
               {(workspace.role === "owner" || workspace.role === "admin") && (
-                <DropdownMenuItem
-                  onClick={() => onArchive(workspace)}
-                >
+                <DropdownMenuItem onClick={() => onArchive(workspace)}>
                   <Archive className="h-4 w-4 mr-2" />
                   {workspace.isArchived ? "Unarsipkan" : "Arsipkan"}
                 </DropdownMenuItem>
@@ -244,9 +240,7 @@ export default function WorkspacesPage() {
   };
 
   const handleLeave = async (workspace) => {
-    if (
-      !confirm(`Yakin ingin keluar dari workspace "${workspace.name}"?`)
-    ) {
+    if (!confirm(`Yakin ingin keluar dari workspace "${workspace.name}"?`)) {
       return;
     }
     try {
@@ -269,11 +263,13 @@ export default function WorkspacesPage() {
         <header className="sticky top-0 z-50 border-b bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm">
           <div className="mx-auto max-w-6xl flex items-center justify-between px-4 sm:px-6 h-16">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-                YN
-              </div>
+              <img
+                src="/icons/icon-192.png"
+                alt="Logo"
+                className="h-10 w-10 rounded"
+              />
               <h1 className="text-lg font-semibold text-foreground hidden sm:block">
-                Project Manager
+                YukNgaji Surabaya
               </h1>
             </div>
 
@@ -315,9 +311,7 @@ export default function WorkspacesPage() {
           {/* Page header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">
-                Workspace
-              </h2>
+              <h2 className="text-2xl font-bold text-foreground">Workspace</h2>
               <p className="text-muted-foreground mt-1">
                 Kelola semua workspace yang kamu ikuti
               </p>
@@ -398,4 +392,3 @@ export default function WorkspacesPage() {
     </ProtectedRoute>
   );
 }
-

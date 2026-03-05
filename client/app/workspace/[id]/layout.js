@@ -12,6 +12,7 @@ import { NotificationPanel } from "@/components/notifications/notification-panel
 import { AppSidebar } from "@/components/app-sidebar";
 import { BottomNav } from "@/components/bottom-nav";
 import { MoreDrawer } from "@/components/more-drawer";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   SidebarProvider,
@@ -68,6 +69,7 @@ function Topbar({ workspace, workspaceId }) {
 
       {/* Right section */}
       <div className="flex items-center gap-1 shrink-0">
+        <ThemeToggle />
         {/* Notification bell */}
         <Tooltip>
           <TooltipTrigger asChild>

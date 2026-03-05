@@ -21,7 +21,7 @@ exports.getProfile = catchAsync(async (req, res, next) => {
 // PUT /api/users/me — Update profil (nama, whatsapp)
 // ──────────────────────────────────────────────
 exports.updateProfile = catchAsync(async (req, res, next) => {
-  const { name, whatsappNumber } = req.body;
+  const { name, whatsappNumber, theme } = req.body;
 
   const user = await User.findById(req.user.id);
   if (!user) {
@@ -56,6 +56,14 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
     } else {
       user.whatsappNumber = null;
     }
+  }
+
+  // Validasi tema
+  if (theme !== undefined) {
+    if (!["light", "dark", "system"].includes(theme)) {
+      return next(new AppError("Tema tidak valid", 400));
+    }
+    user.theme = theme;
   }
 
   await user.save({ validateBeforeSave: false });
@@ -174,15 +182,11 @@ exports.updateNotifications = catchAsync(async (req, res, next) => {
   // Update due date reminders
   if (dueDateReminders !== undefined) {
     if (!Array.isArray(dueDateReminders)) {
-      return next(
-        new AppError("dueDateReminders harus berupa array", 400),
-      );
+      return next(new AppError("dueDateReminders harus berupa array", 400));
     }
 
     const validReminders = ["H", "H-1", "H-3"];
-    const filtered = dueDateReminders.filter((r) =>
-      validReminders.includes(r),
-    );
+    const filtered = dueDateReminders.filter((r) => validReminders.includes(r));
     user.dueDateReminders = filtered;
   }
 
@@ -194,4 +198,3 @@ exports.updateNotifications = catchAsync(async (req, res, next) => {
     user,
   });
 });
-

@@ -4,6 +4,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,14 +17,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "YN Project Manager",
-  description: "Platform manajemen proyek kolaboratif berbasis web",
+  title: "YukNgaji Surabaya",
+  description: "Platform manajemen proyek kolaboratif",
   manifest: "/manifest.json",
   themeColor: "#1a73e8",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "ProjManager",
+    title: "YukNgaji Surabaya",
   },
   viewport: {
     width: "device-width",
@@ -39,14 +40,21 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <WorkspaceProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster position="top-right" richColors />
-            </TooltipProvider>
-          </WorkspaceProvider>
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <AuthProvider>
+            <WorkspaceProvider>
+              <TooltipProvider>
+                {children}
+                <Toaster position="top-right" richColors />
+              </TooltipProvider>
+            </WorkspaceProvider>
+          </AuthProvider>
+        </ThemeProvider>
 
         <script
           dangerouslySetInnerHTML={{

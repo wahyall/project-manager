@@ -253,7 +253,7 @@ export function AppSidebar({ workspaceId, workspace, ...props }) {
       {/* Footer */}
       <SidebarFooter>
         <div className="px-2 py-1 text-[11px] text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden">
-          YN Project Manager
+          YukNgaji Surabaya
         </div>
       </SidebarFooter>
 

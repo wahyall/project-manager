@@ -17,7 +17,7 @@ class EmailService {
   async sendMail({ to, subject, html }) {
     try {
       const info = await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || "YN Project Manager <noreply@ynpm.com>",
+        from: process.env.EMAIL_FROM || "YukNgaji Surabaya <noreply@ynpm.com>",
         to,
         subject,
         html,
@@ -44,13 +44,13 @@ class EmailService {
         </div>
         <p style="color: #666; font-size: 14px;">Tautan ini berlaku selama <strong>1 jam</strong>. Jika kamu tidak meminta reset password, abaikan email ini.</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p style="color: #999; font-size: 12px;">YN Project Manager</p>
+        <p style="color: #999; font-size: 12px;">YukNgaji Surabaya</p>
       </div>
     `;
 
     return this.sendMail({
       to: email,
-      subject: "Reset Password — YN Project Manager",
+      subject: "Reset Password — YukNgaji Surabaya",
       html,
     });
   }
@@ -69,7 +69,7 @@ class EmailService {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #1a73e8;">Undangan Workspace</h2>
         <p>Hai,</p>
-        <p><strong>${inviterName}</strong> mengundang kamu untuk bergabung ke workspace <strong>"${workspaceName}"</strong> di YN Project Manager.</p>
+        <p><strong>${inviterName}</strong> mengundang kamu untuk bergabung ke workspace <strong>"${workspaceName}"</strong> di YukNgaji Surabaya.</p>
         ${messageBlock}
         <div style="text-align: center; margin: 30px 0;">
           <a href="${inviteUrl}" 
@@ -79,13 +79,13 @@ class EmailService {
         </div>
         <p style="color: #666; font-size: 14px;">Undangan ini berlaku selama <strong>7 hari</strong>. Jika kamu tidak mengenal pengirim, abaikan email ini.</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p style="color: #999; font-size: 12px;">YN Project Manager</p>
+        <p style="color: #999; font-size: 12px;">YukNgaji Surabaya</p>
       </div>
     `;
 
     return this.sendMail({
       to: email,
-      subject: `Undangan Workspace "${workspaceName}" — YN Project Manager`,
+      subject: `Undangan Workspace "${workspaceName}" — YukNgaji Surabaya`,
       html,
     });
   }

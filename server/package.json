@@ -1,7 +1,7 @@
 {
   "name": "yn-project-manager-server",
   "version": "1.0.0",
-  "description": "Backend server untuk YN Project Manager",
+  "description": "Backend server untuk YukNgaji Surabaya",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
