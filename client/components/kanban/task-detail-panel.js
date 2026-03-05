@@ -47,6 +47,7 @@ import { TabDetail } from "./tab-detail";
 import { TabComment } from "./tab-comment";
 import { TabActivity } from "./tab-activity";
 import { PRIORITY_CONFIG } from "./task-card";
+import { useIsMobile } from "@/hooks/use-mobile";
 import api from "@/lib/api";
 
 export function TaskDetailPanel({
@@ -68,6 +69,7 @@ export function TaskDetailPanel({
 }) {
   const [activeTab, setActiveTab] = useState("detail");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleUpdate = useCallback(
     async (updates) => {
@@ -121,7 +123,10 @@ export function TaskDetailPanel({
         <SheetContent
           side="right"
           showCloseButton={false}
-          className="w-full sm:max-w-2xl p-0 flex flex-col"
+          className={cn(
+            "w-full p-0 flex flex-col",
+            isMobile ? "h-full sm:h-auto border-none" : "sm:max-w-2xl",
+          )}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-card/50">

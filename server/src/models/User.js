@@ -76,6 +76,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    pushSubscriptions: {
+      type: Array, // Array of push subscription objects
+      default: [],
+    },
   },
   {
     timestamps: true,

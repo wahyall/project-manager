@@ -439,45 +439,45 @@
 
 ### 6.1 Dashboard (Ref: `21-dashboard.md`)
 
-- [ ] **API**: `GET /api/workspaces/:id/dashboard` — Data teragregasi
-- [ ] **Frontend**: Halaman Dashboard (`/workspace/:id`)
-- [ ] **Frontend**: Header welcome
-- [ ] **Frontend**: Stats cards (task aktif, selesai minggu ini, overdue, event ongoing)
-- [ ] **Frontend**: My Tasks — daftar task saya (sortir due date)
-- [ ] **Frontend**: Event Mendatang & Berlangsung
-- [ ] **Frontend**: Aktivitas Terkini (10 terakhir)
-- [ ] **Frontend**: Member Online (avatar stack)
-- [ ] **Frontend**: Auto refresh (polling 60 detik)
+- [x] **API**: `GET /api/workspaces/:id/dashboard` — Data teragregasi
+- [x] **Frontend**: Halaman Dashboard (`/workspace/:id`)
+- [x] **Frontend**: Header welcome
+- [x] **Frontend**: Stats cards (task aktif, selesai minggu ini, overdue, event ongoing)
+- [x] **Frontend**: My Tasks — daftar task saya (sortir due date)
+- [x] **Frontend**: Event Mendatang & Berlangsung
+- [x] **Frontend**: Aktivitas Terkini (10 terakhir)
+- [x] **Frontend**: Member Online (avatar stack)
+- [x] **Frontend**: Auto refresh (polling 60 detik)
 - [ ] **Test**: Test dashboard API
 
 ### 6.2 Mobile Responsive (Ref: `20-mobile-responsive-pwa.md`)
 
-- [ ] **Frontend**: Bottom Navigation Bar (mobile)
-- [ ] **Frontend**: Menu "Lainnya" (drawer)
-- [ ] **Frontend**: Kanban — 1 kolom per view, swipe antar kolom
-- [ ] **Frontend**: Kalender — mode harian default, dot indicator bulanan
-- [ ] **Frontend**: Spreadsheet — horizontal scroll, freeze kolom 1, modal edit cell
-- [ ] **Frontend**: Brainstorming — view-only + pinch-to-zoom, edit terbatas
-- [ ] **Frontend**: Detail Task — halaman penuh (bukan side panel)
-- [ ] **Frontend**: Notifikasi — full-width panel
-- [ ] **Frontend**: Pull-to-Refresh di semua halaman list
-- [ ] **Frontend**: Swipe to Dismiss notifikasi
-- [ ] **Frontend**: Long press untuk drag task di mobile
-- [ ] **Frontend**: Responsive breakpoints (mobile ≤768, tablet 769-1024, desktop >1024)
-- [ ] **Test**: Responsive testing (Chrome DevTools + real device)
+- [x] **Frontend**: Bottom Navigation Bar (mobile)
+- [x] **Frontend**: Menu "Lainnya" (drawer)
+- [x] **Frontend**: Kanban — 1 kolom per view, swipe antar kolom
+- [x] **Frontend**: Kalender — mode harian default, dot indicator bulanan
+- [x] **Frontend**: Spreadsheet — horizontal scroll, freeze kolom 1, modal edit cell
+- [x] **Frontend**: Brainstorming — view-only + pinch-to-zoom, edit terbatas
+- [x] **Frontend**: Detail Task — halaman penuh (bukan side panel)
+- [x] **Frontend**: Notifikasi — full-width panel
+- [x] **Frontend**: Pull-to-Refresh di semua halaman list
+- [x] **Frontend**: Swipe to Dismiss notifikasi
+- [x] **Frontend**: Long press untuk drag task di mobile
+- [x] **Frontend**: Responsive breakpoints (mobile ≤768, tablet 769-1024, desktop >1024)
+- [x] **Test**: Responsive testing (Chrome DevTools + real device)
 
 ### 6.3 PWA (Ref: `20-mobile-responsive-pwa.md`)
 
-- [ ] **Frontend**: `manifest.json` (name, icons, display standalone)
-- [ ] **Frontend**: Service Worker (caching app shell, static assets)
-- [ ] **Frontend**: Offline cache — network first with cache fallback untuk API
-- [ ] **Frontend**: Offline banner "Menampilkan data tersimpan"
-- [ ] **Frontend**: Disable create/edit saat offline
-- [ ] **Frontend**: Push notification (Web Push API, VAPID keys)
-- [ ] **Backend**: Push subscription storage & send push notifications
-- [ ] **Frontend**: Install prompt "Instal Aplikasi"
-- [ ] **Frontend**: Splash screen
-- [ ] **Frontend**: Meta tags mobile (viewport, theme-color, apple-mobile)
+- [x] **Frontend**: `manifest.json` (name, icons, display standalone)
+- [x] **Frontend**: Service Worker (caching app shell, static assets)
+- [x] **Frontend**: Offline cache — network first with cache fallback untuk API
+- [x] **Frontend**: Offline banner "Menampilkan data tersimpan"
+- [x] **Frontend**: Disable create/edit saat offline
+- [x] **Frontend**: Push notification (Web Push API, VAPID keys)
+- [x] **Backend**: Push subscription storage & send push notifications
+- [x] **Frontend**: Install prompt "Instal Aplikasi"
+- [x] **Frontend**: Splash screen
+- [x] **Frontend**: Meta tags mobile (viewport, theme-color, apple-mobile)
 - [ ] **Test**: PWA audit (Lighthouse)
 
 ### 6.4 Dark Mode (Ref: `22-dark-mode-keyboard-shortcuts.md`)

@@ -56,20 +56,41 @@ app.get("/api/health", (req, res) => {
 // API Routes
 // ────────────────────────────────────────────────────
 
-app.use("/api/auth", require("./routes/auth.routes"));
-app.use("/api/workspaces", require("./routes/workspace.routes"));
-app.use("/api/users", require("./routes/user.routes"));
-app.use("/api/workspaces/:id/tasks", require("./routes/task.routes"));
-app.use("/api/workspaces/:id/labels", require("./routes/label.routes"));
-app.use("/api/workspaces/:id/calendar", require("./routes/calendar.routes"));
-app.use("/api/workspaces/:id/events", require("./routes/event.routes"));
-app.use("/api/workspaces/:id/activity", require("./routes/activity.routes"));
-app.use("/api/workspaces/:id/export", require("./routes/export.routes"));
-app.use("/api/workspaces/:id/boards", require("./routes/board.routes"));
-app.use("/api/export-jobs", require("./routes/exportJob.routes"));
-app.use("/api/notifications", require("./routes/notification.routes"));
-app.use("/api/comments", require("./routes/comment.routes"));
-app.use("/api/admin/whatsapp", require("./routes/whatsapp.routes"));
+const authRoutes = require("./routes/auth.routes");
+const workspaceRoutes = require("./routes/workspace.routes");
+const userRoutes = require("./routes/user.routes");
+const taskRoutes = require("./routes/task.routes");
+const labelRoutes = require("./routes/label.routes");
+const calendarRoutes = require("./routes/calendar.routes");
+const eventRoutes = require("./routes/event.routes");
+const activityRoutes = require("./routes/activity.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
+const exportRoutes = require("./routes/export.routes");
+const boardRoutes = require("./routes/board.routes");
+const exportJobRoutes = require("./routes/exportJob.routes");
+const notificationRoutes = require("./routes/notification.routes");
+const commentRoutes = require("./routes/comment.routes");
+const whatsappRoutes = require("./routes/whatsapp.routes");
+const pushRoutes = require("./routes/push.routes");
+const spreadsheetRoutes = require("./routes/spreadsheet.routes");
+
+app.use("/api/auth", authRoutes);
+app.use("/api/workspaces", workspaceRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/workspaces/:id/tasks", taskRoutes);
+app.use("/api/workspaces/:id/labels", labelRoutes);
+app.use("/api/workspaces/:id/calendar", calendarRoutes);
+app.use("/api/workspaces/:id/events", eventRoutes);
+app.use("/api/workspaces/:id/activity", activityRoutes);
+app.use("/api/workspaces/:id/dashboard", dashboardRoutes);
+app.use("/api/workspaces/:id/export", exportRoutes);
+app.use("/api/workspaces/:id/boards", boardRoutes);
+app.use("/api/export-jobs", exportJobRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/comments", commentRoutes);
+app.use("/api/admin/whatsapp", whatsappRoutes);
+app.use("/api/push", pushRoutes);
+app.use("/api/spreadsheets", spreadsheetRoutes);
 
 // ────────────────────────────────────────────────────
 // 404 Handler

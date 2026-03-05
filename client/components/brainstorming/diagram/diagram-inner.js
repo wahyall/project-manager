@@ -15,6 +15,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { DiagramNode, DEFAULT_NODE_STYLES } from "./diagram-node";
 import { DiagramEdge } from "./diagram-edge";
@@ -45,6 +46,7 @@ export function DiagramInner({
 }) {
   const { fitView, screenToFlowPosition, zoomIn, zoomOut, getZoom } =
     useReactFlow();
+  const isMobile = useIsMobile();
 
   // ── Parse initial data ─────────────────────────────
   const initialNodes = useMemo(() => {
@@ -648,6 +650,12 @@ export function DiagramInner({
         setEdgeMenu(null);
       }}
     >
+      {isMobile && !isPreview && isFullscreen && (
+        <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-amber-100 text-amber-800 text-[10px] px-3 py-1 rounded-full shadow-sm whitespace-nowrap opacity-90 border border-amber-200">
+          Gunakan desktop untuk pengalaman edit penuh
+        </div>
+      )}
+
       <DiagramToolbar
         onAutoArrange={handleAutoArrange}
         onExport={onExport}
@@ -818,13 +826,13 @@ export function DiagramInner({
         defaultEdgeOptions={{ type: "diagramEdge" }}
         fitView
         minZoom={0.2}
-        panOnScroll={!isPreview}
-        zoomOnScroll={!isPreview}
-        panOnDrag={!isPreview}
+        panOnScroll={!isPreview && isMobile}
+        zoomOnScroll={!isPreview && !isMobile}
+        panOnDrag={!isPreview && !isMobile}
         zoomOnPinch={!isPreview}
-        nodesDraggable={!isPreview}
-        nodesConnectable={!isPreview}
-        elementsSelectable={!isPreview}
+        nodesDraggable={!isPreview && !isMobile}
+        nodesConnectable={!isPreview && !isMobile}
+        elementsSelectable={!isPreview && !isMobile}
         connectionMode="loose"
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />

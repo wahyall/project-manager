@@ -10,6 +10,9 @@ import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationPanel } from "@/components/notifications/notification-panel";
 import { AppSidebar } from "@/components/app-sidebar";
+import { BottomNav } from "@/components/bottom-nav";
+import { MoreDrawer } from "@/components/more-drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   SidebarProvider,
   SidebarInset,
@@ -148,6 +151,7 @@ export default function WorkspaceLayout({ children, params }) {
   const { currentWorkspace, setCurrentWorkspace, workspaces, loading } =
     useWorkspace();
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   // Load workspace and connect socket
   useEffect(() => {
@@ -210,9 +214,16 @@ export default function WorkspaceLayout({ children, params }) {
     <ProtectedRoute>
       <SidebarProvider>
         <AppSidebar workspaceId={id} workspace={currentWorkspace} />
-        <SidebarInset>
+        <SidebarInset className="relative">
           <Topbar workspace={currentWorkspace} workspaceId={id} />
-          <div className="flex-1 overflow-y-auto">{children}</div>
+          <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">{children}</div>
+          <BottomNav workspaceId={id} onMoreClick={() => setIsMoreOpen(true)} />
+          <MoreDrawer
+            open={isMoreOpen}
+            onOpenChange={setIsMoreOpen}
+            workspaceId={id}
+            workspace={currentWorkspace}
+          />
         </SidebarInset>
       </SidebarProvider>
     </ProtectedRoute>

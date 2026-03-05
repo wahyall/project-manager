@@ -73,7 +73,7 @@ export function KanbanBoard({
         moveTask(taskId, destColumnId, newOrder);
       }
     },
-    [tasksByColumn, moveTask, reorderInColumn]
+    [tasksByColumn, moveTask, reorderInColumn],
   );
 
   if (loading) {
@@ -86,24 +86,28 @@ export function KanbanBoard({
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar-thin h-full">
+      <div className="flex gap-4 overflow-x-auto pb-4 px-1 scrollbar-thin h-full snap-x snap-mandatory">
         {columns.map((column) => {
           const meta = columnMeta?.[column._id];
           return (
-            <KanbanColumn
+            <div
               key={column._id}
-              column={column}
-              tasks={tasksByColumn[column._id] || []}
-              totalCount={meta?.total}
-              hasMore={meta?.hasMore || false}
-              columnLoading={meta?.loading || false}
-              doneColumnIds={doneColumnIds}
-              selectedTaskIds={selectedTaskIds}
-              onToggleSelect={onToggleSelect}
-              onTaskClick={onTaskClick}
-              onQuickCreate={onQuickCreate}
-              onLoadMore={onLoadMore}
-            />
+              className="min-w-[85vw] sm:min-w-[320px] snap-center h-full"
+            >
+              <KanbanColumn
+                column={column}
+                tasks={tasksByColumn[column._id] || []}
+                totalCount={meta?.total}
+                hasMore={meta?.hasMore || false}
+                columnLoading={meta?.loading || false}
+                doneColumnIds={doneColumnIds}
+                selectedTaskIds={selectedTaskIds}
+                onToggleSelect={onToggleSelect}
+                onTaskClick={onTaskClick}
+                onQuickCreate={onQuickCreate}
+                onLoadMore={onLoadMore}
+              />
+            </div>
           );
         })}
       </div>

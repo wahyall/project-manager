@@ -9,6 +9,7 @@ import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { QuickCreateModal } from "@/components/kanban/quick-create-modal";
 import { TaskDetailPanel } from "@/components/kanban/task-detail-panel";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -35,10 +36,22 @@ export default function CalendarPage({ params }) {
 
   // ── Calendar hook ──────────────────────────────
   const calendar = useCalendar(workspaceId, currentWorkspace);
+  const isMobile = useIsMobile();
 
   // ── View state ─────────────────────────────────
   const [currentView, setCurrentView] = useState("dayGridMonth");
   const [calendarTitle, setCalendarTitle] = useState("");
+
+  // Initialize view based on mobile breakpoint
+  useEffect(() => {
+    if (isMobile) {
+      setCurrentView("timeGridDay");
+      calendarViewRef.current?.changeView("timeGridDay");
+    } else {
+      setCurrentView("dayGridMonth");
+      calendarViewRef.current?.changeView("dayGridMonth");
+    }
+  }, [isMobile]);
 
   // ── Calendar component ref ─────────────────────
   const calendarViewRef = useRef(null);
@@ -87,7 +100,7 @@ export default function CalendarPage({ params }) {
         setCalendarTitle(calendarViewRef.current?.getTitle() || "");
       }, 0);
     },
-    [calendar.setDateRange]
+    [calendar.setDateRange],
   );
 
   // ── Date click → open quick create with prefilled due date ──
@@ -108,7 +121,7 @@ export default function CalendarPage({ params }) {
       // Otherwise it's a task → open detail panel
       calendar.setActiveTaskId(fcEventId);
     },
-    [calendar.setActiveTaskId, router, workspaceId]
+    [calendar.setActiveTaskId, router, workspaceId],
   );
 
   // ── Drag → update dates ────────────────────────
@@ -117,7 +130,7 @@ export default function CalendarPage({ params }) {
       calendar.updateTaskDates(taskId, newStart, newEnd);
       toast.success("Tanggal task diperbarui");
     },
-    [calendar.updateTaskDates]
+    [calendar.updateTaskDates],
   );
 
   const handleEventResize = useCallback(
@@ -125,7 +138,7 @@ export default function CalendarPage({ params }) {
       calendar.updateTaskDates(taskId, newStart, newEnd);
       toast.success("Rentang waktu task diperbarui");
     },
-    [calendar.updateTaskDates]
+    [calendar.updateTaskDates],
   );
 
   // ── Create task handler ────────────────────────
@@ -134,7 +147,7 @@ export default function CalendarPage({ params }) {
       try {
         const { data } = await api.post(
           `/workspaces/${workspaceId}/tasks`,
-          taskData
+          taskData,
         );
         toast.success("Task berhasil dibuat");
         calendar.refetch();
@@ -144,7 +157,7 @@ export default function CalendarPage({ params }) {
         throw err;
       }
     },
-    [workspaceId, calendar]
+    [workspaceId, calendar],
   );
 
   // ── Task detail panel handlers ─────────────────
@@ -158,7 +171,7 @@ export default function CalendarPage({ params }) {
         throw err;
       }
     },
-    [workspaceId, calendar]
+    [workspaceId, calendar],
   );
 
   const handleDeleteTask = useCallback(
@@ -172,7 +185,7 @@ export default function CalendarPage({ params }) {
         toast.error("Gagal menghapus task");
       }
     },
-    [workspaceId, calendar]
+    [workspaceId, calendar],
   );
 
   const handleArchiveTask = useCallback(
@@ -186,22 +199,20 @@ export default function CalendarPage({ params }) {
         toast.error("Gagal mengarsipkan task");
       }
     },
-    [workspaceId, calendar]
+    [workspaceId, calendar],
   );
 
   const handleUnarchiveTask = useCallback(
     async (taskId) => {
       try {
-        await api.post(
-          `/workspaces/${workspaceId}/tasks/${taskId}/unarchive`
-        );
+        await api.post(`/workspaces/${workspaceId}/tasks/${taskId}/unarchive`);
         calendar.refetch();
         toast.success("Task berhasil diunarsipkan");
       } catch (err) {
         toast.error("Gagal membatalkan arsip");
       }
     },
-    [workspaceId, calendar]
+    [workspaceId, calendar],
   );
 
   const handleWatchTask = useCallback(
@@ -214,7 +225,7 @@ export default function CalendarPage({ params }) {
         toast.error("Gagal menjadi watcher");
       }
     },
-    [workspaceId, calendar]
+    [workspaceId, calendar],
   );
 
   const handleUnwatchTask = useCallback(
@@ -227,7 +238,7 @@ export default function CalendarPage({ params }) {
         toast.error("Gagal berhenti menjadi watcher");
       }
     },
-    [workspaceId, calendar]
+    [workspaceId, calendar],
   );
 
   // ── Keyboard shortcuts ─────────────────────────
@@ -317,8 +328,8 @@ export default function CalendarPage({ params }) {
                   Buat task baru
                 </p>
                 <p>
-                  <kbd className="px-1 rounded bg-muted text-[10px]">T</kbd>{" "}
-                  Ke hari ini
+                  <kbd className="px-1 rounded bg-muted text-[10px]">T</kbd> Ke
+                  hari ini
                 </p>
                 <p>
                   <kbd className="px-1 rounded bg-muted text-[10px]">Esc</kbd>{" "}
