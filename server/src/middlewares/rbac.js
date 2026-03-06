@@ -12,7 +12,10 @@ const AppError = require("../utils/AppError");
  *   workspaceMember("owner", "admin")    → hanya owner dan admin
  *   workspaceMember("owner")             → hanya owner
  */
-const workspaceMember = (...allowedRoles) => {
+const workspaceMember = (...roles) => {
+  const allowedRoles =
+    roles.length === 1 && Array.isArray(roles[0]) ? roles[0] : roles;
+
   return async (req, res, next) => {
     try {
       const workspaceId = req.params.id || req.params.workspaceId;
@@ -35,9 +38,7 @@ const workspaceMember = (...allowedRoles) => {
       );
 
       if (!membership) {
-        return next(
-          new AppError("Kamu bukan member workspace ini", 403),
-        );
+        return next(new AppError("Kamu bukan member workspace ini", 403));
       }
 
       // Cek role jika ada batasan
@@ -57,6 +58,8 @@ const workspaceMember = (...allowedRoles) => {
     }
   };
 };
+
+const requireRole = workspaceMember;
 
 /**
  * Middleware: Verifikasi user bisa manage member target
@@ -88,7 +91,10 @@ const canManageMember = async (req, res, next) => {
     // Admin tidak bisa manage Owner atau sesama Admin
     if (actorMembership.role === "admin" && targetLevel >= actorLevel) {
       return next(
-        new AppError("Kamu tidak bisa mengelola user dengan role yang sama atau lebih tinggi", 403),
+        new AppError(
+          "Kamu tidak bisa mengelola user dengan role yang sama atau lebih tinggi",
+          403,
+        ),
       );
     }
 
@@ -99,5 +105,4 @@ const canManageMember = async (req, res, next) => {
   }
 };
 
-module.exports = { workspaceMember, canManageMember };
-
+module.exports = { workspaceMember, requireRole, canManageMember };
