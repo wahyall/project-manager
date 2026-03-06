@@ -8,6 +8,7 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "@ag-ui/core": "^0.0.47",
     "@copilotkit/backend": "^0.37.0",
     "@copilotkit/shared": "^1.53.0",
     "@google/generative-ai": "^0.24.1",
