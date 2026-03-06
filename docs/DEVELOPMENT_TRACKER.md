@@ -529,12 +529,14 @@
 - [ ] **Service**: `EmbeddingService.syncWorkspace()` — full re-index seluruh workspace
 - [ ] **Service**: `RAGService.retrieve()` — vector similarity search (workspace-scoped, top-K)
 - [ ] **Service**: `RAGService.buildContext()` — gabungkan dokumen relevan jadi context string
+- [ ] **Integrasi**: Hook embedding sync di Label controller (create, update, delete)
 - [ ] **Integrasi**: Hook embedding sync di Task controller (create, update, delete)
 - [ ] **Integrasi**: Hook embedding sync di Event controller (create, update, delete)
 - [ ] **Integrasi**: Hook embedding sync di Workspace controller (member join/leave/role change)
 - [ ] **Integrasi**: Hook embedding sync di Comment controller (create, edit, delete)
 - [ ] **Integrasi**: Hook embedding sync di Activity Log service (log created)
 - [ ] **Integrasi**: Hook embedding sync di Spreadsheet controller (sheet/column update)
+- [ ] **Integrasi**: Hook embedding sync di Brainstorming Board controller (brainstorming update)
 - [ ] **Cron**: Re-index workspace harian (opsional, fallback, 03:00)
 - [ ] **API**: `POST /api/workspaces/:id/embeddings/sync` — Trigger manual re-index (Admin+)
 - [ ] **API**: `GET /api/workspaces/:id/embeddings/stats` — Statistik embeddings per tipe (Admin+)

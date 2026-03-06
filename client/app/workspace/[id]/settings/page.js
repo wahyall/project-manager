@@ -3,10 +3,11 @@
 import { use } from "react";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Users, Columns3 } from "lucide-react";
+import { Settings, Users, Columns3, Tags } from "lucide-react";
 import GeneralTab from "./general-tab";
 import MembersTab from "./members-tab";
 import KanbanTab from "./kanban-tab";
+import LabelsTab from "./labels-tab";
 
 export default function WorkspaceSettingsPage({ params }) {
   const { id } = use(params);
@@ -35,7 +36,7 @@ export default function WorkspaceSettingsPage({ params }) {
 
       {/* Settings tabs */}
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList className="grid w-full grid-cols-4 max-w-xl">
           <TabsTrigger value="general" className="gap-2">
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Umum</span>
@@ -43,6 +44,10 @@ export default function WorkspaceSettingsPage({ params }) {
           <TabsTrigger value="members" className="gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Member</span>
+          </TabsTrigger>
+          <TabsTrigger value="labels" className="gap-2">
+            <Tags className="h-4 w-4" />
+            <span className="hidden sm:inline">Label</span>
           </TabsTrigger>
           {isAdminOrOwner && (
             <TabsTrigger value="kanban" className="gap-2">
@@ -64,6 +69,10 @@ export default function WorkspaceSettingsPage({ params }) {
             workspace={currentWorkspace}
             isAdminOrOwner={isAdminOrOwner}
           />
+        </TabsContent>
+
+        <TabsContent value="labels">
+          <LabelsTab workspace={currentWorkspace} />
         </TabsContent>
 
         {isAdminOrOwner && (
