@@ -8,6 +8,7 @@ const AppError = require("../utils/AppError");
 const catchAsync = require("../utils/catchAsync");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
+const EmbeddingService = require("../services/embedding.service");
 
 // ──────────────────────────────────────────────
 // GET /api/workspaces — Daftar workspace user
@@ -469,6 +470,15 @@ exports.joinViaLink = catchAsync(async (req, res, next) => {
     url: `/workspace/${workspace._id}/members`,
   });
 
+  // Embedding sync — new member (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "member",
+    sourceId: userId,
+    content: EmbeddingService._buildMemberContent({ role: "member" }, user),
+    metadata: { title: user.name },
+  }).catch(() => {});
+
   res.status(200).json({
     status: "success",
     message: `Berhasil bergabung ke workspace "${workspace.name}"`,
@@ -609,6 +619,15 @@ exports.changeMemberRole = catchAsync(async (req, res, next) => {
     details: { field: "role", newValue: newRole },
   });
 
+  // Embedding sync — role changed (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: req.workspace._id,
+    sourceType: "member",
+    sourceId: targetMembership.userId,
+    content: EmbeddingService._buildMemberContent({ role: newRole }, null),
+    metadata: { title: newRole },
+  }).catch(() => {});
+
   res.status(200).json({
     status: "success",
     data: { member: targetMembership },
@@ -648,6 +667,13 @@ exports.removeMember = catchAsync(async (req, res, next) => {
     targetName: req.workspace.name,
   });
 
+  // Embedding remove — member removed (fire-and-forget)
+  EmbeddingService.remove({
+    sourceType: "member",
+    sourceId: targetMembership.userId,
+    workspaceId: req.workspace._id,
+  }).catch(() => {});
+
   res.status(200).json({
     status: "success",
     message: "Member berhasil dikeluarkan",
@@ -680,6 +706,13 @@ exports.leaveWorkspace = catchAsync(async (req, res, next) => {
     targetId: req.workspace._id,
     targetName: req.workspace.name,
   });
+
+  // Embedding remove — member left (fire-and-forget)
+  EmbeddingService.remove({
+    sourceType: "member",
+    sourceId: req.user.id,
+    workspaceId: req.workspace._id,
+  }).catch(() => {});
 
   res.status(200).json({
     status: "success",

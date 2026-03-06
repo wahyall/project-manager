@@ -8,6 +8,7 @@ const logger = require("./src/utils/logger");
 
 const startDueDateReminderJob = require("./src/jobs/dueDateReminder.job");
 const startEventReminderJob = require("./src/jobs/eventStartReminder.job");
+const startEmbeddingReindexJob = require("./src/jobs/embeddingReindex.job");
 const whatsappService = require("./src/services/whatsapp.service");
 
 const PORT = process.env.PORT || 5000;
@@ -37,7 +38,10 @@ const startServer = async () => {
     // Start cron jobs
     startDueDateReminderJob();
     startEventReminderJob();
-    logger.info("Cron jobs started: Due Date Reminders, Event Start Reminders");
+    startEmbeddingReindexJob();
+    logger.info(
+      "Cron jobs started: Due Date Reminders, Event Start Reminders, Embedding Reindex",
+    );
   });
 
   // Graceful shutdown

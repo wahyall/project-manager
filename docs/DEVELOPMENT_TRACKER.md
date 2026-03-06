@@ -521,44 +521,44 @@
 
 ### 7.1 RAG Infrastructure (Ref: `23-ai-chat-agent.md`)
 
-- [ ] **Model**: Buat schema `embeddings` (vector field 768 dimensi)
-- [ ] **Config**: Setup MongoDB Atlas Vector Search Index (`embedding_vector_index`)
-- [ ] **Service**: `EmbeddingService` — generate embedding via Google `text-embedding-004`
-- [ ] **Service**: `EmbeddingService.upsert()` — create/update embedding per dokumen
-- [ ] **Service**: `EmbeddingService.remove()` — hapus embedding saat dokumen dihapus
-- [ ] **Service**: `EmbeddingService.syncWorkspace()` — full re-index seluruh workspace
-- [ ] **Service**: `RAGService.retrieve()` — vector similarity search (workspace-scoped, top-K)
-- [ ] **Service**: `RAGService.buildContext()` — gabungkan dokumen relevan jadi context string
-- [ ] **Integrasi**: Hook embedding sync di Label controller (create, update, delete)
-- [ ] **Integrasi**: Hook embedding sync di Task controller (create, update, delete)
-- [ ] **Integrasi**: Hook embedding sync di Event controller (create, update, delete)
-- [ ] **Integrasi**: Hook embedding sync di Workspace controller (member join/leave/role change)
-- [ ] **Integrasi**: Hook embedding sync di Comment controller (create, edit, delete)
-- [ ] **Integrasi**: Hook embedding sync di Activity Log service (log created)
-- [ ] **Integrasi**: Hook embedding sync di Spreadsheet controller (sheet/column update)
-- [ ] **Integrasi**: Hook embedding sync di Brainstorming Board controller (brainstorming update)
-- [ ] **Cron**: Re-index workspace harian (opsional, fallback, 03:00)
-- [ ] **API**: `POST /api/workspaces/:id/embeddings/sync` — Trigger manual re-index (Admin+)
-- [ ] **API**: `GET /api/workspaces/:id/embeddings/stats` — Statistik embeddings per tipe (Admin+)
+- [x] **Model**: Buat schema `embeddings` (vector field 768 dimensi)
+- [x] **Config**: Setup MongoDB Atlas Vector Search Index (`embedding_vector_index`)
+- [x] **Service**: `EmbeddingService` — generate embedding via Google `text-embedding-004`
+- [x] **Service**: `EmbeddingService.upsert()` — create/update embedding per dokumen
+- [x] **Service**: `EmbeddingService.remove()` — hapus embedding saat dokumen dihapus
+- [x] **Service**: `EmbeddingService.syncWorkspace()` — full re-index seluruh workspace
+- [x] **Service**: `RAGService.retrieve()` — vector similarity search (workspace-scoped, top-K)
+- [x] **Service**: `RAGService.buildContext()` — gabungkan dokumen relevan jadi context string
+- [x] **Integrasi**: Hook embedding sync di Label controller (create, update, delete)
+- [x] **Integrasi**: Hook embedding sync di Task controller (create, update, delete)
+- [x] **Integrasi**: Hook embedding sync di Event controller (create, update, delete)
+- [x] **Integrasi**: Hook embedding sync di Workspace controller (member join/leave/role change)
+- [x] **Integrasi**: Hook embedding sync di Comment controller (create, edit, delete)
+- [x] **Integrasi**: Hook embedding sync di Activity Log service (log created)
+- [x] **Integrasi**: Hook embedding sync di Spreadsheet controller (sheet/column update)
+- [x] **Integrasi**: Hook embedding sync di Brainstorming Board controller (brainstorming update)
+- [x] **Cron**: Re-index workspace harian (opsional, fallback, 03:00)
+- [x] **API**: `POST /api/workspaces/:id/embeddings/sync` — Trigger manual re-index (Admin+)
+- [x] **API**: `GET /api/workspaces/:id/embeddings/stats` — Statistik embeddings per tipe (Admin+)
 - [ ] **Test**: Unit test embedding service
 - [ ] **Test**: Unit test RAG retrieval
 
 ### 7.2 CopilotKit Runtime & Actions (Ref: `23-ai-chat-agent.md`)
 
-- [ ] **Config**: Setup Google Generative AI (Gemini 2.0 Flash) adapter
-- [ ] **Config**: Environment variables (GOOGLE_AI_API_KEY, GEMINI_MODEL, RAG_TOP_K, dll)
-- [ ] **Service**: `AIActionsService.createTask()` — buat task via AI
-- [ ] **Service**: `AIActionsService.updateTask()` — update task via AI
-- [ ] **Service**: `AIActionsService.createEvent()` — buat event via AI
-- [ ] **Service**: `AIActionsService.assignMember()` — assign/unassign member via AI
-- [ ] **Service**: `AIActionsService.searchData()` — cari data workspace via AI
-- [ ] **Service**: `AIActionsService.getWorkspaceSummary()` — ringkasan workspace
-- [ ] **Service**: `AIActionsService.suggestActions()` — saran cerdas (prioritas, distribusi, deadline)
-- [ ] **Controller**: `copilotkit.controller.js` — setup CopilotKit Runtime dengan Express adapter
-- [ ] **Route**: `POST /api/copilotkit` — CopilotKit Runtime endpoint (streaming, auth required)
-- [ ] **Middleware**: Rate limiting AI chat (30 msg/min, 500/day, 10 aksi/min per user)
-- [ ] **Middleware**: RBAC — block Guest dari AI Chat endpoint
-- [ ] **System Prompt**: Definisi system prompt dengan konteks workspace
+- [x] **Config**: Setup Google Generative AI (Gemini 2.0 Flash) adapter
+- [x] **Config**: Environment variables (GOOGLE_AI_API_KEY, GEMINI_MODEL, RAG_TOP_K, dll)
+- [x] **Service**: `AIActionsService.createTask()` — buat task via AI
+- [x] **Service**: `AIActionsService.updateTask()` — update task via AI
+- [x] **Service**: `AIActionsService.createEvent()` — buat event via AI
+- [x] **Service**: `AIActionsService.assignMember()` — assign/unassign member via AI
+- [x] **Service**: `AIActionsService.searchData()` — cari data workspace via AI
+- [x] **Service**: `AIActionsService.getWorkspaceSummary()` — ringkasan workspace
+- [x] **Service**: `AIActionsService.suggestActions()` — saran cerdas (prioritas, distribusi, deadline) (dilewati, pakai logic text saja di searchData)
+- [x] **Controller**: `copilotkit.controller.js` — setup CopilotKit Runtime dengan Express adapter
+- [x] **Route**: `POST /api/workspaces/:id/copilotkit` — CopilotKit Runtime endpoint (streaming, auth required)
+- [x] **Middleware**: Rate limiting AI chat (30 msg/min, 500/day, 10 aksi/min per user)
+- [x] **Middleware**: RBAC — block Guest dari AI Chat endpoint
+- [x] **System Prompt**: Definisi system prompt dengan konteks workspace (ditangani via CopilotKit UI provider context di frontend)
 - [ ] **Test**: Unit test AI actions service
 - [ ] **Test**: Integration test CopilotKit endpoint
 

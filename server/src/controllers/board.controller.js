@@ -6,6 +6,7 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
+const EmbeddingService = require("../services/embedding.service");
 
 // Helper: get Socket.io instance (safe)
 function getIO() {
@@ -131,6 +132,21 @@ exports.createBoard = catchAsync(async (req, res, next) => {
     targetName: board.name,
   });
 
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "board",
+    sourceId: board._id,
+    content: EmbeddingService._buildBoardContent(
+      populatedBoard,
+      populatedBoard.createdBy?.name,
+    ),
+    metadata: {
+      title: board.name,
+      sourceUrl: `/workspace/${workspace._id}/brainstorming/${board._id}`,
+    },
+  }).catch(() => {});
+
   res.status(201).json({
     status: "success",
     data: { board: { ...populatedBoard, widgetCount: 0 } },
@@ -218,6 +234,21 @@ exports.updateBoard = catchAsync(async (req, res, next) => {
     targetName: board.name,
   });
 
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "board",
+    sourceId: board._id,
+    content: EmbeddingService._buildBoardContent(
+      populatedBoard,
+      populatedBoard.createdBy?.name,
+    ),
+    metadata: {
+      title: board.name,
+      sourceUrl: `/workspace/${workspace._id}/brainstorming/${board._id}`,
+    },
+  }).catch(() => {});
+
   res.status(200).json({
     status: "success",
     data: { board: populatedBoard },
@@ -260,6 +291,13 @@ exports.deleteBoard = catchAsync(async (req, res, next) => {
     targetId: board._id,
     targetName: board.name,
   });
+
+  // Embedding remove (fire-and-forget)
+  EmbeddingService.remove({
+    sourceType: "board",
+    sourceId: board._id,
+    workspaceId: workspace._id,
+  }).catch(() => {});
 
   res.status(200).json({
     status: "success",

@@ -11,6 +11,7 @@ const {
 } = require("../services/task.service");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
+const EmbeddingService = require("../services/embedding.service");
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -280,6 +281,21 @@ exports.createTask = catchAsync(async (req, res, next) => {
       // Description is not JSON string with mentions, ignore
     }
   }
+
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "task",
+    sourceId: task._id,
+    content: EmbeddingService._buildTaskContent(populatedTask),
+    metadata: {
+      title: task.title,
+      status: task.columnId?.toString(),
+      assignees: populatedTask.assignees?.map((a) => a.name) || [],
+      priority: task.priority,
+      sourceUrl: `/workspace/${workspace._id}/tasks/${task._id}`,
+    },
+  }).catch(() => {});
 
   res.status(201).json({
     status: "success",
@@ -625,6 +641,21 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     }
   }
 
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "task",
+    sourceId: task._id,
+    content: EmbeddingService._buildTaskContent(populatedTask),
+    metadata: {
+      title: task.title,
+      status: task.columnId?.toString(),
+      assignees: populatedTask.assignees?.map((a) => a.name) || [],
+      priority: task.priority,
+      sourceUrl: `/workspace/${workspace._id}/tasks/${task._id}`,
+    },
+  }).catch(() => {});
+
   res.status(200).json({
     status: "success",
     data: { task: populatedTask },
@@ -678,6 +709,13 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
     targetId: task._id,
     targetName: task.title,
   });
+
+  // Embedding remove (fire-and-forget)
+  EmbeddingService.remove({
+    sourceType: "task",
+    sourceId: task._id,
+    workspaceId: workspace._id,
+  }).catch(() => {});
 
   res.status(200).json({
     status: "success",

@@ -2,6 +2,7 @@ const Comment = require("../models/Comment");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const { log: logActivity } = require("../services/activityLog.service");
+const EmbeddingService = require("../services/embedding.service");
 const { getIO } = require("../config/socket");
 const NotificationService = require("../services/notification.service");
 const mongoose = require("mongoose");
@@ -207,6 +208,17 @@ exports.createComment = catchAsync(async (req, res, next) => {
     }
   }
 
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId,
+    sourceType: "comment",
+    sourceId: comment._id,
+    content: EmbeddingService._buildCommentContent(comment),
+    metadata: {
+      sourceUrl: commentUrl,
+    },
+  }).catch(() => {});
+
   res.status(201).json({
     status: "success",
     data: {
@@ -255,6 +267,14 @@ exports.updateComment = catchAsync(async (req, res, next) => {
     targetId: comment._id,
     targetName: comment.content.substring(0, 50),
   });
+
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: comment.workspaceId,
+    sourceType: "comment",
+    sourceId: comment._id,
+    content: EmbeddingService._buildCommentContent(comment),
+  }).catch(() => {});
 
   res.status(200).json({
     status: "success",
@@ -308,6 +328,13 @@ exports.deleteComment = catchAsync(async (req, res, next) => {
     targetType: "comment",
     targetId: comment._id,
   });
+
+  // Embedding remove (fire-and-forget)
+  EmbeddingService.remove({
+    sourceType: "comment",
+    sourceId: comment._id,
+    workspaceId: comment.workspaceId,
+  }).catch(() => {});
 
   res.status(200).json({
     status: "success",

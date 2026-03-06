@@ -30,7 +30,7 @@ const log = async ({
   details = {},
 }) => {
   try {
-    await ActivityLog.create({
+    const logEntry = await ActivityLog.create({
       workspaceId,
       actorId,
       action,
@@ -45,6 +45,20 @@ const log = async ({
         contextName: details.contextName || null,
       },
     });
+
+    // Embedding sync (fire-and-forget, lazy-load to avoid circular dep)
+    try {
+      const EmbeddingService = require("./embedding.service");
+      EmbeddingService.upsert({
+        workspaceId,
+        sourceType: "activity",
+        sourceId: logEntry._id,
+        content: EmbeddingService._buildActivityContent(logEntry),
+        metadata: { sourceUrl: `/workspace/${workspaceId}/activity` },
+      }).catch(() => {});
+    } catch {
+      // EmbeddingService not available
+    }
   } catch (error) {
     // Log error tapi jangan gagalkan operasi utama
     console.error("[ActivityLog] Failed to create log:", error.message);

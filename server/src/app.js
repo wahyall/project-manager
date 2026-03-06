@@ -73,6 +73,8 @@ const commentRoutes = require("./routes/comment.routes");
 const whatsappRoutes = require("./routes/whatsapp.routes");
 const pushRoutes = require("./routes/push.routes");
 const spreadsheetRoutes = require("./routes/spreadsheet.routes");
+const embeddingRoutes = require("./routes/embedding.routes");
+const copilotkitRoutes = require("./routes/copilotkit.routes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
@@ -91,6 +93,8 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/admin/whatsapp", whatsappRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/spreadsheets", spreadsheetRoutes);
+app.use("/api/workspaces/:id/embeddings", embeddingRoutes);
+app.use("/api/workspaces/:id/copilotkit", copilotkitRoutes);
 
 // ────────────────────────────────────────────────────
 // 404 Handler

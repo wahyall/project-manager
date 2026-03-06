@@ -7,6 +7,7 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
+const EmbeddingService = require("../services/embedding.service");
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -288,6 +289,19 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     }
   }
 
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "event",
+    sourceId: event._id,
+    content: EmbeddingService._buildEventContent(populatedEvent),
+    metadata: {
+      title: event.title,
+      status: event.status,
+      sourceUrl: `/workspace/${workspace._id}/events/${event._id}`,
+    },
+  }).catch(() => {});
+
   res.status(201).json({
     status: "success",
     data: { event: populatedEvent },
@@ -464,6 +478,19 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
     }
   }
 
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "event",
+    sourceId: event._id,
+    content: EmbeddingService._buildEventContent(populatedEvent),
+    metadata: {
+      title: event.title,
+      status: event.status,
+      sourceUrl: `/workspace/${workspace._id}/events/${event._id}`,
+    },
+  }).catch(() => {});
+
   res.status(200).json({
     status: "success",
     data: { event: { ...populatedEvent, taskCount } },
@@ -524,6 +551,13 @@ exports.deleteEvent = catchAsync(async (req, res, next) => {
     targetId: event._id,
     targetName: event.title,
   });
+
+  // Embedding remove (fire-and-forget)
+  EmbeddingService.remove({
+    sourceType: "event",
+    sourceId: event._id,
+    workspaceId: workspace._id,
+  }).catch(() => {});
 
   res.status(200).json({
     status: "success",

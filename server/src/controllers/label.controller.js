@@ -2,6 +2,7 @@ const WorkspaceLabel = require("../models/WorkspaceLabel");
 const Task = require("../models/Task");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
+const EmbeddingService = require("../services/embedding.service");
 
 // ──────────────────────────────────────────────
 // GET /api/workspaces/:id/labels — Daftar label
@@ -52,6 +53,15 @@ exports.createLabel = catchAsync(async (req, res, next) => {
     color,
   });
 
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "label",
+    sourceId: label._id,
+    content: EmbeddingService._buildLabelContent(label),
+    metadata: { title: label.name },
+  }).catch(() => {});
+
   res.status(201).json({
     status: "success",
     data: { label },
@@ -97,6 +107,15 @@ exports.updateLabel = catchAsync(async (req, res, next) => {
 
   await label.save();
 
+  // Embedding sync (fire-and-forget)
+  EmbeddingService.upsert({
+    workspaceId: workspace._id,
+    sourceType: "label",
+    sourceId: label._id,
+    content: EmbeddingService._buildLabelContent(label),
+    metadata: { title: label.name },
+  }).catch(() => {});
+
   res.status(200).json({
     status: "success",
     data: { label },
@@ -126,6 +145,13 @@ exports.deleteLabel = catchAsync(async (req, res, next) => {
   );
 
   await label.deleteOne();
+
+  // Embedding remove (fire-and-forget)
+  EmbeddingService.remove({
+    sourceType: "label",
+    sourceId: label._id,
+    workspaceId: workspace._id,
+  }).catch(() => {});
 
   res.status(200).json({
     status: "success",
