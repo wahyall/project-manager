@@ -83,7 +83,6 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newDivName, setNewDivName] = useState("");
   const [newDivColor, setNewDivColor] = useState(DIVISION_COLORS[0]);
-  const [creating, setCreating] = useState(false);
 
   const [editingDiv, setEditingDiv] = useState(null);
   const [editName, setEditName] = useState("");
@@ -107,32 +106,26 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
 
   const handleCreate = async () => {
     if (!newDivName.trim()) return;
-    setCreating(true);
+    const name = newDivName.trim();
+    const color = newDivColor;
+    setNewDivName("");
+    setNewDivColor(DIVISION_COLORS[0]);
+    setShowCreateForm(false);
     try {
-      await createDivision({
-        name: newDivName.trim(),
-        color: newDivColor,
-      });
-      setNewDivName("");
-      setNewDivColor(DIVISION_COLORS[0]);
-      setShowCreateForm(false);
+      await createDivision({ name, color });
       toast.success("Divisi berhasil dibuat");
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal membuat divisi");
-    } finally {
-      setCreating(false);
     }
   };
 
   const handleUpdate = async (divisionId) => {
     if (!editName.trim()) return;
+    const name = editName.trim();
+    const color = editColor;
+    setEditingDiv(null);
     try {
-      await updateDivision(divisionId, {
-        name: editName.trim(),
-        color: editColor,
-      });
-      setEditingDiv(null);
-      toast.success("Divisi berhasil diperbarui");
+      await updateDivision(divisionId, { name, color });
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal memperbarui divisi");
     }
@@ -141,17 +134,15 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
   const handleDelete = async (divisionId) => {
     try {
       await deleteDivision(divisionId);
-      toast.success("Divisi berhasil dihapus");
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal menghapus divisi");
     }
   };
 
   const handleAddMember = async (divisionId, memberId) => {
+    setMemberSearch("");
     try {
       await addMember(divisionId, memberId);
-      setMemberSearch("");
-      toast.success("Anggota ditambahkan");
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal menambahkan anggota");
     }
@@ -160,7 +151,6 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
   const handleRemoveMember = async (divisionId, userId) => {
     try {
       await removeMember(divisionId, userId);
-      toast.success("Anggota dihapus dari divisi");
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal menghapus anggota");
     }
@@ -170,7 +160,6 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
     const newRole = currentRole === "leader" ? "member" : "leader";
     try {
       await updateMemberRole(divisionId, userId, newRole);
-      toast.success(`Role diubah menjadi ${newRole}`);
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal mengubah role");
     }
@@ -178,15 +167,12 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
 
   const handleMoveMember = async () => {
     if (!movingMember || !moveTargetDiv) return;
+    const { divisionId, userId } = movingMember;
+    const target = moveTargetDiv;
+    setMovingMember(null);
+    setMoveTargetDiv("");
     try {
-      await moveMember(
-        movingMember.divisionId,
-        movingMember.userId,
-        moveTargetDiv,
-      );
-      setMovingMember(null);
-      setMoveTargetDiv("");
-      toast.success("Anggota dipindahkan");
+      await moveMember(divisionId, userId, target);
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal memindahkan anggota");
     }
@@ -246,10 +232,10 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 gap-1 text-xs"
+              className="h-8 gap-1.5 text-xs"
               onClick={() => setShowCreateForm(!showCreateForm)}
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" />
               Tambah Divisi
             </Button>
           </div>
@@ -288,22 +274,19 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                   ))}
                 </div>
               </div>
-              <div className="flex gap-2">
+                <div className="flex gap-2">
                 <Button
                   size="sm"
-                  className="h-7 text-xs"
+                  className="h-8 text-xs"
                   onClick={handleCreate}
-                  disabled={creating || !newDivName.trim()}
+                  disabled={!newDivName.trim()}
                 >
-                  {creating && (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  )}
                   Buat
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs"
+                  className="h-8 text-xs"
                   onClick={() => setShowCreateForm(false)}
                 >
                   Batal
@@ -329,11 +312,11 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                       {/* Division header */}
                       <div className="flex items-center gap-2 p-2.5">
                         <CollapsibleTrigger asChild>
-                          <button className="p-0.5 hover:bg-accent rounded transition-colors">
+                          <button className="p-1 hover:bg-accent rounded transition-colors">
                             {isOpen ? (
-                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
                             ) : (
-                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
                             )}
                           </button>
                         </CollapsibleTrigger>
@@ -355,17 +338,17 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                   handleUpdate(div._id);
                                 if (e.key === "Escape") setEditingDiv(null);
                               }}
-                              className="h-7 text-sm flex-1"
+                              className="h-8 text-sm flex-1"
                               maxLength={100}
                               autoFocus
                             />
-                            <div className="flex gap-0.5">
+                            <div className="flex gap-1">
                               {DIVISION_COLORS.map((c) => (
                                 <button
                                   key={c}
                                   onClick={() => setEditColor(c)}
                                   className={cn(
-                                    "h-4 w-4 rounded-full transition-all border",
+                                    "h-5 w-5 rounded-full transition-all border",
                                     editColor === c
                                       ? "border-foreground scale-110"
                                       : "border-transparent",
@@ -376,7 +359,7 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                             </div>
                             <Button
                               size="sm"
-                              className="h-7 text-xs"
+                              className="h-8 text-xs"
                               onClick={() => handleUpdate(div._id)}
                             >
                               Simpan
@@ -384,7 +367,7 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 text-xs"
+                              className="h-8 text-xs"
                               onClick={() => setEditingDiv(null)}
                             >
                               Batal
@@ -410,9 +393,9 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6"
+                                className="h-7 w-7"
                               >
-                                <MoreHorizontal className="h-3.5 w-3.5" />
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -421,9 +404,9 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                   setAddMemberDivId(div._id);
                                   setMemberSearch("");
                                 }}
-                                className="gap-2 text-xs"
+                                className="gap-2 text-sm"
                               >
-                                <UserPlus className="h-3.5 w-3.5" />
+                                <UserPlus className="h-4 w-4" />
                                 Tambah Anggota
                               </DropdownMenuItem>
                               <DropdownMenuItem
@@ -432,17 +415,17 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                   setEditName(div.name);
                                   setEditColor(div.color || DIVISION_COLORS[0]);
                                 }}
-                                className="gap-2 text-xs"
+                                className="gap-2 text-sm"
                               >
-                                <Pencil className="h-3.5 w-3.5" />
+                                <Pencil className="h-4 w-4" />
                                 Edit Divisi
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDelete(div._id)}
-                                className="gap-2 text-xs text-destructive focus:text-destructive"
+                                className="gap-2 text-sm text-destructive focus:text-destructive"
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Trash2 className="h-4 w-4" />
                                 Hapus Divisi
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -463,7 +446,7 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                 onChange={(e) =>
                                   setMemberSearch(e.target.value)
                                 }
-                                className="h-7 text-xs"
+                                className="h-8 text-sm"
                                 autoFocus
                               />
                               <div className="max-h-32 overflow-y-auto space-y-0.5">
@@ -485,17 +468,17 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                           onClick={() =>
                                             handleAddMember(div._id, uid)
                                           }
-                                          className="flex items-center gap-2 w-full px-1.5 py-1 rounded text-left hover:bg-accent transition-colors"
+                                          className="flex items-center gap-2 w-full px-2 py-1.5 rounded text-left hover:bg-accent transition-colors"
                                         >
-                                          <Avatar className="h-5 w-5">
-                                            <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                                          <Avatar className="h-6 w-6">
+                                            <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
                                               {uname?.charAt(0).toUpperCase()}
                                             </AvatarFallback>
                                           </Avatar>
-                                          <span className="text-xs truncate flex-1">
+                                          <span className="text-sm truncate flex-1">
                                             {uname}
                                           </span>
-                                          <Plus className="h-3 w-3 text-muted-foreground" />
+                                          <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                                         </button>
                                       );
                                     })
@@ -510,7 +493,7 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 text-[10px] w-full"
+                                className="h-8 text-xs w-full"
                                 onClick={() => setAddMemberDivId(null)}
                               >
                                 Tutup
@@ -559,7 +542,7 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Tooltip>
                                       <TooltipTrigger asChild>
                                         <button
@@ -570,11 +553,11 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                               m.role,
                                             )
                                           }
-                                          className="p-1 rounded hover:bg-accent transition-colors"
+                                          className="p-1.5 rounded hover:bg-accent transition-colors"
                                         >
                                           <Crown
                                             className={cn(
-                                              "h-3 w-3",
+                                              "h-3.5 w-3.5",
                                               m.role === "leader"
                                                 ? "text-amber-500"
                                                 : "text-muted-foreground",
@@ -601,9 +584,9 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                                 divisionName: div.name,
                                               })
                                             }
-                                            className="p-1 rounded hover:bg-accent transition-colors"
+                                            className="p-1.5 rounded hover:bg-accent transition-colors"
                                           >
-                                            <ArrowRightLeft className="h-3 w-3 text-muted-foreground" />
+                                            <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground" />
                                           </button>
                                         </TooltipTrigger>
                                         <TooltipContent>
@@ -618,9 +601,9 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                                           onClick={() =>
                                             handleRemoveMember(div._id, uid)
                                           }
-                                          className="p-1 rounded hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                          className="p-1.5 rounded hover:bg-destructive/10 hover:text-destructive transition-colors"
                                         >
-                                          <UserMinus className="h-3 w-3" />
+                                          <UserMinus className="h-3.5 w-3.5" />
                                         </button>
                                       </TooltipTrigger>
                                       <TooltipContent>
@@ -639,13 +622,13 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 text-[10px] gap-1"
+                                className="h-8 text-xs gap-1.5"
                                 onClick={() => {
                                   setAddMemberDivId(div._id);
                                   setMemberSearch("");
                                 }}
                               >
-                                <UserPlus className="h-3 w-3" />
+                                <UserPlus className="h-3.5 w-3.5" />
                                 Tambah Anggota
                               </Button>
                             </div>
@@ -667,10 +650,10 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1 text-xs"
+                className="h-8 gap-1.5 text-xs"
                 onClick={() => setShowCreateForm(true)}
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
                 Buat Divisi Pertama
               </Button>
             </div>
@@ -723,13 +706,11 @@ export function EventDivisionsSection({ event, workspaceId, members = [] }) {
           <DialogFooter>
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => setMovingMember(null)}
             >
               Batal
             </Button>
             <Button
-              size="sm"
               onClick={handleMoveMember}
               disabled={!moveTargetDiv}
             >

@@ -6,6 +6,7 @@ import { getSocket } from "@/lib/socket";
 
 /**
  * useEventDivisions — Hook for Event Division CRUD, member management, + real-time sync
+ * All mutations use optimistic updates: UI changes instantly, reverts on API error.
  */
 export function useEventDivisions(workspaceId, eventId) {
   const [divisions, setDivisions] = useState([]);
@@ -45,7 +46,12 @@ export function useEventDivisions(workspaceId, eventId) {
 
     const handleCreated = ({ eventId: evId, division }) => {
       if (evId !== evRef.current) return;
-      setDivisions((prev) => [...prev, division]);
+      setDivisions((prev) => {
+        if (prev.some((d) => d._id === division._id)) {
+          return prev.map((d) => (d._id === division._id ? division : d));
+        }
+        return [...prev, division];
+      });
     };
 
     const handleUpdated = ({ eventId: evId, division }) => {
@@ -60,21 +66,7 @@ export function useEventDivisions(workspaceId, eventId) {
       setDivisions((prev) => prev.filter((d) => d._id !== divisionId));
     };
 
-    const handleMemberAdded = ({ eventId: evId, division }) => {
-      if (evId !== evRef.current) return;
-      setDivisions((prev) =>
-        prev.map((d) => (d._id === division._id ? division : d)),
-      );
-    };
-
-    const handleMemberRemoved = ({ eventId: evId, division }) => {
-      if (evId !== evRef.current) return;
-      setDivisions((prev) =>
-        prev.map((d) => (d._id === division._id ? division : d)),
-      );
-    };
-
-    const handleMemberUpdated = ({ eventId: evId, division }) => {
+    const handleMemberChange = ({ eventId: evId, division }) => {
       if (evId !== evRef.current) return;
       setDivisions((prev) =>
         prev.map((d) => (d._id === division._id ? division : d)),
@@ -99,88 +91,251 @@ export function useEventDivisions(workspaceId, eventId) {
     socket.on("event:division:created", handleCreated);
     socket.on("event:division:updated", handleUpdated);
     socket.on("event:division:deleted", handleDeleted);
-    socket.on("event:division:member:added", handleMemberAdded);
-    socket.on("event:division:member:removed", handleMemberRemoved);
-    socket.on("event:division:member:updated", handleMemberUpdated);
+    socket.on("event:division:member:added", handleMemberChange);
+    socket.on("event:division:member:removed", handleMemberChange);
+    socket.on("event:division:member:updated", handleMemberChange);
     socket.on("event:division:member:moved", handleMemberMoved);
 
     return () => {
       socket.off("event:division:created", handleCreated);
       socket.off("event:division:updated", handleUpdated);
       socket.off("event:division:deleted", handleDeleted);
-      socket.off("event:division:member:added", handleMemberAdded);
-      socket.off("event:division:member:removed", handleMemberRemoved);
-      socket.off("event:division:member:updated", handleMemberUpdated);
+      socket.off("event:division:member:added", handleMemberChange);
+      socket.off("event:division:member:removed", handleMemberChange);
+      socket.off("event:division:member:updated", handleMemberChange);
       socket.off("event:division:member:moved", handleMemberMoved);
     };
   }, []);
 
-  // ── Division CRUD ──────────────────────────────────
+  // ── Division CRUD (optimistic) ─────────────────────
 
   const createDivision = useCallback(
     async (divisionData) => {
-      const { data } = await api.post(basePath, divisionData);
-      return data.data.division;
+      const tempId = `temp-${Date.now()}`;
+      const optimistic = {
+        _id: tempId,
+        eventId,
+        workspaceId,
+        name: divisionData.name,
+        description: divisionData.description || "",
+        color: divisionData.color || null,
+        members: [],
+        order: divisionData.order ?? divisions.length,
+        createdBy: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setDivisions((prev) => [...prev, optimistic]);
+
+      try {
+        const { data } = await api.post(basePath, divisionData);
+        const real = data.data.division;
+        setDivisions((prev) =>
+          prev.map((d) => (d._id === tempId ? real : d)),
+        );
+        return real;
+      } catch (err) {
+        setDivisions((prev) => prev.filter((d) => d._id !== tempId));
+        throw err;
+      }
     },
-    [basePath],
+    [basePath, eventId, workspaceId, divisions.length],
   );
 
   const updateDivision = useCallback(
     async (divisionId, updates) => {
-      const { data } = await api.put(`${basePath}/${divisionId}`, updates);
-      return data.data.division;
+      let snapshot;
+      setDivisions((prev) => {
+        snapshot = prev;
+        return prev.map((d) =>
+          d._id === divisionId ? { ...d, ...updates } : d,
+        );
+      });
+
+      try {
+        const { data } = await api.put(`${basePath}/${divisionId}`, updates);
+        const real = data.data.division;
+        setDivisions((prev) =>
+          prev.map((d) => (d._id === divisionId ? real : d)),
+        );
+        return real;
+      } catch (err) {
+        if (snapshot) setDivisions(snapshot);
+        throw err;
+      }
     },
     [basePath],
   );
 
   const deleteDivision = useCallback(
     async (divisionId) => {
-      await api.delete(`${basePath}/${divisionId}`);
+      let snapshot;
+      setDivisions((prev) => {
+        snapshot = prev;
+        return prev.filter((d) => d._id !== divisionId);
+      });
+
+      try {
+        await api.delete(`${basePath}/${divisionId}`);
+      } catch (err) {
+        if (snapshot) setDivisions(snapshot);
+        throw err;
+      }
     },
     [basePath],
   );
 
-  // ── Member operations ──────────────────────────────
+  // ── Member operations (optimistic) ─────────────────
 
   const addMember = useCallback(
     async (divisionId, memberId, role = "member") => {
-      const { data } = await api.post(
-        `${basePath}/${divisionId}/members`,
-        { memberId, role },
-      );
-      return data.data.division;
+      let snapshot;
+      setDivisions((prev) => {
+        snapshot = prev;
+        return prev.map((d) => {
+          if (d._id !== divisionId) return d;
+          return {
+            ...d,
+            members: [
+              ...d.members,
+              { userId: { _id: memberId, name: "...", email: "" }, role },
+            ],
+          };
+        });
+      });
+
+      try {
+        const { data } = await api.post(
+          `${basePath}/${divisionId}/members`,
+          { memberId, role },
+        );
+        const real = data.data.division;
+        setDivisions((prev) =>
+          prev.map((d) => (d._id === divisionId ? real : d)),
+        );
+        return real;
+      } catch (err) {
+        if (snapshot) setDivisions(snapshot);
+        throw err;
+      }
     },
     [basePath],
   );
 
   const updateMemberRole = useCallback(
     async (divisionId, userId, role) => {
-      const { data } = await api.put(
-        `${basePath}/${divisionId}/members/${userId}`,
-        { role },
-      );
-      return data.data.division;
+      let snapshot;
+      setDivisions((prev) => {
+        snapshot = prev;
+        return prev.map((d) => {
+          if (d._id !== divisionId) return d;
+          return {
+            ...d,
+            members: d.members.map((m) => {
+              const uid = (m.userId?._id || m.userId).toString();
+              return uid === userId ? { ...m, role } : m;
+            }),
+          };
+        });
+      });
+
+      try {
+        const { data } = await api.put(
+          `${basePath}/${divisionId}/members/${userId}`,
+          { role },
+        );
+        const real = data.data.division;
+        setDivisions((prev) =>
+          prev.map((d) => (d._id === divisionId ? real : d)),
+        );
+        return real;
+      } catch (err) {
+        if (snapshot) setDivisions(snapshot);
+        throw err;
+      }
     },
     [basePath],
   );
 
   const removeMember = useCallback(
     async (divisionId, userId) => {
-      const { data } = await api.delete(
-        `${basePath}/${divisionId}/members/${userId}`,
-      );
-      return data.data.division;
+      let snapshot;
+      setDivisions((prev) => {
+        snapshot = prev;
+        return prev.map((d) => {
+          if (d._id !== divisionId) return d;
+          return {
+            ...d,
+            members: d.members.filter(
+              (m) => (m.userId?._id || m.userId).toString() !== userId,
+            ),
+          };
+        });
+      });
+
+      try {
+        const { data } = await api.delete(
+          `${basePath}/${divisionId}/members/${userId}`,
+        );
+        const real = data.data.division;
+        setDivisions((prev) =>
+          prev.map((d) => (d._id === divisionId ? real : d)),
+        );
+        return real;
+      } catch (err) {
+        if (snapshot) setDivisions(snapshot);
+        throw err;
+      }
     },
     [basePath],
   );
 
   const moveMember = useCallback(
     async (divisionId, userId, targetDivisionId) => {
-      const { data } = await api.post(
-        `${basePath}/${divisionId}/members/${userId}/move`,
-        { targetDivisionId },
-      );
-      return data.data;
+      let snapshot;
+      setDivisions((prev) => {
+        snapshot = prev;
+        const sourceDivision = prev.find((d) => d._id === divisionId);
+        const movedMember = sourceDivision?.members.find(
+          (m) => (m.userId?._id || m.userId).toString() === userId,
+        );
+        if (!movedMember) return prev;
+
+        return prev.map((d) => {
+          if (d._id === divisionId) {
+            return {
+              ...d,
+              members: d.members.filter(
+                (m) => (m.userId?._id || m.userId).toString() !== userId,
+              ),
+            };
+          }
+          if (d._id === targetDivisionId) {
+            return { ...d, members: [...d.members, movedMember] };
+          }
+          return d;
+        });
+      });
+
+      try {
+        const { data } = await api.post(
+          `${basePath}/${divisionId}/members/${userId}/move`,
+          { targetDivisionId },
+        );
+        const { sourceDivision, targetDivision } = data.data;
+        setDivisions((prev) =>
+          prev.map((d) => {
+            if (d._id === sourceDivision._id) return sourceDivision;
+            if (d._id === targetDivision._id) return targetDivision;
+            return d;
+          }),
+        );
+        return data.data;
+      } catch (err) {
+        if (snapshot) setDivisions(snapshot);
+        throw err;
+      }
     },
     [basePath],
   );
