@@ -4,9 +4,91 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import api from "@/lib/api";
 import { getSocket } from "@/lib/socket";
 
+function applyOp(divisions, op) {
+  switch (op.type) {
+    case "createDivision":
+      return [...divisions, op.optimistic];
+
+    case "updateDivision":
+      return divisions.map((d) =>
+        d._id === op.divisionId ? { ...d, ...op.updates } : d,
+      );
+
+    case "deleteDivision":
+      return divisions.filter((d) => d._id !== op.divisionId);
+
+    case "addMember":
+      return divisions.map((d) => {
+        if (d._id !== op.divisionId) return d;
+        const exists = d.members.some(
+          (m) => (m.userId?._id || m.userId).toString() === op.memberId,
+        );
+        if (exists) return d;
+        return {
+          ...d,
+          members: [
+            ...d.members,
+            { userId: { _id: op.memberId, name: "...", email: "" }, role: op.role },
+          ],
+        };
+      });
+
+    case "removeMember":
+      return divisions.map((d) => {
+        if (d._id !== op.divisionId) return d;
+        return {
+          ...d,
+          members: d.members.filter(
+            (m) => (m.userId?._id || m.userId).toString() !== op.userId,
+          ),
+        };
+      });
+
+    case "updateMemberRole":
+      return divisions.map((d) => {
+        if (d._id !== op.divisionId) return d;
+        return {
+          ...d,
+          members: d.members.map((m) => {
+            const uid = (m.userId?._id || m.userId).toString();
+            return uid === op.userId ? { ...m, role: op.role } : m;
+          }),
+        };
+      });
+
+    case "moveMember": {
+      const src = divisions.find((d) => d._id === op.divisionId);
+      const member = src?.members.find(
+        (m) => (m.userId?._id || m.userId).toString() === op.userId,
+      );
+      if (!member) return divisions;
+      return divisions.map((d) => {
+        if (d._id === op.divisionId) {
+          return {
+            ...d,
+            members: d.members.filter(
+              (m) => (m.userId?._id || m.userId).toString() !== op.userId,
+            ),
+          };
+        }
+        if (d._id === op.targetDivisionId) {
+          return { ...d, members: [...d.members, member] };
+        }
+        return d;
+      });
+    }
+
+    default:
+      return divisions;
+  }
+}
+
 /**
- * useEventDivisions — Hook for Event Division CRUD, member management, + real-time sync
- * All mutations use optimistic updates: UI changes instantly, reverts on API error.
+ * useEventDivisions — Hook for Event Division CRUD, member management, + real-time sync.
+ *
+ * Optimistic updates use a pending-ops queue: incoming server data (API responses
+ * and socket events) is reconciled by replaying still-pending ops on top, so
+ * concurrent mutations never overwrite each other.
  */
 export function useEventDivisions(workspaceId, eventId) {
   const [divisions, setDivisions] = useState([]);
@@ -18,7 +100,52 @@ export function useEventDivisions(workspaceId, eventId) {
   wsRef.current = workspaceId;
   evRef.current = eventId;
 
+  const pendingOpsRef = useRef([]);
+  const opIdRef = useRef(0);
+  const serverStateRef = useRef([]);
+
   const basePath = `/workspaces/${workspaceId}/events/${eventId}/divisions`;
+
+  const reconcile = useCallback((serverState) => {
+    serverStateRef.current = serverState;
+    setDivisions(
+      pendingOpsRef.current.reduce((divs, op) => applyOp(divs, op), serverState),
+    );
+  }, []);
+
+  const updateServerState = useCallback(
+    (transformer) => {
+      const prev = serverStateRef.current;
+      const next =
+        typeof transformer === "function" ? transformer(prev) : transformer;
+      reconcile(next);
+    },
+    [reconcile],
+  );
+
+  const addOp = useCallback((op) => {
+    const id = ++opIdRef.current;
+    const pending = { ...op, _opId: id };
+    pendingOpsRef.current = [...pendingOpsRef.current, pending];
+    setDivisions((prev) => applyOp(prev, pending));
+    return id;
+  }, []);
+
+  const removeOp = useCallback((opId) => {
+    pendingOpsRef.current = pendingOpsRef.current.filter(
+      (op) => op._opId !== opId,
+    );
+  }, []);
+
+  const revertOp = useCallback(
+    (opId) => {
+      removeOp(opId);
+      reconcile(serverStateRef.current);
+    },
+    [removeOp, reconcile],
+  );
+
+  // ── Fetch ────────────────────────────────────────────
 
   const fetchDivisions = useCallback(async () => {
     if (!workspaceId || !eventId) return;
@@ -26,27 +153,28 @@ export function useEventDivisions(workspaceId, eventId) {
     setError(null);
     try {
       const { data } = await api.get(basePath);
-      setDivisions(data.data.divisions);
+      reconcile(data.data.divisions);
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memuat divisi");
       console.error("Failed to fetch event divisions:", err);
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, eventId, basePath]);
+  }, [workspaceId, eventId, basePath, reconcile]);
 
   useEffect(() => {
     fetchDivisions();
   }, [fetchDivisions]);
 
-  // Socket.io real-time sync
+  // ── Socket.io real-time sync ─────────────────────────
+
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
 
     const handleCreated = ({ eventId: evId, division }) => {
       if (evId !== evRef.current) return;
-      setDivisions((prev) => {
+      updateServerState((prev) => {
         if (prev.some((d) => d._id === division._id)) {
           return prev.map((d) => (d._id === division._id ? division : d));
         }
@@ -56,19 +184,19 @@ export function useEventDivisions(workspaceId, eventId) {
 
     const handleUpdated = ({ eventId: evId, division }) => {
       if (evId !== evRef.current) return;
-      setDivisions((prev) =>
+      updateServerState((prev) =>
         prev.map((d) => (d._id === division._id ? division : d)),
       );
     };
 
     const handleDeleted = ({ eventId: evId, divisionId }) => {
       if (evId !== evRef.current) return;
-      setDivisions((prev) => prev.filter((d) => d._id !== divisionId));
+      updateServerState((prev) => prev.filter((d) => d._id !== divisionId));
     };
 
     const handleMemberChange = ({ eventId: evId, division }) => {
       if (evId !== evRef.current) return;
-      setDivisions((prev) =>
+      updateServerState((prev) =>
         prev.map((d) => (d._id === division._id ? division : d)),
       );
     };
@@ -79,7 +207,7 @@ export function useEventDivisions(workspaceId, eventId) {
       targetDivision,
     }) => {
       if (evId !== evRef.current) return;
-      setDivisions((prev) =>
+      updateServerState((prev) =>
         prev.map((d) => {
           if (d._id === sourceDivision._id) return sourceDivision;
           if (d._id === targetDivision._id) return targetDivision;
@@ -105,105 +233,88 @@ export function useEventDivisions(workspaceId, eventId) {
       socket.off("event:division:member:updated", handleMemberChange);
       socket.off("event:division:member:moved", handleMemberMoved);
     };
-  }, []);
+  }, [updateServerState]);
 
   // ── Division CRUD (optimistic) ─────────────────────
 
   const createDivision = useCallback(
     async (divisionData) => {
       const tempId = `temp-${Date.now()}`;
-      const optimistic = {
-        _id: tempId,
-        eventId,
-        workspaceId,
-        name: divisionData.name,
-        description: divisionData.description || "",
-        color: divisionData.color || null,
-        members: [],
-        order: divisionData.order ?? divisions.length,
-        createdBy: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setDivisions((prev) => [...prev, optimistic]);
+      const opId = addOp({
+        type: "createDivision",
+        tempId,
+        optimistic: {
+          _id: tempId,
+          eventId,
+          workspaceId,
+          name: divisionData.name,
+          description: divisionData.description || "",
+          color: divisionData.color || null,
+          members: [],
+          order: divisionData.order ?? serverStateRef.current.length,
+          createdBy: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      });
 
       try {
         const { data } = await api.post(basePath, divisionData);
         const real = data.data.division;
-        setDivisions((prev) =>
-          prev.map((d) => (d._id === tempId ? real : d)),
-        );
+        removeOp(opId);
+        updateServerState((prev) => [...prev, real]);
         return real;
       } catch (err) {
-        setDivisions((prev) => prev.filter((d) => d._id !== tempId));
+        revertOp(opId);
         throw err;
       }
     },
-    [basePath, eventId, workspaceId, divisions.length],
+    [basePath, eventId, workspaceId, addOp, removeOp, revertOp, updateServerState],
   );
 
   const updateDivision = useCallback(
     async (divisionId, updates) => {
-      let snapshot;
-      setDivisions((prev) => {
-        snapshot = prev;
-        return prev.map((d) =>
-          d._id === divisionId ? { ...d, ...updates } : d,
-        );
-      });
+      const opId = addOp({ type: "updateDivision", divisionId, updates });
 
       try {
         const { data } = await api.put(`${basePath}/${divisionId}`, updates);
         const real = data.data.division;
-        setDivisions((prev) =>
+        removeOp(opId);
+        updateServerState((prev) =>
           prev.map((d) => (d._id === divisionId ? real : d)),
         );
         return real;
       } catch (err) {
-        if (snapshot) setDivisions(snapshot);
+        revertOp(opId);
         throw err;
       }
     },
-    [basePath],
+    [basePath, addOp, removeOp, revertOp, updateServerState],
   );
 
   const deleteDivision = useCallback(
     async (divisionId) => {
-      let snapshot;
-      setDivisions((prev) => {
-        snapshot = prev;
-        return prev.filter((d) => d._id !== divisionId);
-      });
+      const opId = addOp({ type: "deleteDivision", divisionId });
 
       try {
         await api.delete(`${basePath}/${divisionId}`);
+        removeOp(opId);
+        updateServerState((prev) =>
+          prev.filter((d) => d._id !== divisionId),
+        );
       } catch (err) {
-        if (snapshot) setDivisions(snapshot);
+        revertOp(opId);
         throw err;
       }
     },
-    [basePath],
+    [basePath, addOp, removeOp, revertOp, updateServerState],
   );
 
   // ── Member operations (optimistic) ─────────────────
 
   const addMember = useCallback(
     async (divisionId, memberId, role = "member") => {
-      let snapshot;
-      setDivisions((prev) => {
-        snapshot = prev;
-        return prev.map((d) => {
-          if (d._id !== divisionId) return d;
-          return {
-            ...d,
-            members: [
-              ...d.members,
-              { userId: { _id: memberId, name: "...", email: "" }, role },
-            ],
-          };
-        });
-      });
+      const opId = addOp({ type: "addMember", divisionId, memberId, role });
 
       try {
         const { data } = await api.post(
@@ -211,33 +322,26 @@ export function useEventDivisions(workspaceId, eventId) {
           { memberId, role },
         );
         const real = data.data.division;
-        setDivisions((prev) =>
+        removeOp(opId);
+        updateServerState((prev) =>
           prev.map((d) => (d._id === divisionId ? real : d)),
         );
         return real;
       } catch (err) {
-        if (snapshot) setDivisions(snapshot);
+        revertOp(opId);
         throw err;
       }
     },
-    [basePath],
+    [basePath, addOp, removeOp, revertOp, updateServerState],
   );
 
   const updateMemberRole = useCallback(
     async (divisionId, userId, role) => {
-      let snapshot;
-      setDivisions((prev) => {
-        snapshot = prev;
-        return prev.map((d) => {
-          if (d._id !== divisionId) return d;
-          return {
-            ...d,
-            members: d.members.map((m) => {
-              const uid = (m.userId?._id || m.userId).toString();
-              return uid === userId ? { ...m, role } : m;
-            }),
-          };
-        });
+      const opId = addOp({
+        type: "updateMemberRole",
+        divisionId,
+        userId,
+        role,
       });
 
       try {
@@ -246,76 +350,48 @@ export function useEventDivisions(workspaceId, eventId) {
           { role },
         );
         const real = data.data.division;
-        setDivisions((prev) =>
+        removeOp(opId);
+        updateServerState((prev) =>
           prev.map((d) => (d._id === divisionId ? real : d)),
         );
         return real;
       } catch (err) {
-        if (snapshot) setDivisions(snapshot);
+        revertOp(opId);
         throw err;
       }
     },
-    [basePath],
+    [basePath, addOp, removeOp, revertOp, updateServerState],
   );
 
   const removeMember = useCallback(
     async (divisionId, userId) => {
-      let snapshot;
-      setDivisions((prev) => {
-        snapshot = prev;
-        return prev.map((d) => {
-          if (d._id !== divisionId) return d;
-          return {
-            ...d,
-            members: d.members.filter(
-              (m) => (m.userId?._id || m.userId).toString() !== userId,
-            ),
-          };
-        });
-      });
+      const opId = addOp({ type: "removeMember", divisionId, userId });
 
       try {
         const { data } = await api.delete(
           `${basePath}/${divisionId}/members/${userId}`,
         );
         const real = data.data.division;
-        setDivisions((prev) =>
+        removeOp(opId);
+        updateServerState((prev) =>
           prev.map((d) => (d._id === divisionId ? real : d)),
         );
         return real;
       } catch (err) {
-        if (snapshot) setDivisions(snapshot);
+        revertOp(opId);
         throw err;
       }
     },
-    [basePath],
+    [basePath, addOp, removeOp, revertOp, updateServerState],
   );
 
   const moveMember = useCallback(
     async (divisionId, userId, targetDivisionId) => {
-      let snapshot;
-      setDivisions((prev) => {
-        snapshot = prev;
-        const sourceDivision = prev.find((d) => d._id === divisionId);
-        const movedMember = sourceDivision?.members.find(
-          (m) => (m.userId?._id || m.userId).toString() === userId,
-        );
-        if (!movedMember) return prev;
-
-        return prev.map((d) => {
-          if (d._id === divisionId) {
-            return {
-              ...d,
-              members: d.members.filter(
-                (m) => (m.userId?._id || m.userId).toString() !== userId,
-              ),
-            };
-          }
-          if (d._id === targetDivisionId) {
-            return { ...d, members: [...d.members, movedMember] };
-          }
-          return d;
-        });
+      const opId = addOp({
+        type: "moveMember",
+        divisionId,
+        userId,
+        targetDivisionId,
       });
 
       try {
@@ -324,7 +400,8 @@ export function useEventDivisions(workspaceId, eventId) {
           { targetDivisionId },
         );
         const { sourceDivision, targetDivision } = data.data;
-        setDivisions((prev) =>
+        removeOp(opId);
+        updateServerState((prev) =>
           prev.map((d) => {
             if (d._id === sourceDivision._id) return sourceDivision;
             if (d._id === targetDivision._id) return targetDivision;
@@ -333,11 +410,11 @@ export function useEventDivisions(workspaceId, eventId) {
         );
         return data.data;
       } catch (err) {
-        if (snapshot) setDivisions(snapshot);
+        revertOp(opId);
         throw err;
       }
     },
-    [basePath],
+    [basePath, addOp, removeOp, revertOp, updateServerState],
   );
 
   return {
