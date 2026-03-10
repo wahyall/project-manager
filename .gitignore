@@ -38,3 +38,5 @@ coverage/
 
 # Temp
 tmp/
+
+server/package-lock.json
