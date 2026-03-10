@@ -39,6 +39,7 @@ import {
   Plus,
   ChevronLeft,
   ListTodo,
+  Sparkles,
 } from "lucide-react";
 
 // ─── Navigation structure ────────────────────────────
@@ -57,6 +58,11 @@ const NAV_MAIN = [
     label: "Brainstorming",
     icon: Lightbulb,
     href: "/brainstorming",
+  },
+  {
+    label: "AI Chat",
+    icon: Sparkles,
+    href: "/ai-chat",
   },
 ];
 

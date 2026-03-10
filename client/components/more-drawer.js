@@ -18,6 +18,7 @@ import {
   User,
   ChevronRight,
   Download,
+  Sparkles,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePushNotification } from "@/hooks/use-push";
@@ -127,6 +128,22 @@ export function MoreDrawer({ open, onOpenChange, workspace, workspaceId }) {
                   <Calendar className="h-4 w-4" />
                 </div>
                 Kalender View
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-between font-normal h-12 rounded-xl"
+              onClick={() =>
+                handleNavigate(`/workspace/${workspaceId}/ai-chat`)
+              }
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600 dark:bg-violet-900/20">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                AI Chat
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
             </Button>

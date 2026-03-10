@@ -416,6 +416,100 @@
   color: var(--foreground) !important;
 }
 
+/* ── CopilotKit chat overrides ────────────────── */
+.copilot-chat-wrapper {
+  --copilot-kit-primary-color: var(--primary);
+  --copilot-kit-contrast-color: var(--primary-foreground);
+  --copilot-kit-background-color: var(--background);
+  --copilot-kit-input-background-color: var(--muted);
+  --copilot-kit-secondary-color: var(--card);
+  --copilot-kit-secondary-contrast-color: var(--card-foreground);
+  --copilot-kit-separator-color: var(--border);
+  --copilot-kit-muted-color: var(--muted-foreground);
+}
+
+.copilot-chat-wrapper .copilotKitChat {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  height: 100%;
+}
+
+.copilot-chat-wrapper .copilotKitHeader {
+  display: none;
+}
+
+.copilot-chat-wrapper .copilotKitMessages {
+  padding: 1rem 1rem 0;
+}
+
+@media (min-width: 640px) {
+  .copilot-chat-wrapper .copilotKitMessages {
+    padding: 1.5rem 1.5rem 0;
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.copilot-chat-wrapper .copilotKitMessage {
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  line-height: 1.625;
+}
+
+.copilot-chat-wrapper .copilotKitAssistantMessage {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.copilot-chat-wrapper .copilotKitUserMessage {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.copilot-chat-wrapper .copilotKitInput {
+  border-top: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .copilot-chat-wrapper .copilotKitInput {
+    padding: 0.75rem 1.5rem;
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.copilot-chat-wrapper .copilotKitInput textarea {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--background);
+  font-size: 0.875rem;
+  padding: 0.625rem 0.75rem;
+}
+
+.copilot-chat-wrapper .copilotKitInput textarea:focus {
+  border-color: var(--ring);
+  outline: none;
+  box-shadow: 0 0 0 2px oklch(from var(--ring) l c h / 20%);
+}
+
+.copilot-chat-wrapper .copilotKitSuggestion {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.copilot-chat-wrapper .copilotKitSuggestion:hover {
+  background: var(--accent);
+  border-color: var(--primary);
+}
+
 /* Mobile responsive safe area padding for bottom nav */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .pb-safe-area {

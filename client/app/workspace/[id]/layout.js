@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, use, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/protected-route";
@@ -14,6 +14,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { MoreDrawer } from "@/components/more-drawer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CopilotKit } from "@copilotkit/react-core";
 import {
   SidebarProvider,
   SidebarInset,
@@ -156,6 +157,20 @@ export default function WorkspaceLayout({ children, params }) {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const isMobile = useIsMobile();
 
+  const copilotRuntimeUrl = useMemo(
+    () =>
+      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555/api"}/workspaces/${id}/copilotkit`,
+    [id],
+  );
+
+  const copilotHeaders = useMemo(() => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, []);
+
   // Load workspace and connect socket
   useEffect(() => {
     async function load() {
@@ -215,25 +230,29 @@ export default function WorkspaceLayout({ children, params }) {
 
   return (
     <ProtectedRoute>
-      <SidebarProvider>
-        <AppSidebar workspaceId={id} workspace={currentWorkspace} />
-        <SidebarInset className="relative">
-          <Topbar workspace={currentWorkspace} workspaceId={id} />
-          <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">{children}</div>
-          {isMobile && (
-            <BottomNav
+      <CopilotKit runtimeUrl={copilotRuntimeUrl} headers={copilotHeaders}>
+        <SidebarProvider>
+          <AppSidebar workspaceId={id} workspace={currentWorkspace} />
+          <SidebarInset className="relative">
+            <Topbar workspace={currentWorkspace} workspaceId={id} />
+            <div className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+              {children}
+            </div>
+            {isMobile && (
+              <BottomNav
+                workspaceId={id}
+                onMoreClick={() => setIsMoreOpen(true)}
+              />
+            )}
+            <MoreDrawer
+              open={isMoreOpen}
+              onOpenChange={setIsMoreOpen}
               workspaceId={id}
-              onMoreClick={() => setIsMoreOpen(true)}
+              workspace={currentWorkspace}
             />
-          )}
-          <MoreDrawer
-            open={isMoreOpen}
-            onOpenChange={setIsMoreOpen}
-            workspaceId={id}
-            workspace={currentWorkspace}
-          />
-        </SidebarInset>
-      </SidebarProvider>
+          </SidebarInset>
+        </SidebarProvider>
+      </CopilotKit>
     </ProtectedRoute>
   );
 }
