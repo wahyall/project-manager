@@ -12,6 +12,7 @@ router.use(auth);
 router.use(requireRole(["admin", "owner", "member"]));
 router.use(aiChatLimiter);
 
-router.post("/", copilotkitController.handleCopilotRequest);
+// Runtime handles both GET (e.g. schema/health) and POST (chat); accept all methods
+router.all("/", copilotkitController.handleCopilotRequest);
 
 module.exports = router;

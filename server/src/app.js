@@ -79,6 +79,8 @@ const embeddingRoutes = require("./routes/embedding.routes");
 const copilotkitRoutes = require("./routes/copilotkit.routes");
 
 app.use("/api/auth", authRoutes);
+// Mount copilotkit before /api/workspaces so /api/workspaces/:id/copilotkit is matched first
+app.use("/api/workspaces/:id/copilotkit", copilotkitRoutes);
 app.use("/api/workspaces", workspaceRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/workspaces/:id/tasks", taskRoutes);
@@ -98,7 +100,6 @@ app.use("/api/admin/whatsapp", whatsappRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/spreadsheets", spreadsheetRoutes);
 app.use("/api/workspaces/:id/embeddings", embeddingRoutes);
-app.use("/api/workspaces/:id/copilotkit", copilotkitRoutes);
 
 // ────────────────────────────────────────────────────
 // 404 Handler

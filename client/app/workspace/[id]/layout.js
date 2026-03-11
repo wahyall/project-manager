@@ -157,11 +157,10 @@ export default function WorkspaceLayout({ children, params }) {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const copilotRuntimeUrl = useMemo(
-    () =>
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555/api"}/workspaces/${id}/copilotkit`,
-    [id],
-  );
+  const copilotRuntimeUrl = useMemo(() => {
+    const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5555/api").replace(/\/$/, "");
+    return `${base}/workspaces/${id}/copilotkit`;
+  }, [id]);
 
   const copilotHeaders = useMemo(() => {
     const token =
