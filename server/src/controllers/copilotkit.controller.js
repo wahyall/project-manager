@@ -226,7 +226,7 @@ exports.handleCopilotRequest = catchAsync(async (req, res, next) => {
   const handler = copilotRuntimeNodeHttpEndpoint({
     runtime,
     serviceAdapter,
-    endpoint: req.originalUrl,
+    endpoint: "/",
   });
 
   await handler(req, res);
