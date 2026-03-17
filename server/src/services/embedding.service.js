@@ -45,7 +45,7 @@ const getGenAI = () => {
  */
 const generateEmbedding = async (text) => {
   const ai = getGenAI();
-  const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL }, { apiVersion: "v1" });
+  const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL });
   const result = await model.embedContent(text);
   return result.embedding.values;
 };
@@ -245,7 +245,8 @@ const _buildDivisionContent = (division, eventTitle = "") => {
         return `${name}${role}`;
       })
       .filter(Boolean);
-    if (memberParts.length > 0) parts.push(`Anggota: ${memberParts.join(", ")}`);
+    if (memberParts.length > 0)
+      parts.push(`Anggota: ${memberParts.join(", ")}`);
   }
 
   return parts.join(" | ");
