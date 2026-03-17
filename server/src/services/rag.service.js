@@ -83,19 +83,18 @@ const retrieve = async ({
       score: doc.score,
     }));
   } catch (error) {
-    console.error("[RAGService] Retrieve failed:", error.message);
+    const msg = error?.message || String(error);
+    console.error("[RAGService] Retrieve failed:", msg);
 
-    // Fallback: jika Vector Search Index belum ada, return empty
     if (
-      error.message.includes("$vectorSearch") ||
-      error.message.includes("index not found") ||
-      error.codeName === "InvalidPipelineOperator"
+      msg.includes("$vectorSearch") ||
+      msg.includes("index not found") ||
+      error?.codeName === "InvalidPipelineOperator"
     ) {
       console.warn(
         "[RAGService] MongoDB Atlas Vector Search Index belum dikonfigurasi. " +
           "Buat index 'embedding_vector_index' di MongoDB Atlas.",
       );
-      return [];
     }
 
     return [];

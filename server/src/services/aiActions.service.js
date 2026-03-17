@@ -23,7 +23,7 @@ class AIActionsService {
     if (!query) return "Query tidak boleh kosong.";
 
     // Gunakan RAG Service untuk mendapatkan potongan dokumen yang relevan
-    const docs = await RAGService.retrieve(query, workspaceId, null, 15);
+    const docs = await RAGService.retrieve({ query, workspaceId, topK: 15 });
     if (docs.length === 0) {
       return "Tidak ditemukan data yang relevan dengan pertanyaan Anda di workspace ini.";
     }

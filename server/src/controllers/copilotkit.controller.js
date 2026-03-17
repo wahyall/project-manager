@@ -1,11 +1,15 @@
 const {
   CopilotRuntime,
-  GoogleGenerativeAIAdapter,
   copilotRuntimeNodeHttpEndpoint,
 } = require("@copilotkit/runtime");
+const { BuiltInAgent, defineTool } = require("@copilotkitnext/agent");
+const { z } = require("zod");
 const AIActionsService = require("../services/aiActions.service");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
+
+const safeReturn = (result) =>
+  typeof result === "string" ? result : JSON.stringify(result);
 
 exports.handleCopilotRequest = catchAsync(async (req, res, next) => {
   const workspace = req.workspace;
@@ -20,212 +24,192 @@ exports.handleCopilotRequest = catchAsync(async (req, res, next) => {
     return next(new AppError("GOOGLE_AI_API_KEY is not configured", 500));
   }
 
-  const serviceAdapter = new GoogleGenerativeAIAdapter({
-    model: process.env.GEMINI_MODEL || "gemini-2.0-flash",
+  const agent = new BuiltInAgent({
+    model: `google/${process.env.GEMINI_MODEL || "gemini-2.0-flash"}`,
     apiKey,
-  });
-
-  const runtime = new CopilotRuntime({
-    actions: [
-      {
+    maxSteps: 5,
+    tools: [
+      defineTool({
         name: "searchData",
         description:
           "Mencari konteks atau informasi dalam workspace, seperti task, event, komentar, aktivitas, spreadsheet, dll.",
-        parameters: [
-          {
-            name: "query",
-            type: "string",
-            description:
+        parameters: z.object({
+          query: z
+            .string()
+            .describe(
               "Pertanyaan atau kata kunci pencarian (misal: 'task apa yang belum selesai', 'siapa yang mengedit event ini')",
-            required: true,
-          },
-        ],
-        handler: async ({ query }) => {
-          return await AIActionsService.searchData({
-            query,
-            workspaceId: workspace._id,
-          });
+            ),
+        }),
+        execute: async ({ query }) => {
+          try {
+            return safeReturn(
+              await AIActionsService.searchData({
+                query,
+                workspaceId: workspace._id,
+              }),
+            );
+          } catch (err) {
+            console.error("[CopilotKit] searchData error:", err);
+            return `Terjadi kesalahan saat mencari data: ${err.message}`;
+          }
         },
-      },
-      {
+      }),
+      defineTool({
         name: "getWorkspaceSummary",
         description:
           "Mendapatkan ringkasan statistik workspace, jumlah task, event, member, dan task by priority.",
-        parameters: [],
-        handler: async () => {
-          return await AIActionsService.getWorkspaceSummary({
-            workspaceId: workspace._id,
-          });
+        parameters: z.object({}),
+        execute: async () => {
+          try {
+            return safeReturn(
+              await AIActionsService.getWorkspaceSummary({
+                workspaceId: workspace._id,
+              }),
+            );
+          } catch (err) {
+            console.error("[CopilotKit] getWorkspaceSummary error:", err);
+            return `Terjadi kesalahan: ${err.message}`;
+          }
         },
-      },
-      {
+      }),
+      defineTool({
         name: "createTask",
         description: "Membuat Task baru di workspace ini.",
-        parameters: [
-          {
-            name: "title",
-            type: "string",
-            description: "Judul task.",
-            required: true,
-          },
-          {
-            name: "description",
-            type: "string",
-            description: "Deskripsi task opsional.",
-            required: false,
-          },
-          {
-            name: "priority",
-            type: "string",
-            description:
-              "Prioritas task, pilih dari: low, medium, high, critical.",
-            required: false,
-          },
-          {
-            name: "columnId",
-            type: "string",
-            description:
+        parameters: z.object({
+          title: z.string().describe("Judul task."),
+          description: z.string().optional().describe("Deskripsi task opsional."),
+          priority: z
+            .string()
+            .optional()
+            .describe("Prioritas task, pilih dari: low, medium, high, critical."),
+          columnId: z
+            .string()
+            .optional()
+            .describe(
               "ID Kolom status tujuan, jika diketahui. Boleh kosong (default ke kolom pertama).",
-            required: false,
-          },
-        ],
-        handler: async ({ title, description, priority, columnId }) => {
-          return await AIActionsService.createTask({
-            workspace,
-            userId,
-            title,
-            description,
-            priority,
-            columnId,
-          });
+            ),
+        }),
+        execute: async ({ title, description, priority, columnId }) => {
+          try {
+            return safeReturn(
+              await AIActionsService.createTask({
+                workspace,
+                userId,
+                title,
+                description,
+                priority,
+                columnId,
+              }),
+            );
+          } catch (err) {
+            console.error("[CopilotKit] createTask error:", err);
+            return `Terjadi kesalahan saat membuat task: ${err.message}`;
+          }
         },
-      },
-      {
+      }),
+      defineTool({
         name: "updateTask",
         description:
           "Mengupdate field task yang sudah ada (misalnya pindah kolom status, ubah prioritas, dll).",
-        parameters: [
-          {
-            name: "taskId",
-            type: "string",
-            description: "ID task yang akan diupdate.",
-            required: true,
-          },
-          {
-            name: "title",
-            type: "string",
-            description: "Judul baru.",
-            required: false,
-          },
-          {
-            name: "description",
-            type: "string",
-            description: "Deskripsi baru.",
-            required: false,
-          },
-          {
-            name: "priority",
-            type: "string",
-            description: "Prioritas baru (low, medium, high, critical).",
-            required: false,
-          },
-          {
-            name: "columnId",
-            type: "string",
-            description:
+        parameters: z.object({
+          taskId: z.string().describe("ID task yang akan diupdate."),
+          title: z.string().optional().describe("Judul baru."),
+          description: z.string().optional().describe("Deskripsi baru."),
+          priority: z
+            .string()
+            .optional()
+            .describe("Prioritas baru (low, medium, high, critical)."),
+          columnId: z
+            .string()
+            .optional()
+            .describe(
               "ID kolom status tujuan yang baru (misal: pindah ke Done).",
-            required: false,
-          },
-        ],
-        handler: async ({ taskId, title, description, priority, columnId }) => {
-          return await AIActionsService.updateTask({
-            workspaceId: workspace._id,
-            userId,
-            taskId,
-            updates: { title, description, priority, columnId },
-          });
+            ),
+        }),
+        execute: async ({ taskId, title, description, priority, columnId }) => {
+          try {
+            return safeReturn(
+              await AIActionsService.updateTask({
+                workspaceId: workspace._id,
+                userId,
+                taskId,
+                updates: { title, description, priority, columnId },
+              }),
+            );
+          } catch (err) {
+            console.error("[CopilotKit] updateTask error:", err);
+            return `Terjadi kesalahan saat mengupdate task: ${err.message}`;
+          }
         },
-      },
-      {
+      }),
+      defineTool({
         name: "createEvent",
         description: "Membuat event calendar baru.",
-        parameters: [
-          {
-            name: "title",
-            type: "string",
-            description: "Judul event",
-            required: true,
-          },
-          {
-            name: "description",
-            type: "string",
-            description: "Deskripsi event",
-            required: false,
-          },
-          {
-            name: "startDate",
-            type: "string",
-            description: "Tanggal mulai (ISO Date atau YYYY-MM-DD)",
-            required: true,
-          },
-          {
-            name: "endDate",
-            type: "string",
-            description: "Tanggal selesai (ISO Date atau YYYY-MM-DD)",
-            required: true,
-          },
-        ],
-        handler: async ({ title, description, startDate, endDate }) => {
-          return await AIActionsService.createEvent({
-            workspaceId: workspace._id,
-            userId,
-            title,
-            description,
-            startDate,
-            endDate,
-          });
+        parameters: z.object({
+          title: z.string().describe("Judul event"),
+          description: z.string().optional().describe("Deskripsi event"),
+          startDate: z
+            .string()
+            .describe("Tanggal mulai (ISO Date atau YYYY-MM-DD)"),
+          endDate: z
+            .string()
+            .describe("Tanggal selesai (ISO Date atau YYYY-MM-DD)"),
+        }),
+        execute: async ({ title, description, startDate, endDate }) => {
+          try {
+            return safeReturn(
+              await AIActionsService.createEvent({
+                workspaceId: workspace._id,
+                userId,
+                title,
+                description,
+                startDate,
+                endDate,
+              }),
+            );
+          } catch (err) {
+            console.error("[CopilotKit] createEvent error:", err);
+            return `Terjadi kesalahan saat membuat event: ${err.message}`;
+          }
         },
-      },
-      {
+      }),
+      defineTool({
         name: "assignMember",
         description:
           "Menugaskan (assign) atau menghapus (unassign) member dari sebuah task.",
-        parameters: [
-          {
-            name: "taskId",
-            type: "string",
-            description: "ID Task",
-            required: true,
-          },
-          {
-            name: "memberId",
-            type: "string",
-            description: "ID Member (user)",
-            required: true,
-          },
-          {
-            name: "action",
-            type: "string",
-            description: "Aksi ('assign' atau 'unassign')",
-            required: true,
-          },
-        ],
-        handler: async ({ taskId, memberId, action }) => {
-          return await AIActionsService.assignMember({
-            workspaceId: workspace._id,
-            userId,
-            taskId,
-            memberId,
-            action,
-          });
+        parameters: z.object({
+          taskId: z.string().describe("ID Task"),
+          memberId: z.string().describe("ID Member (user)"),
+          action: z
+            .string()
+            .describe("Aksi ('assign' atau 'unassign')"),
+        }),
+        execute: async ({ taskId, memberId, action }) => {
+          try {
+            return safeReturn(
+              await AIActionsService.assignMember({
+                workspaceId: workspace._id,
+                userId,
+                taskId,
+                memberId,
+                action,
+              }),
+            );
+          } catch (err) {
+            console.error("[CopilotKit] assignMember error:", err);
+            return `Terjadi kesalahan saat assign member: ${err.message}`;
+          }
         },
-      },
+      }),
     ],
+  });
+
+  const runtime = new CopilotRuntime({
+    agents: { default: agent },
   });
 
   const handler = copilotRuntimeNodeHttpEndpoint({
     runtime,
-    serviceAdapter,
     endpoint: "/",
   });
 
