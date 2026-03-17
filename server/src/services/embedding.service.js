@@ -274,7 +274,7 @@ const upsert = async ({
   metadata = {},
 }) => {
   try {
-    if (!content || !content.trim()) return;
+    if (!content || !content.trim()) return false;
 
     const chunks = chunkText(content);
 
@@ -289,10 +289,12 @@ const upsert = async ({
           chunkIndex: i,
         },
         {
-          content: chunks[i],
-          embedding,
-          metadata,
-          updatedAt: new Date(),
+          $set: {
+            content: chunks[i],
+            embedding,
+            metadata,
+            updatedAt: new Date(),
+          },
         },
         { upsert: true, new: true },
       );
@@ -305,11 +307,14 @@ const upsert = async ({
       sourceId,
       chunkIndex: { $gte: chunks.length },
     });
+
+    return true;
   } catch (error) {
     console.error(
       `[EmbeddingService] Upsert failed for ${sourceType}/${sourceId}:`,
       error.message,
     );
+    return false;
   }
 };
 
@@ -359,6 +364,7 @@ const syncWorkspace = async (workspaceId) => {
     task: 0,
     event: 0,
     event_note: 0,
+    division: 0,
     comment: 0,
     activity: 0,
     member: 0,
@@ -366,6 +372,7 @@ const syncWorkspace = async (workspaceId) => {
     board: 0,
     label: 0,
   };
+  let errors = 0;
 
   // 1. Tasks
   const tasks = await Task.find({ workspaceId, isDeleted: { $ne: true } })
@@ -374,7 +381,7 @@ const syncWorkspace = async (workspaceId) => {
     .lean();
 
   for (const task of tasks) {
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "task",
       sourceId: task._id,
@@ -387,7 +394,8 @@ const syncWorkspace = async (workspaceId) => {
         sourceUrl: `/workspace/${workspaceId}/tasks/${task._id}`,
       },
     });
-    counts.task++;
+    if (ok) counts.task++;
+    else errors++;
   }
 
   // 2. Events
@@ -396,7 +404,7 @@ const syncWorkspace = async (workspaceId) => {
     .lean();
 
   for (const event of events) {
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "event",
       sourceId: event._id,
@@ -407,7 +415,8 @@ const syncWorkspace = async (workspaceId) => {
         sourceUrl: `/workspace/${workspaceId}/events/${event._id}`,
       },
     });
-    counts.event++;
+    if (ok) counts.event++;
+    else errors++;
   }
 
   // 2.5 Event Notes
@@ -423,7 +432,7 @@ const syncWorkspace = async (workspaceId) => {
 
   for (const note of eventNotes) {
     const evTitle = eventTitleMap[note.eventId.toString()] || "";
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "event_note",
       sourceId: note._id,
@@ -433,7 +442,8 @@ const syncWorkspace = async (workspaceId) => {
         sourceUrl: `/workspace/${workspaceId}/events/${note.eventId}`,
       },
     });
-    counts.event_note++;
+    if (ok) counts.event_note++;
+    else errors++;
   }
 
   // 2.7 Event Divisions
@@ -444,10 +454,9 @@ const syncWorkspace = async (workspaceId) => {
     .populate("members.userId", "name email")
     .lean();
 
-  counts.division = 0;
   for (const div of divisions) {
     const evTitle = eventTitleMap[div.eventId.toString()] || "";
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "division",
       sourceId: div._id,
@@ -457,14 +466,15 @@ const syncWorkspace = async (workspaceId) => {
         sourceUrl: `/workspace/${workspaceId}/events/${div.eventId}`,
       },
     });
-    counts.division++;
+    if (ok) counts.division++;
+    else errors++;
   }
 
   // 3. Comments (only from this workspace)
   const comments = await Comment.find({ workspaceId, isDeleted: false }).lean();
 
   for (const comment of comments) {
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "comment",
       sourceId: comment._id,
@@ -476,7 +486,8 @@ const syncWorkspace = async (workspaceId) => {
             : `/workspace/${workspaceId}/events/${comment.targetId}`,
       },
     });
-    counts.comment++;
+    if (ok) counts.comment++;
+    else errors++;
   }
 
   // 4. Activity Logs (last 200 for performance)
@@ -487,7 +498,7 @@ const syncWorkspace = async (workspaceId) => {
     .lean();
 
   for (const log of logs) {
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "activity",
       sourceId: log._id,
@@ -496,7 +507,8 @@ const syncWorkspace = async (workspaceId) => {
         sourceUrl: `/workspace/${workspaceId}/activity`,
       },
     });
-    counts.activity++;
+    if (ok) counts.activity++;
+    else errors++;
   }
 
   // 5. Members
@@ -505,7 +517,7 @@ const syncWorkspace = async (workspaceId) => {
     .lean();
 
   for (const member of members) {
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "member",
       sourceId: member._id,
@@ -515,14 +527,15 @@ const syncWorkspace = async (workspaceId) => {
         sourceUrl: `/workspace/${workspaceId}/members/${member.userId?._id}`,
       },
     });
-    counts.member++;
+    if (ok) counts.member++;
+    else errors++;
   }
 
   // 6. Labels
   const labels = await WorkspaceLabel.find({ workspaceId }).lean();
 
   for (const label of labels) {
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "label",
       sourceId: label._id,
@@ -531,7 +544,8 @@ const syncWorkspace = async (workspaceId) => {
         title: label.name,
       },
     });
-    counts.label++;
+    if (ok) counts.label++;
+    else errors++;
   }
 
   // 7. Spreadsheet Sheets
@@ -541,16 +555,14 @@ const syncWorkspace = async (workspaceId) => {
   const eventIds = wsEvents.map((e) => e._id);
 
   if (eventIds.length > 0) {
-    // Try new format (SpreadsheetSheetData)
     const sheets = await SpreadsheetSheetData.find({
       eventId: { $in: eventIds },
     }).lean();
     for (const sheet of sheets) {
-      // Find which event this sheet belongs to
       const parentEvent = wsEvents.find(
         (e) => e._id.toString() === sheet.eventId.toString(),
       );
-      await upsert({
+      const ok = await upsert({
         workspaceId,
         sourceType: "spreadsheet",
         sourceId: sheet._id,
@@ -562,7 +574,8 @@ const syncWorkspace = async (workspaceId) => {
             : null,
         },
       });
-      counts.spreadsheet++;
+      if (ok) counts.spreadsheet++;
+      else errors++;
     }
   }
 
@@ -575,7 +588,7 @@ const syncWorkspace = async (workspaceId) => {
     .lean();
 
   for (const board of boards) {
-    await upsert({
+    const ok = await upsert({
       workspaceId,
       sourceType: "board",
       sourceId: board._id,
@@ -585,15 +598,22 @@ const syncWorkspace = async (workspaceId) => {
         sourceUrl: `/workspace/${workspaceId}/boards/${board._id}`,
       },
     });
-    counts.board++;
+    if (ok) counts.board++;
+    else errors++;
   }
 
   const total = Object.values(counts).reduce((sum, c) => sum + c, 0);
   console.log(
-    `[EmbeddingService] Synced workspace ${workspaceId}: ${total} embeddings`,
+    `[EmbeddingService] Synced workspace ${workspaceId}: ${total} embedded, ${errors} failed`,
   );
 
-  return { total, byType: counts };
+  if (total === 0 && errors > 0) {
+    throw new Error(
+      `Embedding sync failed: all ${errors} items failed to embed. Check GOOGLE_AI_API_KEY and server logs.`,
+    );
+  }
+
+  return { total, byType: counts, errors };
 };
 
 // ════════════════════════════════════════════════════

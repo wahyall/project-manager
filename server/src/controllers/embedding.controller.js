@@ -12,7 +12,7 @@ exports.syncEmbeddings = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: "success",
-    message: `Re-index selesai: ${result.total} embeddings`,
+    message: `Re-index selesai: ${result.total} embeddings${result.errors ? `, ${result.errors} gagal` : ""}`,
     data: result,
   });
 });
