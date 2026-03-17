@@ -45,7 +45,7 @@ const getGenAI = () => {
  */
 const generateEmbedding = async (text) => {
   const ai = getGenAI();
-  const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL });
+  const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL }, { apiVersion: "v1" });
   const result = await model.embedContent(text);
   return result.embedding.values;
 };
