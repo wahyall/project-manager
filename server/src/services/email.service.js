@@ -1,27 +1,40 @@
-const { Resend } = require("resend");
 const logger = require("../utils/logger");
 
 class EmailService {
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
-    this.from = process.env.EMAIL_FROM || "onboarding@resend.dev";
+    this.apiKey = process.env.BREVO_API_KEY;
+    this.from = {
+      name: process.env.EMAIL_FROM_NAME || "YukNgaji Surabaya",
+      email: process.env.EMAIL_FROM || "ynsurabaya@gmail.com",
+    };
+    this.apiUrl = "https://api.brevo.com/v3/smtp/email";
   }
 
   async sendMail({ to, subject, html }) {
     try {
-      const { data, error } = await this.resend.emails.send({
-        from: this.from,
-        to,
-        subject,
-        html,
+      const response = await fetch(this.apiUrl, {
+        method: "POST",
+        headers: {
+          "api-key": this.apiKey,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          sender: this.from,
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+        }),
       });
 
-      if (error) {
+      if (!response.ok) {
+        const error = await response.json();
         logger.error(`Gagal mengirim email ke ${to}:`, error);
-        throw new Error(error.message);
+        throw new Error(error.message || `Brevo API error: ${response.status}`);
       }
 
-      logger.info(`Email terkirim ke ${to}: ${data.id}`);
+      const data = await response.json();
+      logger.info(`Email terkirim ke ${to}: ${data.messageId}`);
       return data;
     } catch (error) {
       logger.error(`Gagal mengirim email ke ${to}:`, error);
