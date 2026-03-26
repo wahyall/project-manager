@@ -50,8 +50,17 @@ export function WorkspaceProvider({ children }) {
         localStorage.setItem("currentWorkspaceId", workspaceId);
         return data.data.workspace;
       } catch (error) {
-        console.error("Failed to load workspace:", error);
-        localStorage.removeItem("currentWorkspaceId");
+        console.error("Failed to load workspace, retrying...", error);
+        try {
+          // Retry once in case this was a failover event
+          const { data } = await api.get(`/workspaces/${workspaceId}`);
+          setCurrentWorkspaceState(data.data.workspace);
+          localStorage.setItem("currentWorkspaceId", workspaceId);
+          return data.data.workspace;
+        } catch (retryError) {
+          console.error("Failed to load workspace after retry:", retryError);
+          localStorage.removeItem("currentWorkspaceId");
+        }
       }
     },
     [],

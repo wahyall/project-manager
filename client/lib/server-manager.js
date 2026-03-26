@@ -20,6 +20,8 @@ const socketUrls = [
 ].filter(Boolean);
 
 let activeIndex = 0;
+let lastSwitchTime = 0;
+const SWITCH_COOLDOWN_MS = 3000;
 
 const listeners = new Set();
 
@@ -43,11 +45,15 @@ export function onServerSwitch(listener) {
 export function switchServer(reason) {
   if (apiUrls.length <= 1 && socketUrls.length <= 1) return activeIndex;
 
+  const now = Date.now();
+  if (now - lastSwitchTime < SWITCH_COOLDOWN_MS) return activeIndex;
+
   const nextIndex = activeIndex === 0 ? 1 : 0;
   if (nextIndex === activeIndex) return activeIndex;
 
   const prevIndex = activeIndex;
   activeIndex = nextIndex;
+  lastSwitchTime = now;
 
   const payload = {
     prevIndex,
