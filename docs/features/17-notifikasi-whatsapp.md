@@ -271,6 +271,8 @@ APP_BASE_URL=https://app.example.com
 | POST   | `/api/admin/whatsapp/test`      | Test kirim pesan WA      |
 | GET    | `/api/admin/whatsapp/logs`      | Daftar log pengiriman WA |
 
+**API eksternal (tanpa JWT, pakai API key):** `POST /api/external/whatsapp/send` — dokumentasi lengkap: [whatsapp-external-api.md](./whatsapp-external-api.md).
+
 ---
 
 ## Catatan Keamanan
@@ -447,6 +449,8 @@ APP_BASE_URL=https://app.example.com
 | ------ | -------------------------- | ------------------------ |
 | GET    | `/api/admin/whatsapp-logs` | Daftar log pengiriman WA |
 | POST   | `/api/admin/whatsapp/test` | Test kirim pesan WA      |
+
+**API eksternal (tanpa JWT, pakai API key):** `POST /api/external/whatsapp/send` — lihat [whatsapp-external-api.md](./whatsapp-external-api.md).
 
 ---
 
