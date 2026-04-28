@@ -14,17 +14,29 @@ const app = express();
 
 app.use(helmet());
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || [
-      "http://localhost:3000",
-      "http://localhost:3001",
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+const externalWhatsappCors = cors({
+  origin: "*",
+  credentials: false,
+  methods: ["POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "X-API-Key", "Authorization"],
+});
+
+const defaultCors = cors({
+  origin: process.env.CLIENT_URL || [
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+});
+
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/external/whatsapp")) {
+    return externalWhatsappCors(req, res, next);
+  }
+  return defaultCors(req, res, next);
+});
 
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
@@ -71,6 +83,7 @@ const exportJobRoutes = require("./routes/exportJob.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const commentRoutes = require("./routes/comment.routes");
 const whatsappRoutes = require("./routes/whatsapp.routes");
+const whatsappExternalRoutes = require("./routes/whatsapp-external.routes");
 const pushRoutes = require("./routes/push.routes");
 const spreadsheetRoutes = require("./routes/spreadsheet.routes");
 const eventNoteRoutes = require("./routes/eventNote.routes");
@@ -97,6 +110,7 @@ app.use("/api/export-jobs", exportJobRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/admin/whatsapp", whatsappRoutes);
+app.use("/api/external/whatsapp", whatsappExternalRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/spreadsheets", spreadsheetRoutes);
 app.use("/api/workspaces/:id/embeddings", embeddingRoutes);

@@ -81,6 +81,38 @@ exports.testMessage = catchAsync(async (req, res, next) => {
 });
 
 // ──────────────────────────────────────────────
+// POST /api/external/whatsapp/send
+// ──────────────────────────────────────────────
+exports.sendExternalMessage = catchAsync(async (req, res, next) => {
+  const { number, message } = req.body;
+
+  if (!number || !message) {
+    return next(new AppError("number and message are required", 400));
+  }
+
+  const status = whatsappService.getStatus();
+  if (!status.connected) {
+    return next(new AppError("WhatsApp is not connected", 503));
+  }
+
+  const log = await whatsappService.queueMessage({
+    recipientNumber: number,
+    type: "external",
+    message: String(message),
+  });
+
+  if (!log) {
+    return next(new AppError("Failed to queue message", 500));
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "Message queued",
+    data: { logId: log._id },
+  });
+});
+
+// ──────────────────────────────────────────────
 // GET /api/admin/whatsapp/logs
 // ──────────────────────────────────────────────
 exports.getLogs = catchAsync(async (req, res, next) => {

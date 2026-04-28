@@ -5,7 +5,8 @@ const whatsappLogSchema = new mongoose.Schema(
     recipientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
+      default: undefined,
     },
     recipientNumber: {
       type: String,
@@ -22,6 +23,7 @@ const whatsappLogSchema = new mongoose.Schema(
         "new_member",
         "event_start",
         "task_update",
+        "external",
       ],
     },
     message: {
