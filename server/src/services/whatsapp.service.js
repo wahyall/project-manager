@@ -13,7 +13,8 @@ const logger = require("../utils/logger");
 
 const AUTH_DIR =
   process.env.WHATSAPP_AUTH_DIR || path.join(__dirname, "../../whatsapp_auth");
-const RATE_LIMIT_MS = 2000; // 2 seconds between messages (30/min)
+const BATCH_SIZE = 10;      // messages per batch
+const BATCH_INTERVAL_MS = 2000; // delay between batches (ms)
 
 class WhatsAppService {
   constructor() {
@@ -170,26 +171,12 @@ class WhatsAppService {
   }
 
   /**
-   * Process the message queue with rate limiting and exponential backoff.
+   * Send a single queued item. Returns true if successfully sent.
+   * On failure applies retry/backoff logic.
    */
-  async processQueue() {
-    if (this.messageQueue.length === 0) {
-      this.isProcessingQueue = false;
-      return;
-    }
-
-    this.isProcessingQueue = true;
-
-    // Wait for rate limit delay
-    const now = Date.now();
-    const timeSinceLastSend = now - this.lastSentTime;
-    if (timeSinceLastSend < RATE_LIMIT_MS) {
-      const delayMs = RATE_LIMIT_MS - timeSinceLastSend;
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-
-    const item = this.messageQueue[0];
+  async _sendItem(item) {
     const { logId, recipientNumber, message, attempts } = item;
+    const MAX_ATTEMPTS = 3;
 
     try {
       if (!this.isConnected || !this.sock) {
@@ -203,14 +190,13 @@ class WhatsAppService {
       }
       const jid = `${formattedNumber}@s.whatsapp.net`;
 
-      // Check if number exists on WA (optional, but good practice to avoid generic errors)
+      // Check if number exists on WhatsApp
       const [result] = await this.sock.onWhatsApp(jid);
       if (!result || !result.exists) {
         throw new Error("Number is not registered on WhatsApp");
       }
 
       await this.sock.sendMessage(jid, { text: message });
-      this.lastSentTime = Date.now();
 
       // Success
       await WhatsAppLog.findByIdAndUpdate(logId, {
@@ -220,8 +206,7 @@ class WhatsAppService {
         lastAttemptAt: new Date(),
       });
 
-      // Remove from queue
-      this.messageQueue.shift();
+      return { success: true };
     } catch (error) {
       logger.error(
         `[WhatsApp] Failed to send message to ${recipientNumber}:`,
@@ -229,38 +214,68 @@ class WhatsAppService {
       );
 
       const newAttempts = attempts + 1;
-      const MAX_ATTEMPTS = 3;
 
       if (newAttempts >= MAX_ATTEMPTS) {
-        // Drop it
         await WhatsAppLog.findByIdAndUpdate(logId, {
           status: "failed",
           error: error.message,
           attempts: newAttempts,
           lastAttemptAt: new Date(),
         });
-        this.messageQueue.shift();
+        return { success: false, drop: true };
       } else {
-        // Update attempt count and put back in queue, BUT apply backoff
         await WhatsAppLog.findByIdAndUpdate(logId, {
           error: error.message,
           attempts: newAttempts,
           lastAttemptAt: new Date(),
         });
-
-        // Remove from front, put at back to process other messages
-        const failedItem = this.messageQueue.shift();
-        failedItem.attempts = newAttempts;
-        this.messageQueue.push(failedItem);
-
-        // Add artificial delay before processing next item to prevent spamming failed attempts
-        const backoffMs = Math.pow(2, newAttempts) * 1000; // 2s, 4s, etc
-        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+        item.attempts = newAttempts;
+        return { success: false, drop: false };
       }
     }
+  }
 
-    // Process next
-    setTimeout(() => this.processQueue(), 100);
+  /**
+   * Process the message queue in batches of BATCH_SIZE.
+   * Each batch is sent concurrently; a fixed BATCH_INTERVAL_MS delay
+   * separates consecutive batches (10 messages every 2 seconds).
+   */
+  async processQueue() {
+    if (this.messageQueue.length === 0) {
+      this.isProcessingQueue = false;
+      return;
+    }
+
+    this.isProcessingQueue = true;
+
+    // Grab up to BATCH_SIZE items from the front of the queue
+    const batch = this.messageQueue.splice(0, BATCH_SIZE);
+
+    logger.info(
+      `[WhatsApp] Processing batch of ${batch.length} message(s). Remaining in queue: ${this.messageQueue.length}`,
+    );
+
+    // Send all items in the batch concurrently
+    const results = await Promise.all(batch.map((item) => this._sendItem(item)));
+
+    this.lastSentTime = Date.now();
+
+    // Re-queue items that failed and should be retried (put them at the end)
+    batch.forEach((item, i) => {
+      const { success, drop } = results[i];
+      if (!success && !drop) {
+        this.messageQueue.push(item);
+      }
+    });
+
+    if (this.messageQueue.length === 0) {
+      this.isProcessingQueue = false;
+      return;
+    }
+
+    // Wait BATCH_INTERVAL_MS before processing the next batch
+    await new Promise((resolve) => setTimeout(resolve, BATCH_INTERVAL_MS));
+    this.processQueue();
   }
 
   /**
