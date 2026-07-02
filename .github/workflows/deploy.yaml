@@ -59,6 +59,17 @@ jobs:
             deploy/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_PATH }}/
 
+      - name: Move /client to Project Directory
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} '
+            if [ -d "/app/client" ]; then
+              echo "/app/client already exists, removing it..."
+              sudo rm -rf /app/client
+            fi
+            sudo mv ${{ secrets.VPS_PATH }}/client/* ${{ secrets.VPS_PATH }}
+            sudo mv ${{ secrets.VPS_PATH }}/client/.next/* ${{ secrets.VPS_PATH }}/.next
+          '
+
       - name: Restart service
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} '
