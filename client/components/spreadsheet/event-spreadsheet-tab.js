@@ -33,13 +33,13 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
   // Helper to build iframe src URL with minimal UI
   const getEmbedUrl = (url, id) => {
     if (id) {
-      return `https://docs.google.com/spreadsheets/d/${id}/edit?rm=minimal`;
+      return `https://docs.google.com/spreadsheets/d/${id}/edit`;
     }
     if (url) {
       if (url.includes("?")) {
-        return `${url}&rm=minimal`;
+        return `${url}`;
       }
-      return `${url}?rm=minimal`;
+      return `${url}`;
     }
     return "";
   };
