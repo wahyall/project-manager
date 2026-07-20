@@ -28,8 +28,13 @@ router.delete(
   eventController.deleteEvent,
 );
 
-// ── Event Tasks ─────────────────────────────────────
+// ── Event Tasks & Spreadsheet ───────────────────────
 router.get("/:eventId/tasks", workspaceMember(), eventController.getEventTasks);
+router.post(
+  "/:eventId/google-sheet",
+  workspaceMember("owner", "admin", "member"),
+  eventController.createEventGoogleSpreadsheet
+);
 
 // ── Spreadsheet (sub-router) ────────────────────────
 router.use("/:eventId/sheets", require("./spreadsheet.routes"));

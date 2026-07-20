@@ -1,222 +1,127 @@
 "use client";
 
-import { useState, useCallback, useRef, useMemo, useEffect } from "react";
-import dynamic from "next/dynamic";
-import "@fortune-sheet/react/dist/index.css";
-
-// Presence colors palette (from fortune-sheet core/modules/color.ts — not exported in dist)
-const PRESENCE_COLORS = [
-  "#c1232b",
-  "#27727b",
-  "#fcce10",
-  "#e87c25",
-  "#b5c334",
-  "#fe8463",
-  "#9bca63",
-  "#fad860",
-  "#f3a43b",
-  "#60c0dd",
-  "#d7504b",
-  "#c6e579",
-  "#f4e001",
-  "#f0805a",
-  "#26c0c0",
-  "#c12e34",
-  "#e6b600",
-  "#0098d9",
-  "#2b821d",
-  "#005eaa",
-];
-import { useSpreadsheet } from "@/hooks/use-spreadsheet";
+import { useState } from "react";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Download,
-  FileSpreadsheet,
-  FileDown,
-  Loader2,
   Table2,
-  AlertCircle,
+  ExternalLink,
+  RotateCw,
+  Plus,
+  Loader2,
   Eye,
+  FileSpreadsheet,
 } from "lucide-react";
 import { toast } from "sonner";
-
-// Dynamic import FortuneSheet (client-only, no SSR)
-const Workbook = dynamic(
-  () => import("@fortune-sheet/react").then((mod) => mod.Workbook),
-  { ssr: false, loading: () => <SpreadsheetSkeleton /> },
-);
-
-// Simple hash for consistent presence colors
-function hashCode(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return hash;
-}
-
-// ════════════════════════════════════════════════
-// Main Component
-// ════════════════════════════════════════════════
+import api from "@/lib/api";
 
 export function EventSpreadsheetTab({ event, workspaceId }) {
-  const {
-    data,
-    setData,
-    loading,
-    error,
-    fetchWorkbook,
-    onOp,
-    onChange,
-    workbookRef,
-    exportCSV,
-    exportXLSX,
-    username,
-    userId,
-  } = useSpreadsheet(workspaceId, event._id);
-
   const { currentWorkspace } = useWorkspace();
   const isReadOnly = currentWorkspace?.role === "guest";
 
-  const [exporting, setExporting] = useState(false);
-  const [activeFortuneSheetId, setActiveFortuneSheetId] = useState(null);
+  const [googleSpreadsheetUrl, setGoogleSpreadsheetUrl] = useState(
+    event?.googleSpreadsheetUrl || null
+  );
+  const [googleSpreadsheetId, setGoogleSpreadsheetId] = useState(
+    event?.googleSpreadsheetId || null
+  );
+  const [creating, setCreating] = useState(false);
+  const [key, setKey] = useState(0); // For forcing iframe reload
 
-  // Track last selection to avoid spamming presence updates
-  const lastSelection = useRef(null);
-  const sheetContainerRef = useRef(null);
-
-  // ── Trap wheel events so Shift+Scroll horizontal scrolling works ──
-  useEffect(() => {
-    const el = sheetContainerRef.current;
-    if (!el) return;
-    const handler = (e) => {
-      // Stop the event from reaching parent scrollable containers
-      // so FortuneSheet can handle horizontal scroll (shift+wheel) natively
-      e.stopPropagation();
-    };
-    // Must use passive: false so we can stopPropagation on non-passive wheel
-    el.addEventListener("wheel", handler, { passive: true });
-    return () => el.removeEventListener("wheel", handler);
-  }, [data]); // re-attach when data loads
-
-  // ── afterSelectionChange: broadcast cursor presence ──
-  const afterSelectionChange = useCallback(
-    (sheetId, selection) => {
-      const { getSocket } = require("@/lib/socket");
-      const socket = getSocket();
-      if (!socket) return;
-
-      const s = {
-        r: selection.row[0],
-        c: selection.column[0],
-      };
-
-      // Deduplicate
-      if (
-        lastSelection.current?.r === s.r &&
-        lastSelection.current?.c === s.c
-      ) {
-        return;
+  // Helper to build iframe src URL with minimal UI
+  const getEmbedUrl = (url, id) => {
+    if (id) {
+      return `https://docs.google.com/spreadsheets/d/${id}/edit?rm=minimal`;
+    }
+    if (url) {
+      if (url.includes("?")) {
+        return `${url}&rm=minimal`;
       }
-      lastSelection.current = s;
+      return `${url}?rm=minimal`;
+    }
+    return "";
+  };
 
-      socket.emit("workbook:addPresences", [
-        {
-          sheetId,
-          username,
-          userId,
-          color:
-            PRESENCE_COLORS[
-              Math.abs(hashCode(userId)) % PRESENCE_COLORS.length
-            ],
-          selection: s,
-        },
-      ]);
-    },
-    [userId, username],
-  );
-
-  // ── FortuneSheet hooks ──
-  const fortuneHooks = useMemo(
-    () => ({
-      afterActivateSheet: (id) => {
-        setActiveFortuneSheetId(String(id));
-      },
-      afterSelectionChange,
-    }),
-    [afterSelectionChange],
-  );
-
-  // ── Export ──
-  const handleExportCSV = async () => {
-    const backendId = activeFortuneSheetId || data?.[0]?.id;
-    if (!backendId) return;
-
-    setExporting(true);
+  const handleCreateGoogleSheet = async () => {
+    setCreating(true);
     try {
-      await exportCSV(backendId);
-      toast.success("CSV exported");
+      const res = await api.post(
+        `/workspaces/${workspaceId}/events/${event._id}/google-sheet`
+      );
+      const { googleSpreadsheetUrl: newUrl, googleSpreadsheetId: newId } =
+        res.data.data;
+      setGoogleSpreadsheetUrl(newUrl);
+      setGoogleSpreadsheetId(newId);
+      toast.success("Google Spreadsheet berhasil dibuat!");
     } catch (err) {
-      toast.error("Failed to export CSV");
+      console.error("Failed to create Google Spreadsheet:", err);
+      toast.error(
+        err.response?.data?.message || "Gagal membuat Google Spreadsheet"
+      );
     } finally {
-      setExporting(false);
+      setCreating(false);
     }
   };
 
-  const handleExportXLSX = async () => {
-    setExporting(true);
-    try {
-      await exportXLSX();
-      toast.success("Excel exported");
-    } catch (err) {
-      toast.error("Failed to export Excel");
-    } finally {
-      setExporting(false);
+  const handleOpenExternal = () => {
+    const rawUrl =
+      googleSpreadsheetUrl ||
+      (googleSpreadsheetId
+        ? `https://docs.google.com/spreadsheets/d/${googleSpreadsheetId}/edit`
+        : null);
+    if (rawUrl) {
+      window.open(rawUrl, "_blank", "noopener,noreferrer");
     }
   };
 
-  // ════════════════════════════════════════════════
-  // Render
-  // ════════════════════════════════════════════════
+  const handleRefreshIframe = () => {
+    setKey((prev) => prev + 1);
+  };
 
-  if (loading) return <SpreadsheetSkeleton />;
+  const embedUrl = getEmbedUrl(googleSpreadsheetUrl, googleSpreadsheetId);
 
-  if (error) {
+  // If event does not have Google Spreadsheet yet
+  if (!embedUrl) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <AlertCircle className="h-10 w-10 text-destructive/60 mb-3" />
-        <p className="text-sm text-muted-foreground">{error}</p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-3"
-          onClick={() => fetchWorkbook()}
-        >
-          Try Again
-        </Button>
+      <div className="flex flex-col items-center justify-center p-12 border rounded-lg bg-background text-center space-y-4">
+        <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+          <FileSpreadsheet className="h-10 w-10" />
+        </div>
+        <div className="max-w-md space-y-1">
+          <h3 className="text-lg font-semibold">Google Spreadsheet Event</h3>
+          <p className="text-sm text-muted-foreground">
+            Event ini belum memiliki Google Spreadsheet. Buat spreadsheet baru
+            untuk mengelola data event ini secara fleksibel.
+          </p>
+        </div>
+        {!isReadOnly && (
+          <Button
+            onClick={handleCreateGoogleSheet}
+            disabled={creating}
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            {creating ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            {creating ? "Membuat Spreadsheet..." : "Buat Google Spreadsheet"}
+          </Button>
+        )}
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-0 border rounded-lg overflow-hidden bg-background">
-      {/* ── Header bar ──────────────────────────────── */}
+      {/* ── Header Bar ──────────────────────────────── */}
       <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
         <div className="flex items-center gap-2">
-          <Table2 className="h-4 w-4 text-muted-foreground" />
+          <Table2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           <span className="text-sm font-medium text-foreground">
-            Spreadsheet
+            Google Spreadsheet
           </span>
           {isReadOnly && (
             <Badge
@@ -229,172 +134,39 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
           )}
         </div>
 
-        {/* Export menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1.5"
-              disabled={exporting}
-            >
-              {exporting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Download className="h-3.5 w-3.5" />
-              )}
-              <span className="hidden sm:inline">Export</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleExportCSV}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Export CSV (active sheet)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleExportXLSX}>
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export Excel (all sheets)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={handleRefreshIframe}
+            title="Muat ulang spreadsheet"
+          >
+            <RotateCw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+            onClick={handleOpenExternal}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            <span>Buka di Google Sheets</span>
+          </Button>
+        </div>
       </div>
 
-      {/* ── FortuneSheet ─────────────────────────────── */}
-      <div
-        ref={sheetContainerRef}
-        className="relative"
-        style={{ height: "650px", width: "100%" }}
-      >
-        {data ? (
-          <Workbook
-            ref={workbookRef}
-            data={data}
-            onChange={onChange}
-            onOp={onOp}
-            showToolbar={!isReadOnly}
-            showFormulaBar={!isReadOnly}
-            showSheetTabs={true}
-            allowEdit={!isReadOnly}
-            lang="en"
-            hooks={fortuneHooks}
-            toolbarItems={[
-              "undo",
-              "redo",
-              "format-painter",
-              "clear-format",
-              "|",
-              "currency-format",
-              "percentage-format",
-              "number-decrease",
-              "number-increase",
-              "format",
-              "|",
-              "font",
-              "|",
-              "font-size",
-              "|",
-              "bold",
-              "italic",
-              "strike-through",
-              "underline",
-              "|",
-              "font-color",
-              "background",
-              "border",
-              "merge-cell",
-              "|",
-              "horizontal-align",
-              "vertical-align",
-              "text-wrap",
-              "text-rotation",
-              "|",
-              "freeze",
-              "conditionFormat",
-              "filter",
-              "link",
-              "image",
-              "comment",
-              "quick-formula",
-            ]}
-            cellContextMenu={
-              isReadOnly
-                ? ["copy"]
-                : [
-                    "copy",
-                    "paste",
-                    "|",
-                    "insert-row",
-                    "insert-column",
-                    "delete-row",
-                    "delete-column",
-                    "delete-cell",
-                    "hide-row",
-                    "hide-column",
-                    "set-row-height",
-                    "set-column-width",
-                    "|",
-                    "clear",
-                    "sort",
-                    "orderAZ",
-                    "orderZA",
-                    "filter",
-                    "image",
-                    "link",
-                    "cell-format",
-                  ]
-            }
-            headerContextMenu={
-              isReadOnly
-                ? ["copy"]
-                : [
-                    "copy",
-                    "paste",
-                    "|",
-                    "insert-row",
-                    "insert-column",
-                    "delete-row",
-                    "delete-column",
-                    "delete-cell",
-                    "hide-row",
-                    "hide-column",
-                    "set-row-height",
-                    "set-column-width",
-                    "|",
-                    "clear",
-                    "sort",
-                    "orderAZ",
-                    "orderZA",
-                  ]
-            }
-            sheetTabContextMenu={
-              isReadOnly
-                ? []
-                : ["delete", "copy", "rename", "color", "hide", "|", "move"]
-            }
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p className="text-sm">No sheet data available</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════
-// Loading Skeleton
-// ════════════════════════════════════════════════
-
-function SpreadsheetSkeleton() {
-  return (
-    <div className="border rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
-        <Skeleton className="h-5 w-24" />
-        <Skeleton className="h-7 w-16" />
-      </div>
-      <div className="p-0">
-        <Skeleton className="h-[650px] w-full rounded-none" />
+      {/* ── Google Spreadsheet iframe ───────────────── */}
+      <div className="relative w-full h-[680px] bg-background">
+        <iframe
+          key={key}
+          src={embedUrl}
+          className="w-full h-full border-0"
+          allow="clipboard-write; auto-fill; fullscreen"
+          title={`Google Spreadsheet - ${event?.title || "Event"}`}
+        />
       </div>
     </div>
   );

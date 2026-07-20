@@ -53,6 +53,14 @@ const eventSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    googleSpreadsheetId: {
+      type: String,
+      default: null,
+    },
+    googleSpreadsheetUrl: {
+      type: String,
+      default: null,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

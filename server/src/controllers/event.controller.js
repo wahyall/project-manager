@@ -8,6 +8,7 @@ const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
+const googleSheetsService = require("../services/googleSheets.service");
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -180,6 +181,22 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     );
   }
 
+  // Auto-create Google Spreadsheet for this event
+  let googleSpreadsheetId = null;
+  let googleSpreadsheetUrl = null;
+  try {
+    const spreadsheetTitle = workspace?.name
+      ? `${workspace.name} - ${title.trim()}`
+      : title.trim();
+    const sheetResult = await googleSheetsService.createGoogleSpreadsheet(spreadsheetTitle);
+    if (sheetResult) {
+      googleSpreadsheetId = sheetResult.spreadsheetId;
+      googleSpreadsheetUrl = sheetResult.spreadsheetUrl;
+    }
+  } catch (sheetErr) {
+    console.error("Gagal membuat Google Spreadsheet untuk event:", sheetErr.message);
+  }
+
   const event = await Event.create({
     workspaceId: workspace._id,
     title: title.trim(),
@@ -189,6 +206,8 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     color: color || "#8B5CF6",
     status: status || "upcoming",
     participants: [],
+    googleSpreadsheetId,
+    googleSpreadsheetUrl,
     createdBy: userId,
   });
 
@@ -563,3 +582,47 @@ exports.getEventTasks = catchAsync(async (req, res, next) => {
     data: { tasks },
   });
 });
+
+// ──────────────────────────────────────────────
+// POST /api/workspaces/:id/events/:eventId/google-sheet — Create Google Spreadsheet on demand
+// ──────────────────────────────────────────────
+exports.createEventGoogleSpreadsheet = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const workspace = req.workspace;
+
+  const event = await Event.findOne({
+    _id: eventId,
+    workspaceId: workspace._id,
+  });
+
+  if (!event) {
+    return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  if (event.googleSpreadsheetUrl) {
+    return res.status(200).json({
+      status: "success",
+      data: {
+        googleSpreadsheetId: event.googleSpreadsheetId,
+        googleSpreadsheetUrl: event.googleSpreadsheetUrl,
+      },
+    });
+  }
+
+  const spreadsheetTitle = workspace?.name
+    ? `${workspace.name} - ${event.title}`
+    : event.title;
+  const sheetResult = await googleSheetsService.createGoogleSpreadsheet(spreadsheetTitle);
+  event.googleSpreadsheetId = sheetResult.spreadsheetId;
+  event.googleSpreadsheetUrl = sheetResult.spreadsheetUrl;
+  await event.save();
+
+  res.status(201).json({
+    status: "success",
+    data: {
+      googleSpreadsheetId: event.googleSpreadsheetId,
+      googleSpreadsheetUrl: event.googleSpreadsheetUrl,
+    },
+  });
+});
+
