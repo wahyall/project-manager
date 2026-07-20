@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 
@@ -9,12 +9,14 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
+      return cache.addAll(STATIC_ASSETS).catch((err) => {
+        console.warn("Failed to precache static assets:", err);
+      });
     }),
   );
 });
 
-// Activate Event
+// Activate Event: Clean up all old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -38,18 +40,20 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Skip non-http/https requests for caching (fixes chrome-extension error)
+  // Skip non-http/https requests (e.g. chrome-extension)
   if (!url.protocol.startsWith("http")) {
     return;
   }
 
-  // API Requests: Network First, fallback to Cache
+  // 1. API Requests: Network First, fallback to Cache
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const resClone = response.clone();
-          caches.open(API_CACHE).then((cache) => cache.put(request, resClone));
+          if (response && response.status === 200) {
+            const resClone = response.clone();
+            caches.open(API_CACHE).then((cache) => cache.put(request, resClone));
+          }
           return response;
         })
         .catch(() => caches.match(request)),
@@ -57,20 +61,44 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static Assets: Cache First, fallback to Network
+  // 2. Navigation / HTML Requests: Network First, fallback to Cache
+  // This guarantees fresh HTML page on every reload/navigation when online
+  const isNavigation =
+    request.mode === "navigate" ||
+    (request.headers.get("accept") &&
+      request.headers.get("accept").includes("text/html"));
+
+  if (isNavigation) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const resClone = response.clone();
+            caches
+              .open(STATIC_CACHE)
+              .then((cache) => cache.put(request, resClone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request) || caches.match("/")),
+    );
+    return;
+  }
+
+  // 3. Static Assets (_next/static, images, etc.): Network First, fallback to Cache
+  // Ensures fresh JS/CSS builds are fetched instead of serving old stale cache
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      return (
-        cachedResponse ||
-        fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200) {
           const resClone = response.clone();
           caches
             .open(STATIC_CACHE)
             .then((cache) => cache.put(request, resClone));
-          return response;
-        })
-      );
-    }),
+        }
+        return response;
+      })
+      .catch(() => caches.match(request)),
   );
 });
 

@@ -64,11 +64,20 @@ export default function RootLayout({ children }) {
                     navigator.serviceWorker.register('/sw.js').then(
                       function(registration) {
                         console.log('ServiceWorker registration successful');
+                        registration.update();
                       },
                       function(err) {
                         console.log('ServiceWorker registration failed: ', err);
                       }
                     );
+                  });
+
+                  let refreshing = false;
+                  navigator.serviceWorker.addEventListener('controllerchange', function() {
+                    if (!refreshing) {
+                      refreshing = true;
+                      window.location.reload();
+                    }
                   });
                 }
 
