@@ -30,6 +30,7 @@ export default function BrainstormingPage({ params }) {
   const {
     boards,
     loading,
+    fetchBoards,
     createBoard,
     updateBoard,
     deleteBoard,
@@ -70,12 +71,13 @@ export default function BrainstormingPage({ params }) {
         await updateBoard(editingBoard._id, updates);
         toast.success("Board berhasil diperbarui");
         setEditingBoard(null);
+        fetchBoards(true);
       } catch (err) {
         toast.error(err.response?.data?.message || "Gagal memperbarui board");
         throw err;
       }
     },
-    [editingBoard, updateBoard],
+    [editingBoard, updateBoard, fetchBoards],
   );
 
   const handleToggleMading = useCallback(
@@ -88,13 +90,14 @@ export default function BrainstormingPage({ params }) {
             ? `"${board.name}" dijadikan Mading Workspace`
             : `"${board.name}" dihapus dari Mading Workspace`,
         );
+        fetchBoards(true);
       } catch (err) {
         toast.error(
           err.response?.data?.message || "Gagal mengubah status Mading",
         );
       }
     },
-    [updateBoard],
+    [updateBoard, fetchBoards],
   );
 
   const handleDuplicate = useCallback(
@@ -102,11 +105,12 @@ export default function BrainstormingPage({ params }) {
       try {
         await duplicateBoard(board._id);
         toast.success("Board berhasil diduplikasi");
+        fetchBoards(true);
       } catch (err) {
         toast.error(err.response?.data?.message || "Gagal duplikasi board");
       }
     },
-    [duplicateBoard],
+    [duplicateBoard, fetchBoards],
   );
 
   const handleDelete = useCallback(async () => {
@@ -116,12 +120,13 @@ export default function BrainstormingPage({ params }) {
       await deleteBoard(deleteBoardTarget._id);
       toast.success("Board berhasil dihapus");
       setDeleteBoardTarget(null);
+      fetchBoards(true);
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal menghapus board");
     } finally {
       setDeleteLoading(false);
     }
-  }, [deleteBoardTarget, deleteLoading, deleteBoard]);
+  }, [deleteBoardTarget, deleteLoading, deleteBoard, fetchBoards]);
 
   // ── Filter boards ─────────────────────────────────
   const filteredBoards = boards.filter((b) =>

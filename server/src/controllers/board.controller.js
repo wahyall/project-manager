@@ -245,11 +245,16 @@ exports.updateBoard = catchAsync(async (req, res, next) => {
     BrainstormingBoard.findById(board._id),
   ).lean();
 
+  const widgetCount = await BrainstormingWidget.countDocuments({
+    boardId: board._id,
+  });
+  const boardWithCount = { ...populatedBoard, widgetCount };
+
   // Emit to workspace room
   const io = getIO();
   if (io) {
     io.to(`workspace:${workspace._id}`).emit("board:updated", {
-      board: populatedBoard,
+      board: boardWithCount,
     });
   }
 
@@ -280,7 +285,7 @@ exports.updateBoard = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    data: { board: populatedBoard },
+    data: { board: boardWithCount },
   });
 });
 

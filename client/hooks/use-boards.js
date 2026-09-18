@@ -13,20 +13,23 @@ export function useBoards(workspaceId) {
   const [error, setError] = useState(null);
 
   // ── Fetch boards ──────────────────────────────────
-  const fetchBoards = useCallback(async () => {
-    if (!workspaceId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const { data } = await api.get(`/workspaces/${workspaceId}/boards`);
-      setBoards(data.data.boards);
-    } catch (err) {
-      setError(err.response?.data?.message || "Gagal memuat boards");
-      console.error("Failed to fetch boards:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [workspaceId]);
+  const fetchBoards = useCallback(
+    async (silent = false) => {
+      if (!workspaceId) return;
+      if (!silent) setLoading(true);
+      setError(null);
+      try {
+        const { data } = await api.get(`/workspaces/${workspaceId}/boards`);
+        setBoards(data.data.boards);
+      } catch (err) {
+        setError(err.response?.data?.message || "Gagal memuat boards");
+        console.error("Failed to fetch boards:", err);
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [workspaceId],
+  );
 
   // ── Auto-fetch on mount ───────────────────────────
   useEffect(() => {
@@ -44,7 +47,15 @@ export function useBoards(workspaceId) {
 
     const handleUpdated = ({ board }) => {
       setBoards((prev) =>
-        prev.map((b) => (b._id === board._id ? { ...b, ...board } : b)),
+        prev.map((b) => {
+          if (b._id === board._id) {
+            return { ...b, ...board };
+          }
+          if (board.isMading) {
+            return { ...b, isMading: false };
+          }
+          return b;
+        }),
       );
     };
 
@@ -61,7 +72,7 @@ export function useBoards(workspaceId) {
       socket.off("board:updated", handleUpdated);
       socket.off("board:deleted", handleDeleted);
     };
-  }, []);
+  }, [workspaceId]);
 
   // ── CRUD Operations ───────────────────────────────
   const createBoard = useCallback(
@@ -72,7 +83,17 @@ export function useBoards(workspaceId) {
         `/workspaces/${workspaceId}/boards`,
         payload,
       );
-      return data.data.board;
+      const newBoard = data.data.board;
+      setBoards((prev) => {
+        const updatedList = prev.map((b) =>
+          newBoard.isMading ? { ...b, isMading: false } : b,
+        );
+        if (updatedList.some((b) => b._id === newBoard._id)) {
+          return updatedList.map((b) => (b._id === newBoard._id ? newBoard : b));
+        }
+        return [newBoard, ...updatedList];
+      });
+      return newBoard;
     },
     [workspaceId],
   );
@@ -83,7 +104,19 @@ export function useBoards(workspaceId) {
         `/workspaces/${workspaceId}/boards/${boardId}`,
         updates,
       );
-      return data.data.board;
+      const updated = data.data.board;
+      setBoards((prev) =>
+        prev.map((b) => {
+          if (b._id === boardId) {
+            return { ...b, ...updated };
+          }
+          if (updated.isMading) {
+            return { ...b, isMading: false };
+          }
+          return b;
+        }),
+      );
+      return updated;
     },
     [workspaceId],
   );
@@ -91,6 +124,7 @@ export function useBoards(workspaceId) {
   const deleteBoard = useCallback(
     async (boardId) => {
       await api.delete(`/workspaces/${workspaceId}/boards/${boardId}`);
+      setBoards((prev) => prev.filter((b) => b._id !== boardId));
     },
     [workspaceId],
   );
@@ -100,7 +134,9 @@ export function useBoards(workspaceId) {
       const { data } = await api.post(
         `/workspaces/${workspaceId}/boards/${boardId}/duplicate`,
       );
-      return data.data.board;
+      const duplicated = data.data.board;
+      setBoards((prev) => [duplicated, ...prev]);
+      return duplicated;
     },
     [workspaceId],
   );
