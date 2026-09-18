@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import { Loader2, ImagePlus, X, Pin } from "lucide-react";
 import { uploadBannerImage } from "@/lib/image-upload";
 import { toast } from "sonner";
 
-export function CreateBoardDialog({ open, onOpenChange, onSubmit }) {
+export function EditBoardDialog({ open, onOpenChange, board, onSubmit }) {
   const [name, setName] = useState("");
   const [thumbnail, setThumbnail] = useState(null);
   const [isMading, setIsMading] = useState(false);
@@ -25,13 +25,14 @@ export function CreateBoardDialog({ open, onOpenChange, onSubmit }) {
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
 
-  const resetForm = () => {
-    setName("");
-    setThumbnail(null);
-    setIsMading(false);
-    setLoading(false);
-    setUploadingImage(false);
-  };
+  // Sync board prop when dialog opens
+  useEffect(() => {
+    if (board && open) {
+      setName(board.name || "");
+      setThumbnail(board.thumbnail || null);
+      setIsMading(!!board.isMading);
+    }
+  }, [board, open]);
 
   const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
@@ -52,7 +53,7 @@ export function CreateBoardDialog({ open, onOpenChange, onSubmit }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || loading || uploadingImage) return;
+    if (!name.trim() || loading || uploadingImage || !board) return;
 
     setLoading(true);
     try {
@@ -61,40 +62,33 @@ export function CreateBoardDialog({ open, onOpenChange, onSubmit }) {
         thumbnail,
         isMading,
       });
-      resetForm();
       onOpenChange(false);
     } catch (err) {
-      console.error("Failed to create board:", err);
+      console.error("Failed to update board:", err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) resetForm();
-        onOpenChange(isOpen);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Buat Board Baru</DialogTitle>
+          <DialogTitle>Edit Informasi Board</DialogTitle>
           <DialogDescription>
-            Mulai sesi brainstorming baru dengan canvas kosong dan banner opsional.
+            Ubah nama, banner / thumbnail, atau status Mading untuk board ini.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-3">
             {/* Board Name */}
             <div className="space-y-2">
-              <Label htmlFor="board-name">Nama Board</Label>
+              <Label htmlFor="edit-board-name">Nama Board</Label>
               <Input
-                id="board-name"
+                id="edit-board-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Contoh: Ide Fitur Q2 / Papan Mading"
+                placeholder="Nama board..."
                 maxLength={100}
                 autoFocus
               />
@@ -102,7 +96,7 @@ export function CreateBoardDialog({ open, onOpenChange, onSubmit }) {
 
             {/* Banner / Thumbnail */}
             <div className="space-y-2">
-              <Label>Banner / Thumbnail Board (Opsional)</Label>
+              <Label>Banner / Thumbnail Board</Label>
               {thumbnail ? (
                 <div className="relative w-full h-32 rounded-lg overflow-hidden border shadow-sm group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -174,14 +168,14 @@ export function CreateBoardDialog({ open, onOpenChange, onSubmit }) {
             {/* Mading Toggle */}
             <div className="flex items-start space-x-3 pt-2 border-t">
               <Checkbox
-                id="is-mading"
+                id="edit-is-mading"
                 checked={isMading}
                 onCheckedChange={(checked) => setIsMading(!!checked)}
                 className="mt-0.5"
               />
               <div className="grid gap-1 leading-none cursor-pointer">
                 <label
-                  htmlFor="is-mading"
+                  htmlFor="edit-is-mading"
                   className="text-sm font-medium text-foreground flex items-center gap-1.5 cursor-pointer"
                 >
                   <Pin className="h-3.5 w-3.5 text-purple-500" />
@@ -198,10 +192,7 @@ export function CreateBoardDialog({ open, onOpenChange, onSubmit }) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                resetForm();
-                onOpenChange(false);
-              }}
+              onClick={() => onOpenChange(false)}
             >
               Batal
             </Button>
@@ -210,7 +201,7 @@ export function CreateBoardDialog({ open, onOpenChange, onSubmit }) {
               disabled={!name.trim() || loading || uploadingImage}
             >
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Buat Board
+              Simpan Perubahan
             </Button>
           </DialogFooter>
         </form>

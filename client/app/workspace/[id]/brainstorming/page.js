@@ -6,6 +6,7 @@ import { useWorkspace } from "@/contexts/workspace-context";
 import { useBoards } from "@/hooks/use-boards";
 import { BoardCard } from "@/components/brainstorming/board-card";
 import { CreateBoardDialog } from "@/components/brainstorming/create-board-dialog";
+import { EditBoardDialog } from "@/components/brainstorming/edit-board-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,13 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Lightbulb, Plus, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -45,10 +39,8 @@ export default function BrainstormingPage({ params }) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Rename state
-  const [renameBoard, setRenameBoard] = useState(null);
-  const [renameName, setRenameName] = useState("");
-  const [renameLoading, setRenameLoading] = useState(false);
+  // Edit Board state
+  const [editingBoard, setEditingBoard] = useState(null);
 
   // Delete state
   const [deleteBoardTarget, setDeleteBoardTarget] = useState(null);
@@ -58,9 +50,9 @@ export default function BrainstormingPage({ params }) {
 
   // ── Handlers ──────────────────────────────────────
   const handleCreate = useCallback(
-    async (name) => {
+    async (boardData) => {
       try {
-        const board = await createBoard(name);
+        const board = await createBoard(boardData);
         toast.success("Board berhasil dibuat");
         router.push(`/workspace/${id}/brainstorming/${board._id}`);
       } catch (err) {
@@ -71,19 +63,39 @@ export default function BrainstormingPage({ params }) {
     [createBoard, router, id],
   );
 
-  const handleRename = useCallback(async () => {
-    if (!renameBoard || !renameName.trim() || renameLoading) return;
-    setRenameLoading(true);
-    try {
-      await updateBoard(renameBoard._id, { name: renameName.trim() });
-      toast.success("Board berhasil direname");
-      setRenameBoard(null);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Gagal rename board");
-    } finally {
-      setRenameLoading(false);
-    }
-  }, [renameBoard, renameName, renameLoading, updateBoard]);
+  const handleEditBoard = useCallback(
+    async (updates) => {
+      if (!editingBoard) return;
+      try {
+        await updateBoard(editingBoard._id, updates);
+        toast.success("Board berhasil diperbarui");
+        setEditingBoard(null);
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal memperbarui board");
+        throw err;
+      }
+    },
+    [editingBoard, updateBoard],
+  );
+
+  const handleToggleMading = useCallback(
+    async (board) => {
+      try {
+        const newStatus = !board.isMading;
+        await updateBoard(board._id, { isMading: newStatus });
+        toast.success(
+          newStatus
+            ? `"${board.name}" dijadikan Mading Workspace`
+            : `"${board.name}" dihapus dari Mading Workspace`,
+        );
+      } catch (err) {
+        toast.error(
+          err.response?.data?.message || "Gagal mengubah status Mading",
+        );
+      }
+    },
+    [updateBoard],
+  );
 
   const handleDuplicate = useCallback(
     async (board) => {
@@ -194,10 +206,8 @@ export default function BrainstormingPage({ params }) {
               onClick={() =>
                 router.push(`/workspace/${id}/brainstorming/${board._id}`)
               }
-              onRename={() => {
-                setRenameBoard(board);
-                setRenameName(board.name);
-              }}
+              onEdit={() => setEditingBoard(board)}
+              onToggleMading={() => handleToggleMading(board)}
               onDuplicate={() => handleDuplicate(board)}
               onDelete={() => setDeleteBoardTarget(board)}
             />
@@ -222,46 +232,13 @@ export default function BrainstormingPage({ params }) {
         onSubmit={handleCreate}
       />
 
-      {/* Rename dialog */}
-      <Dialog
-        open={!!renameBoard}
-        onOpenChange={(open) => !open && setRenameBoard(null)}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Rename Board</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="rename-input">Nama Board</Label>
-              <Input
-                id="rename-input"
-                value={renameName}
-                onChange={(e) => setRenameName(e.target.value)}
-                maxLength={100}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleRename();
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameBoard(null)}>
-              Batal
-            </Button>
-            <Button
-              onClick={handleRename}
-              disabled={!renameName.trim() || renameLoading}
-            >
-              {renameLoading && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Simpan
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Edit board dialog */}
+      <EditBoardDialog
+        open={!!editingBoard}
+        onOpenChange={(open) => !open && setEditingBoard(null)}
+        board={editingBoard}
+        onSubmit={handleEditBoard}
+      />
 
       {/* Delete confirmation */}
       <AlertDialog

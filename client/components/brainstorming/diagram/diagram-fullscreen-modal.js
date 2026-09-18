@@ -33,7 +33,10 @@ export function DiagramFullscreenModal({
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[96vw] w-[96vw] h-[94vh] flex flex-col p-0 overflow-hidden border shadow-2xl rounded-xl">
+      <DialogContent
+        showCloseButton={false}
+        className="sm:max-w-[96vw] w-[96vw] h-[94vh] flex flex-col p-0 overflow-hidden border shadow-2xl rounded-xl"
+      >
         <DialogHeader className="sr-only">
           <DialogTitle>Editor Diagram Excalidraw</DialogTitle>
           <DialogDescription>
@@ -47,6 +50,7 @@ export function DiagramFullscreenModal({
               widgetId={widgetId}
               initialData={widgetData}
               onUpdateWidget={onUpdateWidget}
+              onClose={onClose}
             />
           )}
         </div>

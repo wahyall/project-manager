@@ -18,6 +18,10 @@ const brainstormingBoardSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    isMading: {
+      type: Boolean,
+      default: false,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -39,6 +43,7 @@ const brainstormingBoardSchema = new mongoose.Schema(
 
 // ── Indexes ─────────────────────────────────────────
 brainstormingBoardSchema.index({ workspaceId: 1, isDeleted: 1 });
+brainstormingBoardSchema.index({ workspaceId: 1, isMading: 1 });
 brainstormingBoardSchema.index({ createdBy: 1 });
 
 // ── Pre-find: exclude soft-deleted ──────────────────

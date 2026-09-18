@@ -36,7 +36,27 @@ import {
   TrendingUp,
   History,
   ListTodo,
+  Pin,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const BoardCanvas = dynamic(
+  () =>
+    import("@/components/brainstorming/board-canvas").then(
+      (mod) => mod.BoardCanvas,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[460px] flex items-center justify-center bg-muted/10 text-muted-foreground text-xs gap-2">
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <span>Memuat canvas Mading...</span>
+      </div>
+    ),
+  },
+);
 
 const ROLE_LABELS = {
   owner: "Owner",
@@ -178,6 +198,43 @@ export default function WorkspaceDashboardPage({ params }) {
           loading={loading}
         />
       </div>
+
+      {/* Mading Workspace (Majalah Dinding / Bulletin Board) */}
+      {data?.madingBoard && (
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Badge className="bg-purple-600 hover:bg-purple-600 text-white font-medium text-xs gap-1.5 px-3 py-1 shadow-sm border-none shrink-0">
+                <Pin className="h-3.5 w-3.5" /> Mading Workspace
+              </Badge>
+              <h2 className="text-lg font-bold text-foreground truncate">
+                {data.madingBoard.name}
+              </h2>
+            </div>
+            <Link
+              href={`/workspace/${id}/brainstorming/${data.madingBoard._id}`}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs gap-1.5 shadow-sm"
+              >
+                Buka Board Lengkap <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </div>
+
+          <Card className="overflow-hidden border-2 border-purple-500/20 shadow-sm hover:shadow-md transition-shadow relative">
+            <div className="h-[460px] w-full relative bg-muted/10">
+              <BoardCanvas
+                widgets={data.madingBoard.widgets || []}
+                connections={data.madingBoard.connections || []}
+                isReadOnly={true}
+              />
+            </div>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 3. Task Saya yang Harus Dikerjakan (My Tasks) */}

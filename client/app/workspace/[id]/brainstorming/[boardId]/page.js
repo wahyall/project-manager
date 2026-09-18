@@ -1,24 +1,29 @@
 "use client";
 
-import { use, useCallback } from "react";
+import { use, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useBoard } from "@/hooks/use-boards";
 import { BoardCanvas } from "@/components/brainstorming/board-canvas";
+import { EditBoardDialog } from "@/components/brainstorming/edit-board-dialog";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Loader2, Pin, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import api from "@/lib/api";
 
 export default function BoardCanvasPage({ params }) {
   const { id, boardId } = use(params);
   const router = useRouter();
   const { currentWorkspace } = useWorkspace();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const {
     board,
     widgets,
     connections,
     loading,
     error,
+    fetchBoard,
     addWidget,
     updateWidget,
     deleteWidget,
@@ -111,23 +116,57 @@ export default function BoardCanvasPage({ params }) {
     );
   }
 
+  const handleUpdateBoard = useCallback(
+    async (updates) => {
+      try {
+        await api.put(`/workspaces/${id}/boards/${boardId}`, updates);
+        toast.success("Informasi board berhasil diperbarui");
+        fetchBoard();
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal memperbarui board");
+        throw err;
+      }
+    },
+    [id, boardId, fetchBoard],
+  );
+
   return (
     <div className="h-[calc(100vh-3.5rem)] flex flex-col">
       {/* Board header */}
-      <div className="flex items-center gap-3 px-4 py-2 border-b bg-background/80 backdrop-blur-sm shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => router.push(`/workspace/${id}/brainstorming`)}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-sm font-semibold truncate">{board.name}</h1>
-        {isReadOnly && (
-          <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
-            Read-only
-          </span>
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-background/80 backdrop-blur-sm shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            onClick={() => router.push(`/workspace/${id}/brainstorming`)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-sm font-semibold truncate">{board.name}</h1>
+          {board.isMading && (
+            <Badge className="bg-purple-600 hover:bg-purple-600 text-white font-medium text-[11px] gap-1 px-2 py-0.5 border-none shrink-0">
+              <Pin className="h-3 w-3" />
+              Mading Workspace
+            </Badge>
+          )}
+          {isReadOnly && (
+            <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground shrink-0">
+              Read-only
+            </span>
+          )}
+        </div>
+
+        {!isReadOnly && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs gap-1.5 shrink-0"
+            onClick={() => setEditDialogOpen(true)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Edit Info Board</span>
+          </Button>
         )}
       </div>
 
@@ -145,6 +184,14 @@ export default function BoardCanvasPage({ params }) {
           isReadOnly={isReadOnly}
         />
       </div>
+
+      {/* Edit Board Dialog */}
+      <EditBoardDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        board={board}
+        onSubmit={handleUpdateBoard}
+      />
     </div>
   );
 }

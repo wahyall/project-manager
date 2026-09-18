@@ -1,6 +1,9 @@
 const Task = require("../models/Task");
 const Event = require("../models/Event");
 const ActivityLog = require("../models/ActivityLog");
+const BrainstormingBoard = require("../models/BrainstormingBoard");
+const BrainstormingWidget = require("../models/BrainstormingWidget");
+const BrainstormingConnection = require("../models/BrainstormingConnection");
 const catchAsync = require("../utils/catchAsync");
 
 // ──────────────────────────────────────────────
@@ -39,6 +42,7 @@ exports.getDashboard = catchAsync(async (req, res) => {
     myTasks,
     upcomingEventsList,
     recentActivity,
+    madingBoardRaw,
   ] = await Promise.all([
     // 1. Active tasks count (assigned to user, not Done, not Archived)
     Task.countDocuments({
@@ -107,7 +111,30 @@ exports.getDashboard = catchAsync(async (req, res) => {
       .limit(10)
       .populate("actorId", "name email avatar")
       .lean(),
+
+    // 8. Active Mading Board
+    BrainstormingBoard.findOne({
+      workspaceId,
+      isMading: true,
+    })
+      .populate("createdBy", "name email avatar")
+      .lean(),
   ]);
+
+  let madingBoard = null;
+  if (madingBoardRaw) {
+    const [widgets, connections] = await Promise.all([
+      BrainstormingWidget.find({ boardId: madingBoardRaw._id })
+        .populate("createdBy", "name email avatar")
+        .lean(),
+      BrainstormingConnection.find({ boardId: madingBoardRaw._id }).lean(),
+    ]);
+    madingBoard = {
+      ...madingBoardRaw,
+      widgets,
+      connections,
+    };
+  }
 
   // Enrich myTasks with column name from workspace.kanbanColumns
   const columnMap = {};
@@ -160,6 +187,7 @@ exports.getDashboard = catchAsync(async (req, res) => {
       myTasks: enrichedTasks,
       upcomingEvents: enrichedEvents,
       recentActivity,
+      madingBoard,
     },
   });
 });

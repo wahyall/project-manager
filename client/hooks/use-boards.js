@@ -65,10 +65,13 @@ export function useBoards(workspaceId) {
 
   // ── CRUD Operations ───────────────────────────────
   const createBoard = useCallback(
-    async (name) => {
-      const { data } = await api.post(`/workspaces/${workspaceId}/boards`, {
-        name,
-      });
+    async (boardData) => {
+      const payload =
+        typeof boardData === "string" ? { name: boardData } : boardData;
+      const { data } = await api.post(
+        `/workspaces/${workspaceId}/boards`,
+        payload,
+      );
       return data.data.board;
     },
     [workspaceId],

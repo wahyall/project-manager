@@ -98,15 +98,24 @@ exports.listBoards = catchAsync(async (req, res) => {
 exports.createBoard = catchAsync(async (req, res, next) => {
   const workspace = req.workspace;
   const userId = req.user.id;
-  const { name } = req.body;
+  const { name, thumbnail, isMading } = req.body;
 
   if (!name || !name.trim()) {
     return next(new AppError("Nama board harus diisi", 400));
   }
 
+  if (isMading) {
+    await BrainstormingBoard.updateMany(
+      { workspaceId: workspace._id, isMading: true },
+      { isMading: false },
+    );
+  }
+
   const board = await BrainstormingBoard.create({
     workspaceId: workspace._id,
     name: name.trim(),
+    thumbnail: thumbnail || null,
+    isMading: !!isMading,
     createdBy: userId,
   });
 
@@ -192,7 +201,7 @@ exports.updateBoard = catchAsync(async (req, res, next) => {
   const { boardId } = req.params;
   const workspace = req.workspace;
   const userId = req.user.id;
-  const { name } = req.body;
+  const { name, thumbnail, isMading } = req.body;
 
   const board = await BrainstormingBoard.findOne({
     _id: boardId,
@@ -208,6 +217,26 @@ exports.updateBoard = catchAsync(async (req, res, next) => {
       return next(new AppError("Nama board tidak boleh kosong", 400));
     }
     board.name = name.trim();
+  }
+
+  if (thumbnail !== undefined) {
+    board.thumbnail = thumbnail;
+  }
+
+  if (isMading !== undefined) {
+    if (isMading) {
+      await BrainstormingBoard.updateMany(
+        {
+          workspaceId: workspace._id,
+          _id: { $ne: board._id },
+          isMading: true,
+        },
+        { isMading: false },
+      );
+      board.isMading = true;
+    } else {
+      board.isMading = false;
+    }
   }
 
   await board.save();
