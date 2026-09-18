@@ -364,6 +364,7 @@ function CanvasInner({
       const widgetSizes = {
         image: { width: 350, height: 250 },
         text: { width: 400, height: 300 },
+        diagram: { width: 450, height: 320 },
       };
       const size = widgetSizes[type] || { width: 300, height: 200 };
 
@@ -373,6 +374,10 @@ function CanvasInner({
         y: Math.round(centerY + Math.random() * 100 - 50),
         width: size.width,
         height: size.height,
+        data:
+          type === "diagram"
+            ? { title: "Diagram", elements: [], appState: {} }
+            : undefined,
       });
     },
     [onAddWidget, viewport],

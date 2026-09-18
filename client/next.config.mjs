@@ -2,6 +2,7 @@
 const nextConfig = {
   /* config options here */
   reactCompiler: true,
+  transpilePackages: ["@excalidraw/excalidraw"],
   output: "standalone",
   typescript: {
     ignoreBuildErrors: true,
