@@ -70,10 +70,10 @@ export default function AdminWhatsAppPage({ params }) {
 
   const fetchStatus = async () => {
     try {
-      const { data } = await api.get("/admin/whatsapp/status");
+      const { data } = await api.get(`/workspaces/${id}/whatsapp/status`);
       if (!data.data.connected && !data.data.qrCodeStr) {
         // Jika disconnected dan belum ada QR, coba fetch QR explictly
-        const qrRes = await api.get("/admin/whatsapp/qr");
+        const qrRes = await api.get(`/workspaces/${id}/whatsapp/qr`);
         if (qrRes.data.data?.qrCodeStr) {
           setStatus({
             ...data.data,
@@ -90,7 +90,7 @@ export default function AdminWhatsAppPage({ params }) {
 
   const fetchLogs = async () => {
     try {
-      const { data } = await api.get("/admin/whatsapp/logs?limit=10");
+      const { data } = await api.get(`/workspaces/${id}/whatsapp/logs?limit=10`);
       setLogs(data.data.logs || []);
     } catch (error) {
       console.error("Failed to fetch logs:", error);
@@ -100,7 +100,7 @@ export default function AdminWhatsAppPage({ params }) {
   const handleReconnect = async () => {
     setReconnecting(true);
     try {
-      await api.post("/admin/whatsapp/reconnect");
+      await api.post(`/workspaces/${id}/whatsapp/reconnect`);
       toast.success("Mencoba menghubungkan ulang WhatsApp...");
       // Poll faster during reconnect
       setTimeout(fetchStatus, 3000);
@@ -122,7 +122,7 @@ export default function AdminWhatsAppPage({ params }) {
 
     setSendingTest(true);
     try {
-      await api.post("/admin/whatsapp/test", testForm);
+      await api.post(`/workspaces/${id}/whatsapp/test`, testForm);
       toast.success("Pesan percobaan ditambahkan ke antrian");
       setTestForm({ number: "", message: "" });
       setTimeout(fetchLogs, 2000); // refresh logs after a bit

@@ -8,6 +8,11 @@ const whatsappLogSchema = new mongoose.Schema(
       required: false,
       default: undefined,
     },
+    workspaceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Workspace",
+      required: false,
+    },
     recipientNumber: {
       type: String,
       required: true,
@@ -59,6 +64,7 @@ const whatsappLogSchema = new mongoose.Schema(
 );
 
 // Indexes
+whatsappLogSchema.index({ workspaceId: 1, createdAt: -1 });
 whatsappLogSchema.index({ recipientId: 1, createdAt: -1 });
 whatsappLogSchema.index({ status: 1 });
 

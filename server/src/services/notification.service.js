@@ -110,6 +110,7 @@ const create = async ({
 
       whatsappService
         .queueMessage({
+          workspaceId,
           recipientId: user._id,
           recipientNumber: user.whatsappNumber,
           type,
@@ -204,6 +205,7 @@ const createForMany = async ({
         ) {
           whatsappService
             .queueMessage({
+              workspaceId,
               recipientId: u._id,
               recipientNumber: u.whatsappNumber,
               type,

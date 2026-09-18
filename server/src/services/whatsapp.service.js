@@ -16,33 +16,35 @@ const AUTH_DIR =
 const BATCH_SIZE = 10;      // messages per batch
 const BATCH_INTERVAL_MS = 2000; // delay between batches (ms)
 
-class WhatsAppService {
-  constructor() {
+class WhatsAppInstance {
+  constructor(workspaceId) {
+    this.workspaceId = workspaceId;
     this.sock = null;
     this.isConnected = false;
     this.qrCodeStr = null;
     this.messageQueue = [];
     this.isProcessingQueue = false;
     this.lastSentTime = 0;
+    this.retryCache = {};
+    this.authDir = path.join(AUTH_DIR, `workspace_${workspaceId}`);
   }
 
   /**
-   * Initialize Baileys socket connection.
+   * Initialize Baileys socket connection for this workspace.
    */
   async initialize() {
     try {
-      if (!fs.existsSync(AUTH_DIR)) {
-        fs.mkdirSync(AUTH_DIR, { recursive: true });
+      if (!fs.existsSync(this.authDir)) {
+        fs.mkdirSync(this.authDir, { recursive: true });
       }
 
       const { version, isLatest } = await fetchLatestBaileysVersion();
       logger.info(
-        `[WhatsApp] Using Baileys version: ${version} (Latest: ${isLatest})`,
+        `[WhatsApp - Workspace ${this.workspaceId}] Using Baileys version: ${version} (Latest: ${isLatest})`,
       );
 
-      const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+      const { state, saveCreds } = await useMultiFileAuthState(this.authDir);
 
-      this.retryCache = this.retryCache || {};
       const msgRetryCounterCache = {
         get: (key) => this.retryCache[key],
         set: (key, value) => {
@@ -65,13 +67,15 @@ class WhatsAppService {
       this.sock.ev.on("creds.update", saveCreds);
 
       this.sock.ev.on("connection.update", async (update) => {
-        logger.info(`[WhatsApp] Connection update: ${JSON.stringify(update)}`);
+        logger.info(
+          `[WhatsApp - Workspace ${this.workspaceId}] Connection update: ${JSON.stringify(update)}`,
+        );
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
           // Generate QR code data URL for frontend to render
           this.qrCodeStr = await QRCode.toDataURL(qr);
-          logger.info("[WhatsApp] New QR code generated");
+          logger.info(`[WhatsApp - Workspace ${this.workspaceId}] New QR code generated`);
         }
 
         if (connection === "close") {
@@ -82,7 +86,7 @@ class WhatsAppService {
             DisconnectReason.loggedOut;
 
           logger.error(
-            `[WhatsApp] Connection closed due to: ${lastDisconnect?.error?.message || "Unknown error"}. Reconnecting: ${shouldReconnect}`,
+            `[WhatsApp - Workspace ${this.workspaceId}] Connection closed due to: ${lastDisconnect?.error?.message || "Unknown error"}. Reconnecting: ${shouldReconnect}`,
           );
 
           if (shouldReconnect) {
@@ -91,17 +95,17 @@ class WhatsAppService {
             // Logged out manually, clear auth dir
             this.qrCodeStr = null; // Next init will generate new QR
             this._clearAuthDir();
-            logger.info("[WhatsApp] User logged out. Waiting for new scan.");
+            logger.info(`[WhatsApp - Workspace ${this.workspaceId}] User logged out. Waiting for new scan.`);
             setTimeout(() => this.initialize(), 2000);
           }
         } else if (connection === "open") {
           this.isConnected = true;
           this.qrCodeStr = null; // Clear QR code as we are connected
-          logger.info("[WhatsApp] Connected successfully!");
+          logger.info(`[WhatsApp - Workspace ${this.workspaceId}] Connected successfully!`);
         }
       });
     } catch (error) {
-      logger.error("[WhatsApp] Failed to initialize:", error);
+      logger.error(`[WhatsApp - Workspace ${this.workspaceId}] Failed to initialize:`, error);
     }
   }
 
@@ -109,9 +113,9 @@ class WhatsAppService {
    * Helper to clear auth directory upon logout or forced reconnect
    */
   _clearAuthDir() {
-    if (fs.existsSync(AUTH_DIR)) {
-      fs.rmSync(AUTH_DIR, { recursive: true, force: true });
-      fs.mkdirSync(AUTH_DIR, { recursive: true });
+    if (fs.existsSync(this.authDir)) {
+      fs.rmSync(this.authDir, { recursive: true, force: true });
+      fs.mkdirSync(this.authDir, { recursive: true });
     }
   }
 
@@ -120,7 +124,11 @@ class WhatsAppService {
    */
   async reconnect() {
     if (this.sock) {
-      this.sock.ws.close();
+      try {
+        this.sock.ws.close();
+      } catch (err) {
+        // ignore
+      }
     }
     this.isConnected = false;
     this._clearAuthDir();
@@ -145,6 +153,7 @@ class WhatsAppService {
   async queueMessage({ recipientId, recipientNumber, type, message }) {
     try {
       const log = await WhatsAppLog.create({
+        workspaceId: this.workspaceId,
         recipientId,
         recipientNumber,
         notificationType: type,
@@ -165,7 +174,7 @@ class WhatsAppService {
 
       return log;
     } catch (error) {
-      logger.error("[WhatsApp] Failed to queue message:", error);
+      logger.error(`[WhatsApp - Workspace ${this.workspaceId}] Failed to queue message:`, error);
       return null;
     }
   }
@@ -209,7 +218,7 @@ class WhatsAppService {
       return { success: true };
     } catch (error) {
       logger.error(
-        `[WhatsApp] Failed to send message to ${recipientNumber}:`,
+        `[WhatsApp - Workspace ${this.workspaceId}] Failed to send message to ${recipientNumber}:`,
         error,
       );
 
@@ -252,7 +261,7 @@ class WhatsAppService {
     const batch = this.messageQueue.splice(0, BATCH_SIZE);
 
     logger.info(
-      `[WhatsApp] Processing batch of ${batch.length} message(s). Remaining in queue: ${this.messageQueue.length}`,
+      `[WhatsApp - Workspace ${this.workspaceId}] Processing batch of ${batch.length} message(s). Remaining in queue: ${this.messageQueue.length}`,
     );
 
     // Send all items in the batch concurrently
@@ -277,18 +286,102 @@ class WhatsAppService {
     await new Promise((resolve) => setTimeout(resolve, BATCH_INTERVAL_MS));
     this.processQueue();
   }
+}
+
+class WhatsAppService {
+  constructor() {
+    this.instances = new Map();
+  }
 
   /**
-   * Fetch recent logs for admin panel
+   * Get or create a WhatsAppInstance for a specific workspace.
    */
-  async getRecentLogs(limit = 50, skip = 0) {
-    const logs = await WhatsAppLog.find()
+  getInstance(workspaceId) {
+    if (!workspaceId) return null;
+    const wsIdStr = workspaceId.toString();
+    if (!this.instances.has(wsIdStr)) {
+      logger.info(`[WhatsApp] Creating service instance for workspace ${wsIdStr}`);
+      const instance = new WhatsAppInstance(wsIdStr);
+      this.instances.set(wsIdStr, instance);
+      instance.initialize();
+    }
+    return this.instances.get(wsIdStr);
+  }
+
+  /**
+   * Initialize WhatsApp connection manager and restore previously connected workspace instances.
+   */
+  async initialize() {
+    try {
+      if (!fs.existsSync(AUTH_DIR)) {
+        fs.mkdirSync(AUTH_DIR, { recursive: true });
+        return;
+      }
+
+      const dirs = fs.readdirSync(AUTH_DIR);
+      for (const dirName of dirs) {
+        if (dirName.startsWith("workspace_")) {
+          const workspaceId = dirName.replace("workspace_", "");
+          const fullPath = path.join(AUTH_DIR, dirName);
+          const stats = fs.statSync(fullPath);
+          if (stats.isDirectory()) {
+            const credsPath = path.join(fullPath, "creds.json");
+            if (fs.existsSync(credsPath)) {
+              logger.info(`[WhatsApp] Auto-initializing connection for workspace ${workspaceId}`);
+              this.getInstance(workspaceId);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      logger.error("[WhatsApp] Failed to initialize manager:", error);
+    }
+  }
+
+  /**
+   * Queue a message for a specific workspace's WhatsApp connection.
+   */
+  async queueMessage({ workspaceId, recipientId, recipientNumber, type, message }) {
+    if (!workspaceId) {
+      logger.error("[WhatsApp] Cannot queue message: workspaceId is required");
+      return null;
+    }
+    const instance = this.getInstance(workspaceId);
+    if (!instance) return null;
+    return instance.queueMessage({ recipientId, recipientNumber, type, message });
+  }
+
+  /**
+   * Get connection status for a specific workspace.
+   */
+  getStatus(workspaceId) {
+    const instance = this.getInstance(workspaceId);
+    if (!instance) return { connected: false, qrCodeStr: null, queueLength: 0 };
+    return instance.getStatus();
+  }
+
+  /**
+   * Force reconnect a specific workspace's connection.
+   */
+  async reconnect(workspaceId) {
+    const instance = this.getInstance(workspaceId);
+    if (instance) {
+      await instance.reconnect();
+    }
+  }
+
+  /**
+   * Fetch recent logs filtered by workspaceId
+   */
+  async getRecentLogs(workspaceId, limit = 50, skip = 0) {
+    const query = workspaceId ? { workspaceId } : {};
+    const logs = await WhatsAppLog.find(query)
       .populate("recipientId", "name avatar")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const total = await WhatsAppLog.countDocuments();
+    const total = await WhatsAppLog.countDocuments(query);
 
     return { logs, total };
   }

@@ -14,7 +14,7 @@ Set on the server (see `server/.env.example`):
 |----------|-------------|
 | `WHATSAPP_EXTERNAL_API_KEY` | Shared secret. Required for the endpoint to accept traffic. Use a long random value in production (e.g. `openssl rand -hex 32`). |
 
-The WhatsApp session must already be **connected** (QR scanned, Baileys running). If the bridge is down, the API returns `503`.
+The WhatsApp session for the target workspace must already be **connected** (QR scanned, Baileys running). If the bridge is down, the API returns `503`.
 
 ---
 
@@ -47,6 +47,7 @@ Do **not** send the project’s JWT here; this route does not validate user sess
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `workspaceId` | string | Yes | The ID of the workspace that has the WhatsApp connection to send from. |
 | `number` | string | Yes | Destination phone number (digits; local `0…` is normalized to Indonesia `62…` in the service, same as internal sends). |
 | `message` | string | Yes | Plain text body to send. |
 
@@ -54,6 +55,7 @@ Example:
 
 ```json
 {
+  "workspaceId": "674a1b2c3d4e5f6789abcdef",
   "number": "081234567890",
   "message": "Hello from the external service."
 }
@@ -75,7 +77,7 @@ Example:
 }
 ```
 
-The message is placed in the same outbound queue as internal notifications; delivery is asynchronous and rate-limited on the server. The log is stored with notification type `external` (see `WhatsAppLog` in the codebase).
+The message is placed in the workspace's outbound queue; delivery is asynchronous and rate-limited on the server. The log is stored with notification type `external` (see `WhatsAppLog` in the codebase).
 
 ---
 
@@ -85,11 +87,12 @@ Operational errors return JSON with `status: "error"` and a `message` field (sha
 
 | HTTP | Typical `message` | When |
 |------|-------------------|------|
+| 400 | `workspaceId is required` | Missing or empty `workspaceId`. |
 | 400 | `number and message are required` | Missing or empty `number` / `message`. |
 | 401 | `Missing API key` | No `X-API-Key` and no usable Bearer token. |
 | 401 | `Invalid API key` | Key does not match `WHATSAPP_EXTERNAL_API_KEY`. |
 | 503 | `External WhatsApp messaging is not configured` | Env key unset or blank. |
-| 503 | `WhatsApp is not connected` | Baileys not connected. |
+| 503 | `WhatsApp is not connected for this workspace` | Baileys connection not established for specified workspace. |
 | 500 | `Failed to queue message` | Persistence/queue error (rare). |
 
 ---
@@ -108,7 +111,7 @@ Requests under `/api/external/whatsapp` use permissive CORS (`Access-Control-All
 curl -sS -X POST "https://your-api.example.com/api/external/whatsapp/send" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_SECRET_KEY" \
-  -d '{"number":"081234567890","message":"Test from curl"}'
+  -d '{"workspaceId":"674a1b2c3d4e5f6789abcdef","number":"081234567890","message":"Test from curl"}'
 ```
 
 ### cURL (`Authorization: Bearer`)
@@ -117,7 +120,7 @@ curl -sS -X POST "https://your-api.example.com/api/external/whatsapp/send" \
 curl -sS -X POST "https://your-api.example.com/api/external/whatsapp/send" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_SECRET_KEY" \
-  -d '{"number":"081234567890","message":"Test from curl"}'
+  -d '{"workspaceId":"674a1b2c3d4e5f6789abcdef","number":"081234567890","message":"Test from curl"}'
 ```
 
 ### Node.js (`fetch`)
@@ -130,6 +133,7 @@ const res = await fetch("https://your-api.example.com/api/external/whatsapp/send
     "X-API-Key": process.env.WHATSAPP_EXTERNAL_API_KEY,
   },
   body: JSON.stringify({
+    workspaceId: "674a1b2c3d4e5f6789abcdef",
     number: "081234567890",
     message: "Hello from Node",
   }),
@@ -144,4 +148,3 @@ const data = await res.json();
 - Treat `WHATSAPP_EXTERNAL_API_KEY` like a password: rotate if leaked, store only in secrets/env, never commit to git.
 - Call this API **only over HTTPS** in production so the key and message metadata are not exposed on the network.
 - This endpoint can send WhatsApp messages to **any** number the connected session is allowed to message; restrict who can reach your server (firewall, private network, or API gateway) if possible.
-

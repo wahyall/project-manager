@@ -109,7 +109,7 @@ app.use("/api/workspaces/:id/boards", boardRoutes);
 app.use("/api/export-jobs", exportJobRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/comments", commentRoutes);
-app.use("/api/admin/whatsapp", whatsappRoutes);
+app.use("/api/workspaces/:id/whatsapp", whatsappRoutes);
 app.use("/api/external/whatsapp", whatsappExternalRoutes);
 app.use("/api/push", pushRoutes);
 app.use("/api/spreadsheets", spreadsheetRoutes);

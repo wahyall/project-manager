@@ -3,10 +3,10 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 
 // ──────────────────────────────────────────────
-// GET /api/admin/whatsapp/status
+// GET /api/workspaces/:id/whatsapp/status
 // ──────────────────────────────────────────────
 exports.getStatus = catchAsync(async (req, res, next) => {
-  const status = whatsappService.getStatus();
+  const status = whatsappService.getStatus(req.params.id);
 
   res.status(200).json({
     status: "success",
@@ -15,10 +15,10 @@ exports.getStatus = catchAsync(async (req, res, next) => {
 });
 
 // ──────────────────────────────────────────────
-// GET /api/admin/whatsapp/qr
+// GET /api/workspaces/:id/whatsapp/qr
 // ──────────────────────────────────────────────
 exports.getQR = catchAsync(async (req, res, next) => {
-  const status = whatsappService.getStatus();
+  const status = whatsappService.getStatus(req.params.id);
 
   if (status.connected) {
     return res.status(200).json({
@@ -37,11 +37,11 @@ exports.getQR = catchAsync(async (req, res, next) => {
 });
 
 // ──────────────────────────────────────────────
-// POST /api/admin/whatsapp/reconnect
+// POST /api/workspaces/:id/whatsapp/reconnect
 // ──────────────────────────────────────────────
 exports.reconnect = catchAsync(async (req, res, next) => {
   // Trigger reconnection asynchronously to not block
-  whatsappService.reconnect();
+  whatsappService.reconnect(req.params.id);
 
   res.status(200).json({
     status: "success",
@@ -51,22 +51,24 @@ exports.reconnect = catchAsync(async (req, res, next) => {
 });
 
 // ──────────────────────────────────────────────
-// POST /api/admin/whatsapp/test
+// POST /api/workspaces/:id/whatsapp/test
 // ──────────────────────────────────────────────
 exports.testMessage = catchAsync(async (req, res, next) => {
   const { number, message } = req.body;
+  const workspaceId = req.params.id;
 
   if (!number || !message) {
     return next(new AppError("Nomor telepon dan pesan wajib diisi", 400));
   }
 
-  const status = whatsappService.getStatus();
+  const status = whatsappService.getStatus(workspaceId);
   if (!status.connected) {
     return next(new AppError("WhatsApp tidak terhubung", 400));
   }
 
   // Queue message
   const log = await whatsappService.queueMessage({
+    workspaceId,
     recipientId: req.user.id, // Just track the admin who sent the test
     recipientNumber: number,
     type: "mention", // Fake it for testing
@@ -84,18 +86,23 @@ exports.testMessage = catchAsync(async (req, res, next) => {
 // POST /api/external/whatsapp/send
 // ──────────────────────────────────────────────
 exports.sendExternalMessage = catchAsync(async (req, res, next) => {
-  const { number, message } = req.body;
+  const { number, message, workspaceId } = req.body;
+
+  if (!workspaceId) {
+    return next(new AppError("workspaceId is required", 400));
+  }
 
   if (!number || !message) {
     return next(new AppError("number and message are required", 400));
   }
 
-  const status = whatsappService.getStatus();
+  const status = whatsappService.getStatus(workspaceId);
   if (!status.connected) {
-    return next(new AppError("WhatsApp is not connected", 503));
+    return next(new AppError("WhatsApp is not connected for this workspace", 503));
   }
 
   const log = await whatsappService.queueMessage({
+    workspaceId,
     recipientNumber: number,
     type: "external",
     message: String(message),
@@ -113,16 +120,17 @@ exports.sendExternalMessage = catchAsync(async (req, res, next) => {
 });
 
 // ──────────────────────────────────────────────
-// GET /api/admin/whatsapp/logs
+// GET /api/workspaces/:id/whatsapp/logs
 // ──────────────────────────────────────────────
 exports.getLogs = catchAsync(async (req, res, next) => {
   const { limit = 20, page = 1 } = req.query;
+  const workspaceId = req.params.id;
 
   const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
   const pageNum = Math.max(1, parseInt(page));
   const skip = (pageNum - 1) * limitNum;
 
-  const { logs, total } = await whatsappService.getRecentLogs(limitNum, skip);
+  const { logs, total } = await whatsappService.getRecentLogs(workspaceId, limitNum, skip);
 
   res.status(200).json({
     status: "success",
