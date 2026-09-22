@@ -21,6 +21,7 @@ import {
   ArrowRightLeft,
   Paperclip,
   Crown,
+  Sprout,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -132,6 +133,35 @@ const ACTION_CONFIG = {
     icon: UserMinus,
     color: "text-gray-600 bg-gray-50 dark:bg-gray-900/20",
     label: (a) => `menghapus peserta dari event`,
+  },
+  // Idea (Bank Ide)
+  "idea.created": {
+    icon: Plus,
+    color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20",
+    label: (a) => `menulis ide baru`,
+  },
+  "idea.updated": {
+    icon: Pencil,
+    color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
+    label: (a) => {
+      const field = a.details?.field;
+      return field ? `mengubah ${field} pada ide` : `mengupdate ide`;
+    },
+  },
+  "idea.status_changed": {
+    icon: Sprout,
+    color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20",
+    label: (a) => {
+      const value = a.details?.newValue;
+      return value
+        ? `mengubah status ide menjadi "${value}"`
+        : `mengubah status ide`;
+    },
+  },
+  "idea.deleted": {
+    icon: Trash2,
+    color: "text-red-600 bg-red-50 dark:bg-red-900/20",
+    label: (a) => `menghapus ide`,
   },
   // Spreadsheet
   "spreadsheet.sheet_created": {

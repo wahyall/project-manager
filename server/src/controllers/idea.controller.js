@@ -343,7 +343,10 @@ exports.updateIdea = catchAsync(async (req, res, next) => {
       targetType: "idea",
       targetId: idea._id,
       targetName: idea.title,
-      details: { field: changedFields.join(", ") },
+      details: {
+        field: changedFields.join(", "),
+        newValue: status !== undefined ? status : null,
+      },
     });
   }
 

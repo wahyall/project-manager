@@ -17,6 +17,7 @@ const TARGET_TYPES = [
   { value: "all", label: "Semua Modul" },
   { value: "task", label: "Task" },
   { value: "event", label: "Event" },
+  { value: "idea", label: "Bank Ide" },
   { value: "spreadsheet", label: "Spreadsheet" },
   { value: "workspace", label: "Workspace" },
 ];
