@@ -119,6 +119,8 @@ exports.createComment = catchAsync(async (req, res, next) => {
     commentUrl = `/workspace/${workspaceId}/tasks/${targetId}`;
   else if (targetType === "event")
     commentUrl = `/workspace/${workspaceId}/events/${targetId}`;
+  else if (targetType === "idea")
+    commentUrl = `/workspace/${workspaceId}/ideas/${targetId}`;
   else if (targetType === "workspace") commentUrl = `/workspace/${workspaceId}`;
 
   // 1. Mention Notifications
@@ -126,6 +128,7 @@ exports.createComment = catchAsync(async (req, res, next) => {
     let mentionContext = "komentar";
     if (targetType === "task") mentionContext = "komentar task";
     else if (targetType === "event") mentionContext = "komentar event";
+    else if (targetType === "idea") mentionContext = "komentar ide";
 
     await NotificationService.createForMany({
       workspaceId,
@@ -203,6 +206,37 @@ exports.createComment = catchAsync(async (req, res, next) => {
     } catch (err) {
       console.error(
         "Failed to trigger new_comment notification for event:",
+        err,
+      );
+    }
+  } else if (targetType === "idea") {
+    try {
+      const Idea = mongoose.model("Idea");
+      const idea = await Idea.findById(targetId).select("createdBy title");
+      if (idea) {
+        // Sengaja hanya pembuat ide. Memberi notifikasi ke semua pemberi
+        // dukungan akan membuat ide populer menghasilkan puluhan notifikasi
+        // per komentar.
+        const notifySet = new Set([idea.createdBy.toString()]);
+        notifySet.delete(req.user.id.toString());
+        mentionedUserIds.forEach((id) => notifySet.delete(id.toString()));
+
+        if (notifySet.size > 0) {
+          await NotificationService.createForMany({
+            workspaceId,
+            recipientIds: Array.from(notifySet),
+            actorId: req.user.id,
+            type: "new_comment",
+            targetType: "comment",
+            targetId: comment._id,
+            message: `berkomentar di ide "${idea.title}"`,
+            url: commentUrl,
+          });
+        }
+      }
+    } catch (err) {
+      console.error(
+        "Failed to trigger new_comment notification for idea:",
         err,
       );
     }

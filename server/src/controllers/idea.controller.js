@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Idea = require("../models/Idea");
 const Event = require("../models/Event");
 const WorkspaceLabel = require("../models/WorkspaceLabel");
+const Comment = require("../models/Comment");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
@@ -228,12 +229,32 @@ exports.listIdeas = catchAsync(async (req, res) => {
     eventCountMap[e._id.toString()] = e.count;
   });
 
+  // Catatan: getComments (yang memasok CommentThread) tidak menyaring
+  // isDeleted — komentar terhapus tetap tampil sebagai tombstone di
+  // utas. Agregasi ini meniru filter yang sama persis supaya angka di
+  // kartu daftar cocok dengan jumlah entri yang benar-benar terlihat
+  // di utas diskusi.
+  const commentCounts = await Comment.aggregate([
+    {
+      $match: {
+        targetType: "idea",
+        targetId: { $in: ideaIdList },
+      },
+    },
+    { $group: { _id: "$targetId", count: { $sum: 1 } } },
+  ]);
+  const commentCountMap = {};
+  commentCounts.forEach((c) => {
+    commentCountMap[c._id.toString()] = c.count;
+  });
+
   res.status(200).json({
     status: "success",
     data: {
       ideas: ideas.map((i) =>
         shapeIdea(i, userId, {
           eventCount: eventCountMap[i._id.toString()] || 0,
+          commentCount: commentCountMap[i._id.toString()] || 0,
         }),
       ),
       pagination: {

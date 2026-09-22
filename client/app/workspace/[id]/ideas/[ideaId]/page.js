@@ -9,6 +9,7 @@ import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
 import { IdeaVoteButton } from "@/components/ideas/idea-vote-button";
 import { IdeaOverviewTab } from "@/components/ideas/idea-overview-tab";
 import { IdeaEventsTab } from "@/components/ideas/idea-events-tab";
+import { CommentThread } from "@/components/comments/comment-thread";
 import { DeleteIdeaDialog } from "@/components/ideas/delete-idea-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -228,6 +229,7 @@ export default function IdeaDetailPage({ params }) {
             Event Terkait
             {idea.relatedEvents?.length > 0 && ` (${idea.relatedEvents.length})`}
           </TabsTrigger>
+          <TabsTrigger value="discussion">Diskusi</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4">
           <IdeaOverviewTab
@@ -242,6 +244,15 @@ export default function IdeaDetailPage({ params }) {
           <IdeaEventsTab
             events={idea.relatedEvents || []}
             workspaceId={id}
+          />
+        </TabsContent>
+        <TabsContent value="discussion" className="mt-4">
+          <CommentThread
+            workspaceId={id}
+            targetType="idea"
+            targetId={ideaId}
+            currentUserId={user?._id}
+            members={members}
           />
         </TabsContent>
       </Tabs>

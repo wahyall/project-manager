@@ -10,7 +10,7 @@ const commentSchema = new mongoose.Schema(
     targetType: {
       type: String,
       required: true,
-      enum: ["task", "spreadsheet_cell", "brainstorming_widget"],
+      enum: ["task", "idea", "spreadsheet_cell", "brainstorming_widget"],
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,
