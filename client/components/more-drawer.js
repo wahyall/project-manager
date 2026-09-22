@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Download,
   Sparkles,
+  Sprout,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePushNotification } from "@/hooks/use-push";
@@ -115,6 +116,20 @@ export function MoreDrawer({ open, onOpenChange, workspace, workspaceId }) {
             <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
               Menu Utama
             </p>
+
+            <Button
+              variant="ghost"
+              className="w-full justify-between font-normal h-12 rounded-xl"
+              onClick={() => handleNavigate(`/workspace/${workspaceId}/ideas`)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-900/20">
+                  <Sprout className="h-4 w-4" />
+                </div>
+                Bank Ide
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+            </Button>
 
             <Button
               variant="ghost"

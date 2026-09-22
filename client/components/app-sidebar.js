@@ -40,6 +40,7 @@ import {
   ChevronLeft,
   ListTodo,
   Sparkles,
+  Sprout,
 } from "lucide-react";
 
 // ─── Navigation structure ────────────────────────────
@@ -53,6 +54,11 @@ const NAV_MAIN = [
     label: "Event",
     icon: CalendarRange,
     href: "/events",
+  },
+  {
+    label: "Bank Ide",
+    icon: Sprout,
+    href: "/ideas",
   },
   {
     label: "Brainstorming",
