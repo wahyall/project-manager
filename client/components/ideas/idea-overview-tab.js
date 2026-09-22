@@ -38,7 +38,13 @@ const MentionReadOnly = lazy(() =>
   })),
 );
 
-export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
+export function IdeaOverviewTab({
+  idea,
+  onUpdate,
+  members = [],
+  workspaceId,
+  canManage = false,
+}) {
   const [editingDesc, setEditingDesc] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
@@ -69,6 +75,9 @@ export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
   // antarmuka tidak berubah lagi belakangan.
   const eventCount = idea.eventCount || 0;
   const statusLocked = eventCount > 0;
+  // Status juga tak bisa disunting kalau bukan pengelola. Alasan tertaut
+  // Event lebih spesifik jadi diprioritaskan saat keduanya berlaku.
+  const statusReadOnly = statusLocked || !canManage;
 
   // Deskripsi — auto-save dengan debounce, mengikuti pola tab Ringkasan
   // Event (event-overview-tab.js). MentionEditor tidak menerima prop
@@ -139,11 +148,18 @@ export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
               </div>
             ) : (
               <div
-                onClick={() => {
-                  setEditingDesc(true);
-                  setEditorKey((k) => k + 1);
-                }}
-                className="min-h-[60px] cursor-text rounded-md px-2 py-1 transition-colors hover:bg-muted/50"
+                onClick={
+                  canManage
+                    ? () => {
+                        setEditingDesc(true);
+                        setEditorKey((k) => k + 1);
+                      }
+                    : undefined
+                }
+                className={cn(
+                  "min-h-[60px] rounded-md px-2 py-1 transition-colors",
+                  canManage && "cursor-text hover:bg-muted/50",
+                )}
               >
                 {idea.description ? (
                   <MentionReadOnly content={idea.description} />
@@ -168,7 +184,7 @@ export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
               <p className="text-xs font-medium text-muted-foreground">
                 Status
               </p>
-              {statusLocked ? (
+              {statusReadOnly ? (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -184,8 +200,14 @@ export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      Ditentukan oleh {eventCount} Event terkait. Lepas
-                      tautannya dulu untuk mengubah status.
+                      {statusLocked ? (
+                        <>
+                          Ditentukan oleh {eventCount} Event terkait. Lepas
+                          tautannya dulu untuk mengubah status.
+                        </>
+                      ) : (
+                        "Kamu tidak punya izin mengubah status ide ini."
+                      )}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
