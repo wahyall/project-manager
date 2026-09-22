@@ -28,12 +28,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EventDivisionsSection } from "@/components/events/event-divisions-section";
+import { IdeaPicker } from "@/components/ideas/idea-picker";
 import {
   CalendarIcon,
   Palette,
   Check,
   Pencil,
   Loader2,
+  Sprout,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -387,6 +389,21 @@ export function EventOverviewTab({
                 </button>
               ))}
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Relasi Bank Ide */}
+          <div className="space-y-2">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Sprout className="h-3.5 w-3.5" />
+              Realisasi dari Ide
+            </p>
+            <IdeaPicker
+              workspaceId={workspaceId}
+              value={(event.ideas || []).map((i) => i._id || i)}
+              onChange={(next) => saveField("ideas", next)}
+            />
           </div>
         </CardContent>
       </Card>

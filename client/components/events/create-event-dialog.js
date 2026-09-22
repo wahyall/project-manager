@@ -40,8 +40,10 @@ import {
   Palette,
   Check,
   AlignLeft,
+  Sprout,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IdeaPicker } from "@/components/ideas/idea-picker";
 
 const EVENT_COLORS = [
   "#8B5CF6", // violet
@@ -60,6 +62,7 @@ export function CreateEventDialog({
   open,
   onOpenChange,
   onCreate,
+  workspaceId,
 }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -73,6 +76,7 @@ export function CreateEventDialog({
     EVENT_COLORS[Math.floor(Math.random() * EVENT_COLORS.length)],
   );
   const [status, setStatus] = useState("upcoming");
+  const [ideas, setIdeas] = useState([]);
 
   // Reset form on open
   useEffect(() => {
@@ -83,6 +87,7 @@ export function CreateEventDialog({
       setEndDate(null);
       setColor(EVENT_COLORS[Math.floor(Math.random() * EVENT_COLORS.length)]);
       setStatus("upcoming");
+      setIdeas([]);
       setErrors({});
       setEditorKey((k) => k + 1);
     }
@@ -113,6 +118,7 @@ export function CreateEventDialog({
         endDate: endDate.toISOString(),
         color,
         status,
+        ideas,
       });
       onOpenChange(false);
     } catch (err) {
@@ -325,6 +331,22 @@ export function CreateEventDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Relasi Bank Ide */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <Sprout className="h-3.5 w-3.5" />
+              Realisasi dari Ide
+              <span className="font-normal text-muted-foreground">
+                (opsional)
+              </span>
+            </Label>
+            <IdeaPicker
+              workspaceId={workspaceId}
+              value={ideas}
+              onChange={setIdeas}
+            />
           </div>
 
           {/* Submit Error */}

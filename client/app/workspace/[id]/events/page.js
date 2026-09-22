@@ -19,6 +19,7 @@ import {
   Inbox,
 } from "lucide-react";
 import { toast } from "sonner";
+import api from "@/lib/api";
 
 export default function EventsPage({ params }) {
   const { id } = use(params);
@@ -48,8 +49,19 @@ export default function EventsPage({ params }) {
   }, [id, fetchMembers]);
 
   const handleCreate = async (eventData) => {
-    const newEvent = await createEvent(eventData);
+    const { data } = await api.post(`/workspaces/${id}/events`, eventData);
+    const newEvent = data.data.event;
+    const ideaChanges = data.data.ideaChanges || [];
+
     toast.success("Event berhasil dibuat!");
+
+    // Status ide berubah sendiri, jadi user diberi tahu supaya tidak kaget
+    ideaChanges
+      .filter((c) => c.to === "direalisasi")
+      .forEach((c) => {
+        toast.info(`Ide "${c.title}" ditandai direalisasi`);
+      });
+
     await fetchEvents(1);
     return newEvent;
   };
@@ -219,6 +231,7 @@ export default function EventsPage({ params }) {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreate}
+        workspaceId={id}
       />
     </div>
   );
