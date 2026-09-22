@@ -158,12 +158,15 @@ exports.listIdeas = catchAsync(async (req, res) => {
       { $sort: { voteCountSort: direction, createdAt: -1 } },
       { $skip: skip },
       { $limit: limitNum },
+      { $unset: "voteCountSort" },
     ]);
     ideas = await Idea.populate(raw, [
       { path: "createdBy", select: "name email avatar" },
       { path: "labels", select: "name color" },
     ]);
-    total = await Idea.countDocuments(filter);
+    // countDocuments melewati hook pre-find juga, jadi isDeleted
+    // harus disaring manual di sini.
+    total = await Idea.countDocuments({ ...filter, isDeleted: { $ne: true } });
   } else {
     const allowed = ["createdAt", "title"];
     const field = allowed.includes(sortBy) ? sortBy : "createdAt";
@@ -173,7 +176,7 @@ exports.listIdeas = catchAsync(async (req, res) => {
         .skip(skip)
         .limit(limitNum)
         .lean(),
-      Idea.countDocuments(filter),
+      Idea.countDocuments({ ...filter, isDeleted: { $ne: true } }),
     ]);
   }
 
