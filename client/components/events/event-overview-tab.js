@@ -8,6 +8,7 @@ import {
   lazy,
   Suspense,
 } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -256,6 +257,27 @@ export function EventOverviewTab({
           </div>
         </CardContent>
       </Card>
+
+      {event.ideas?.length > 0 && (
+        <div className="space-y-2">
+          <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <Sprout className="h-3.5 w-3.5" />
+            Realisasi dari
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {event.ideas.map((idea) => (
+              <Link
+                key={idea._id}
+                href={`/workspace/${workspaceId}/ideas/${idea._id}`}
+                className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium transition-colors hover:bg-muted"
+              >
+                <Sprout className="h-3 w-3 text-amber-500" />
+                <span className="max-w-[220px] truncate">{idea.title}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Details card */}
       <Card>

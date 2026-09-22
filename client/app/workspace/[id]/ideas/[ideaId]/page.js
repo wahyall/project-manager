@@ -8,6 +8,7 @@ import { useIdeas } from "@/hooks/use-ideas";
 import { IdeaStatusBadge } from "@/components/ideas/idea-status-badge";
 import { IdeaVoteButton } from "@/components/ideas/idea-vote-button";
 import { IdeaOverviewTab } from "@/components/ideas/idea-overview-tab";
+import { IdeaEventsTab } from "@/components/ideas/idea-events-tab";
 import { DeleteIdeaDialog } from "@/components/ideas/delete-idea-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -223,6 +224,10 @@ export default function IdeaDetailPage({ params }) {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Ringkasan</TabsTrigger>
+          <TabsTrigger value="events">
+            Event Terkait
+            {idea.relatedEvents?.length > 0 && ` (${idea.relatedEvents.length})`}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4">
           <IdeaOverviewTab
@@ -231,6 +236,12 @@ export default function IdeaDetailPage({ params }) {
             members={members}
             workspaceId={id}
             canManage={canManage}
+          />
+        </TabsContent>
+        <TabsContent value="events" className="mt-4">
+          <IdeaEventsTab
+            events={idea.relatedEvents || []}
+            workspaceId={id}
           />
         </TabsContent>
       </Tabs>
