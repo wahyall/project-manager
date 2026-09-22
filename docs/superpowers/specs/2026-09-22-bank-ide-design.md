@@ -325,9 +325,8 @@ client/components/ideas/idea-events-tab.js
 
 | Berkas | Perubahan |
 |---|---|
-| `client/components/app-sidebar.js` | Item nav "Bank Ide" di `NAV_MAIN`, di bawah "Event" |
-| `client/components/bottom-nav.js` | Navigasi mobile |
-| `client/components/more-drawer.js` | Navigasi mobile, laci tambahan |
+| `client/components/app-sidebar.js` | Item nav "Bank Ide" di `NAV_MAIN`, di antara "Event" dan "Brainstorming" |
+| `client/components/more-drawer.js` | Entri Bank Ide di laci Lainnya untuk mobile |
 | `client/components/events/create-event-dialog.js` | Field `IdeaPicker` |
 | `client/components/events/event-overview-tab.js` | Field `IdeaPicker` inline, plus chip backlink |
 | `client/components/activity/activity-timeline.js` | Label tampilan untuk aksi `idea.*` |
@@ -409,7 +408,9 @@ Event ini menjadi wujud nyata dari ide yang dipilih
 
 Komponen `IdeaPicker`: `Popover` berisi `Command` yang bisa dicari, tiap baris menampilkan judul ide dan jumlah dukungan. Ide terpilih ditampilkan sebagai chip yang bisa dilepas. Ide berstatus `diarsipkan` disembunyikan dari daftar pilihan.
 
-Komponen ini sepenuhnya terkendali lewat props `value` dan `onChange`, tanpa mengambil data sendiri, supaya bisa dipakai di dialog buat (state lokal) dan di tab overview (auto-save per field) tanpa cabang logika di dalamnya.
+Pemisahan tanggung jawab di komponen ini: **pilihan** sepenuhnya terkendali lewat props `value` dan `onChange`, sedangkan **daftar opsinya** diambil sendiri oleh komponen saat popover pertama kali dibuka.
+
+Pilihan dibuat terkendali supaya komponen yang sama bisa dipakai di dialog buat Event (state lokal, disimpan sekali saat submit) dan di tab overview Event (auto-save per field) tanpa cabang logika di dalamnya. Daftar opsi diambil internal karena alternatifnya memaksa setiap induk memasok daftar ide lewat props, padahal halaman Event tidak punya urusan dengan Bank Ide. Pengambilan ditunda sampai popover dibuka supaya halaman Event tidak menanggung satu permintaan jaringan tambahan yang sering tidak terpakai.
 
 ### 6.4 Chip backlink di detail Event
 
@@ -422,7 +423,11 @@ Realisasi dari
 
 Tiap chip menautkan ke halaman ide terkait. Bagian ini disembunyikan seluruhnya bila `ideas` kosong.
 
-### 6.5 Perilaku mobile
+### 6.5 Navigasi mobile
+
+`client/components/bottom-nav.js` **tidak diubah**. Bilah bawah sudah berisi empat tab plus tombol Lainnya, dan tab kelima membuat label terpotong di layar sempit. Bank Ide masuk sebagai entri pertama di laci Lainnya.
+
+### 6.6 Perilaku mobile
 
 Grid kartu runtuh ke satu kolom di bawah 640px. Tab pada halaman detail berubah jadi bisa digeser horizontal, mengikuti pola halaman detail Event. `IdeaPicker` memakai lebar penuh pada layar sempit.
 
