@@ -98,15 +98,18 @@ Index ini wajib, bukan optimasi opsional. Service sinkronisasi status menghitung
 
 **Keputusan: relasi disimpan di `Event`, bukan di `Idea`.** Form Event adalah satu-satunya tempat relasi ini disunting, jadi sisi itu yang memegang data. Halaman ide melakukan query balik. Kalau data disimpan di kedua sisi, keduanya akan berselisih cepat atau lambat.
 
-### 2.3 Diubah: empat enum yang harus dilebarkan
+### 2.3 Diubah: lima enum yang harus dilebarkan
 
-Ini bagian yang paling mudah terlewat. Keempatnya akan menolak dokumen secara diam-diam pada level validasi Mongoose kalau tidak diperbarui.
+Ini bagian yang paling mudah terlewat. Semuanya akan menolak dokumen pada level validasi Mongoose kalau tidak diperbarui, dan sebagian gagal secara diam-diam karena pemanggilnya fire-and-forget.
 
 | Berkas | Perubahan |
 |---|---|
 | `server/src/models/Comment.js` | `targetType` enum `+= "idea"` |
 | `server/src/models/ActivityLog.js` | `action` enum `+= "idea.created", "idea.updated", "idea.status_changed", "idea.deleted"`; `targetType` enum `+= "idea"` |
+| `server/src/models/Notification.js` | `targetType` enum `+= "idea"` |
 | `server/src/models/Embedding.js` | `sourceType` enum `+= "idea"` |
+
+`Notification.targetType` diperlukan sejak Tahap 1, karena mention di deskripsi ide sudah aktif di tahap itu. `ActivityLogService.log` dan `NotificationService` keduanya dipanggil tanpa `await` di controller yang ada, jadi kegagalan enum tidak akan memunculkan galat ke user. Itu sebabnya enum harus dilebarkan di task yang sama dengan pembuatan model, bukan belakangan.
 
 **Keputusan: tidak ada `idea.voted` di activity log.** Vote itu aksi murah dan sering. Mencatatnya akan menenggelamkan kejadian penting di linimasa aktivitas. Perubahan jumlah vote tetap tersiar lewat Socket.io, hanya tidak diarsipkan.
 
