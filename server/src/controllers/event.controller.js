@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Event = require("../models/Event");
+const Idea = require("../models/Idea");
 const Task = require("../models/Task");
 const SpreadsheetWorkbook = require("../models/SpreadsheetWorkbook");
 const WorkspaceMember = require("../models/WorkspaceMember");
@@ -31,7 +32,40 @@ const emitEventEvent = (workspaceId, event, data) => {
 const populateEvent = (query) => {
   return query
     .populate("participants", "name email avatar")
-    .populate("createdBy", "name email avatar");
+    .populate("createdBy", "name email avatar")
+    .populate("ideas", "title status");
+};
+
+// Helper: validasi dan bersihkan daftar id ide dari body request.
+// Mengembalikan array unik yang terbukti milik workspace ini.
+const resolveIdeaIds = async (rawIdeas, workspaceId) => {
+  if (!Array.isArray(rawIdeas)) {
+    throw new AppError("Format daftar ide tidak valid", 400);
+  }
+
+  const unique = [...new Set(rawIdeas.map((i) => String(i)))];
+
+  if (unique.length === 0) return [];
+
+  const invalidFormat = unique.filter(
+    (i) => !mongoose.Types.ObjectId.isValid(i),
+  );
+  if (invalidFormat.length > 0) {
+    throw new AppError("Ada id ide yang tidak valid", 400);
+  }
+
+  const found = await Idea.find({
+    _id: { $in: unique },
+    workspaceId,
+  })
+    .select("_id")
+    .lean();
+
+  if (found.length !== unique.length) {
+    throw new AppError("Ada ide yang tidak ditemukan di workspace ini", 400);
+  }
+
+  return found.map((i) => i._id);
 };
 
 // ──────────────────────────────────────────────
@@ -158,6 +192,7 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     endDate,
     color,
     status,
+    ideas,
   } = req.body;
 
   if (!title || !title.trim()) {
@@ -197,6 +232,9 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     console.error("Gagal membuat Google Spreadsheet untuk event:", sheetErr.message);
   }
 
+  const ideaIds =
+    ideas === undefined ? [] : await resolveIdeaIds(ideas, workspace._id);
+
   const event = await Event.create({
     workspaceId: workspace._id,
     title: title.trim(),
@@ -206,6 +244,7 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     color: color || "#8B5CF6",
     status: status || "upcoming",
     participants: [],
+    ideas: ideaIds,
     googleSpreadsheetId,
     googleSpreadsheetUrl,
     createdBy: userId,
@@ -344,7 +383,8 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   // Backup original state
   const oldDescription = event.description;
 
-  const { title, description, startDate, endDate, color, status } = req.body;
+  const { title, description, startDate, endDate, color, status, ideas } =
+    req.body;
 
   // Title
   if (title !== undefined) {
@@ -390,6 +430,14 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
     event.status = status;
   }
 
+  // ideas === undefined berarti jangan sentuh relasinya. Array kosong
+  // berarti perintah melepas semua tautan. Pembedaan ini penting karena
+  // tab overview Event menyimpan per field, jadi menyunting judul saja
+  // tidak boleh menghapus relasi ide.
+  if (ideas !== undefined) {
+    event.ideas = await resolveIdeaIds(ideas, workspace._id);
+  }
+
   await event.save();
 
   // Populate for response
@@ -415,6 +463,7 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   if (endDate !== undefined) changedFields.push("endDate");
   if (color !== undefined) changedFields.push("color");
   if (status !== undefined) changedFields.push("status");
+  if (ideas !== undefined) changedFields.push("ideas");
   if (changedFields.length > 0) {
     ActivityLogService.log({
       workspaceId: workspace._id,

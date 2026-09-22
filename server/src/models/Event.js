@@ -48,6 +48,15 @@ const eventSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    // Ide dari Bank Ide yang diwujudkan oleh event ini.
+    // Relasi disimpan satu arah di sini, bukan di kedua sisi,
+    // supaya tidak ada dua sumber data yang bisa berselisih.
+    ideas: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Idea",
+      },
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -79,6 +88,9 @@ const eventSchema = new mongoose.Schema(
 eventSchema.index({ workspaceId: 1, isDeleted: 1 });
 eventSchema.index({ workspaceId: 1, status: 1 });
 eventSchema.index({ participants: 1 });
+// Wajib, bukan optimasi opsional: syncRealizationStatus menghitung
+// Event per ide pada setiap penyimpanan Event.
+eventSchema.index({ ideas: 1 });
 eventSchema.index({ startDate: 1 });
 eventSchema.index({ endDate: 1 });
 
