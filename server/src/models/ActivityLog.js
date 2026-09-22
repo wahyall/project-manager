@@ -40,6 +40,11 @@ const activityLogSchema = new mongoose.Schema(
         "event.participant_added",
         "event.participant_removed",
         "event.status_changed",
+        // Idea (Bank Ide)
+        "idea.created",
+        "idea.updated",
+        "idea.status_changed",
+        "idea.deleted",
         // Spreadsheet
         "spreadsheet.sheet_created",
         "spreadsheet.sheet_deleted",
@@ -69,7 +74,15 @@ const activityLogSchema = new mongoose.Schema(
     targetType: {
       type: String,
       required: true,
-      enum: ["task", "event", "spreadsheet", "workspace", "board", "comment"],
+      enum: [
+        "task",
+        "event",
+        "idea",
+        "spreadsheet",
+        "workspace",
+        "board",
+        "comment",
+      ],
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,
