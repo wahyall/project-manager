@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Idea = require("../models/Idea");
+const Event = require("../models/Event");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
@@ -180,10 +181,33 @@ exports.listIdeas = catchAsync(async (req, res) => {
     ]);
   }
 
+  const ideaIdList = ideas.map((i) => i._id);
+  // aggregate melewati hook pre-find, jadi isDeleted disaring manual
+  const eventCounts = await Event.aggregate([
+    {
+      $match: {
+        workspaceId: workspace._id,
+        ideas: { $in: ideaIdList },
+        isDeleted: { $ne: true },
+      },
+    },
+    { $unwind: "$ideas" },
+    { $match: { ideas: { $in: ideaIdList } } },
+    { $group: { _id: "$ideas", count: { $sum: 1 } } },
+  ]);
+  const eventCountMap = {};
+  eventCounts.forEach((e) => {
+    eventCountMap[e._id.toString()] = e.count;
+  });
+
   res.status(200).json({
     status: "success",
     data: {
-      ideas: ideas.map((i) => shapeIdea(i, userId)),
+      ideas: ideas.map((i) =>
+        shapeIdea(i, userId, {
+          eventCount: eventCountMap[i._id.toString()] || 0,
+        }),
+      ),
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -263,11 +287,22 @@ exports.getIdea = catchAsync(async (req, res, next) => {
     return next(new AppError("Ide tidak ditemukan", 404));
   }
 
-  // relatedEvents diisi di Tahap 2. Field-nya sudah ada sejak sekarang
-  // supaya klien tidak perlu diubah dua kali.
+  const relatedEvents = await Event.find({
+    workspaceId: workspace._id,
+    ideas: idea._id,
+  })
+    .select("title startDate endDate status color")
+    .sort({ startDate: -1 })
+    .lean();
+
   res.status(200).json({
     status: "success",
-    data: { idea: { ...shapeIdea(idea, userId), relatedEvents: [] } },
+    data: {
+      idea: {
+        ...shapeIdea(idea, userId, { eventCount: relatedEvents.length }),
+        relatedEvents,
+      },
+    },
   });
 });
 
@@ -320,7 +355,20 @@ exports.updateIdea = catchAsync(async (req, res, next) => {
     if (!IDEA_STATUSES.includes(status)) {
       return next(new AppError("Status tidak valid", 400));
     }
-    // Penjaga status otomatis dipasang di Task 10, saat relasi Event ada.
+    // Status ditentukan sistem selama ide punya Event tertaut. Tanpa
+    // penjaga ini, perubahan manual dan otomatis saling menimpa diam-diam.
+    // countDocuments melewati hook pre(/^find/) Event, jadi isDeleted
+    // harus disaring manual di sini juga.
+    const linkedCount = await Event.countDocuments({
+      workspaceId: workspace._id,
+      ideas: idea._id,
+      isDeleted: { $ne: true },
+    });
+    if (linkedCount > 0) {
+      return next(
+        new AppError("Status ide ini ditentukan oleh Event terkait", 400),
+      );
+    }
     idea.status = status;
     changedFields.push("status");
   }
@@ -396,7 +444,11 @@ exports.deleteIdea = catchAsync(async (req, res, next) => {
   idea.deletedAt = new Date();
   await idea.save();
 
-  // Pelepasan dari Event dikerjakan di Task 10.
+  // Lepas ide ini dari semua Event supaya tidak ada chip menggantung.
+  await Event.updateMany(
+    { workspaceId: workspace._id, ideas: idea._id },
+    { $pull: { ideas: idea._id } },
+  );
 
   emitIdeaEvent(workspace._id.toString(), "idea:deleted", {
     ideaId: idea._id,

@@ -87,8 +87,12 @@ export function useIdeas(workspaceId) {
       setIdeas((prev) => [idea, ...prev]);
     };
 
-    const handleUpdated = ({ idea }) => {
-      setIdeas((prev) => prev.map((i) => (i._id === idea._id ? idea : i)));
+    const handleUpdated = ({ idea, partial }) => {
+      setIdeas((prev) =>
+        prev.map((i) =>
+          i._id === idea._id ? (partial ? { ...i, ...idea } : idea) : i,
+        ),
+      );
     };
 
     const handleDeleted = ({ ideaId }) => {

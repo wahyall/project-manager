@@ -10,6 +10,7 @@ const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
 const googleSheetsService = require("../services/googleSheets.service");
+const { syncRealizationStatus } = require("../services/ideaRealization.service");
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -269,6 +270,14 @@ exports.createEvent = catchAsync(async (req, res, next) => {
   // Populate for response
   const populatedEvent = await populateEvent(Event.findById(event._id)).lean();
 
+  // Ditunggu, bukan fire-and-forget, karena balikan ke klien harus
+  // sudah mencerminkan status ide yang benar.
+  const ideaChanges = await syncRealizationStatus({
+    ideaIds: ideaIds,
+    workspaceId: workspace._id,
+    actorId: userId,
+  });
+
   // Emit Socket.io event
   emitEventEvent(workspace._id.toString(), "event:created", {
     event: populatedEvent,
@@ -329,7 +338,7 @@ exports.createEvent = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     status: "success",
-    data: { event: populatedEvent },
+    data: { event: populatedEvent, ideaChanges },
   });
 });
 
@@ -430,6 +439,8 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
     event.status = status;
   }
 
+  const previousIdeaIds = (event.ideas || []).map((i) => i.toString());
+
   // ideas === undefined berarti jangan sentuh relasinya. Array kosong
   // berarti perintah melepas semua tautan. Pembedaan ini penting karena
   // tab overview Event menyimpan per field, jadi menyunting judul saja
@@ -442,6 +453,19 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
 
   // Populate for response
   const populatedEvent = await populateEvent(Event.findById(event._id)).lean();
+
+  // Gabungan lama dan baru. Kalau hanya yang baru disinkronkan, ide yang
+  // barusan dilepas tautannya akan tertinggal berstatus direalisasi
+  // selamanya.
+  let ideaChanges = [];
+  if (ideas !== undefined) {
+    const currentIdeaIds = (event.ideas || []).map((i) => i.toString());
+    ideaChanges = await syncRealizationStatus({
+      ideaIds: [...previousIdeaIds, ...currentIdeaIds],
+      workspaceId: workspace._id,
+      actorId: userId,
+    });
+  }
 
   // Attach task count
   const taskCount = await Task.countDocuments({
@@ -528,7 +552,7 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    data: { event: { ...populatedEvent, taskCount } },
+    data: { event: { ...populatedEvent, taskCount }, ideaChanges },
   });
 });
 
@@ -564,6 +588,12 @@ exports.deleteEvent = catchAsync(async (req, res, next) => {
   event.isDeleted = true;
   event.deletedAt = new Date();
   await event.save();
+
+  await syncRealizationStatus({
+    ideaIds: (event.ideas || []).map((i) => i.toString()),
+    workspaceId: workspace._id,
+    actorId: userId,
+  });
 
   // Nullify eventId on all related tasks
   await Task.updateMany(
