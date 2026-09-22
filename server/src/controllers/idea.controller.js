@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Idea = require("../models/Idea");
 const Event = require("../models/Event");
+const WorkspaceLabel = require("../models/WorkspaceLabel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
@@ -31,6 +32,33 @@ const populateIdea = (query) => {
   return query
     .populate("createdBy", "name email avatar")
     .populate("labels", "name color");
+};
+
+// Helper: validasi daftar id label milik workspace ini
+const resolveLabelIds = async (rawLabels, workspaceId) => {
+  if (!Array.isArray(rawLabels)) {
+    throw new AppError("Format daftar label tidak valid", 400);
+  }
+
+  const unique = [...new Set(rawLabels.map((l) => String(l)))];
+  if (unique.length === 0) return [];
+
+  if (unique.some((l) => !mongoose.Types.ObjectId.isValid(l))) {
+    throw new AppError("Ada id label yang tidak valid", 400);
+  }
+
+  const found = await WorkspaceLabel.find({
+    _id: { $in: unique },
+    workspaceId,
+  })
+    .select("_id")
+    .lean();
+
+  if (found.length !== unique.length) {
+    throw new AppError("Ada label yang tidak ditemukan di workspace ini", 400);
+  }
+
+  return found.map((l) => l._id);
 };
 
 // Helper: bentuk balikan ke klien.
@@ -224,17 +252,21 @@ exports.listIdeas = catchAsync(async (req, res) => {
 exports.createIdea = catchAsync(async (req, res, next) => {
   const workspace = req.workspace;
   const userId = req.user.id;
-  const { title, description } = req.body;
+  const { title, description, labels } = req.body;
 
   if (!title || !title.trim()) {
     return next(new AppError("Judul ide harus diisi", 400));
   }
+
+  const labelIds =
+    labels === undefined ? [] : await resolveLabelIds(labels, workspace._id);
 
   const idea = await Idea.create({
     workspaceId: workspace._id,
     title: title.trim(),
     description: description || "",
     createdBy: userId,
+    labels: labelIds,
   });
 
   const populated = await populateIdea(Idea.findById(idea._id)).lean();
@@ -333,7 +365,7 @@ exports.updateIdea = catchAsync(async (req, res, next) => {
   }
 
   const oldDescription = idea.description;
-  const { title, description, status } = req.body;
+  const { title, description, status, labels } = req.body;
   const changedFields = [];
 
   if (title !== undefined) {
@@ -347,6 +379,11 @@ exports.updateIdea = catchAsync(async (req, res, next) => {
   if (description !== undefined) {
     idea.description = description;
     changedFields.push("deskripsi");
+  }
+
+  if (labels !== undefined) {
+    idea.labels = await resolveLabelIds(labels, workspace._id);
+    changedFields.push("label");
   }
 
   const statusOnlyChange = status !== undefined && changedFields.length === 0;

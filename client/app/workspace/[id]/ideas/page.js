@@ -54,7 +54,8 @@ export default function IdeasPage({ params }) {
     return acc;
   }, {});
 
-  const isFiltering = filters.keyword || filters.status.length > 0;
+  const isFiltering =
+    filters.keyword || filters.status.length > 0 || filters.labels.length > 0;
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 p-4 lg:p-6">
@@ -119,6 +120,7 @@ export default function IdeasPage({ params }) {
         setSortBy={setSortBy}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
+        workspaceId={id}
       />
 
       {error && (

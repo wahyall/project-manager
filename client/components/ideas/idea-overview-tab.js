@@ -23,6 +23,7 @@ import {
   IDEA_STATUS_CONFIG,
   IDEA_STATUS_ORDER,
 } from "@/components/ideas/idea-status-badge";
+import { IdeaLabelPicker } from "@/components/ideas/idea-label-picker";
 import { AlignLeft, Loader2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -254,6 +255,15 @@ export function IdeaOverviewTab({
                 </span>
               </div>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Label</p>
+            <IdeaLabelPicker
+              workspaceId={workspaceId}
+              value={(idea.labels || []).map((l) => l._id || l)}
+              onChange={(next) => saveField("labels", next)}
+            />
           </div>
 
           <div className="space-y-1.5">

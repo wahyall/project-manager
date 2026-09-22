@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import api from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +21,7 @@ import {
   IDEA_STATUS_CONFIG,
   IDEA_STATUS_ORDER,
 } from "@/components/ideas/idea-status-badge";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, Tag, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function IdeaFilterToolbar({
@@ -29,13 +31,39 @@ export function IdeaFilterToolbar({
   setSortBy,
   sortOrder,
   setSortOrder,
+  workspaceId,
 }) {
+  const [labelOptions, setLabelOptions] = useState([]);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    let active = true;
+    api
+      .get(`/workspaces/${workspaceId}/labels`)
+      .then(({ data }) => {
+        if (active) setLabelOptions(data.data.labels);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [workspaceId]);
+
   const toggleStatus = (status) => {
     setFilters((prev) => ({
       ...prev,
       status: prev.status.includes(status)
         ? prev.status.filter((s) => s !== status)
         : [...prev.status, status],
+    }));
+  };
+
+  const toggleLabel = (labelId) => {
+    setFilters((prev) => ({
+      ...prev,
+      labels: prev.labels.includes(labelId)
+        ? prev.labels.filter((l) => l !== labelId)
+        : [...prev.labels, labelId],
     }));
   };
 
@@ -48,7 +76,8 @@ export function IdeaFilterToolbar({
     setSortOrder(order);
   };
 
-  const hasFilter = filters.status.length > 0 || filters.keyword;
+  const hasFilter =
+    filters.status.length > 0 || filters.labels.length > 0 || filters.keyword;
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -99,6 +128,40 @@ export function IdeaFilterToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {labelOptions.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Tag className="h-3.5 w-3.5" />
+                Label
+                {filters.labels.length > 0 && (
+                  <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                    {filters.labels.length}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {labelOptions.map((label) => (
+                <DropdownMenuCheckboxItem
+                  key={label._id}
+                  checked={filters.labels.includes(label._id)}
+                  onCheckedChange={() => toggleLabel(label._id)}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: label.color }}
+                    />
+                    {label.name}
+                  </span>
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
         <Select value={sortValue} onValueChange={applySort}>
           <SelectTrigger className="h-9 w-[150px]">
             <SelectValue />
@@ -117,7 +180,12 @@ export function IdeaFilterToolbar({
             size="sm"
             className="h-9 gap-1.5 text-muted-foreground"
             onClick={() =>
-              setFilters((prev) => ({ ...prev, status: [], keyword: "" }))
+              setFilters((prev) => ({
+                ...prev,
+                status: [],
+                labels: [],
+                keyword: "",
+              }))
             }
           >
             <X className="h-3.5 w-3.5" />
