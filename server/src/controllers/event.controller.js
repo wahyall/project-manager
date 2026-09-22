@@ -267,16 +267,18 @@ exports.createEvent = catchAsync(async (req, res, next) => {
   //   updatedBy: userId,
   // });
 
-  // Populate for response
-  const populatedEvent = await populateEvent(Event.findById(event._id)).lean();
-
   // Ditunggu, bukan fire-and-forget, karena balikan ke klien harus
-  // sudah mencerminkan status ide yang benar.
+  // sudah mencerminkan status ide yang benar. Sync harus berjalan
+  // SEBELUM populate di bawah, supaya event.ideas[].status yang
+  // dikembalikan ke klien sudah mencerminkan status pasca-sync.
   const ideaChanges = await syncRealizationStatus({
     ideaIds: ideaIds,
     workspaceId: workspace._id,
     actorId: userId,
   });
+
+  // Populate for response
+  const populatedEvent = await populateEvent(Event.findById(event._id)).lean();
 
   // Emit Socket.io event
   emitEventEvent(workspace._id.toString(), "event:created", {
@@ -451,12 +453,11 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
 
   await event.save();
 
-  // Populate for response
-  const populatedEvent = await populateEvent(Event.findById(event._id)).lean();
-
   // Gabungan lama dan baru. Kalau hanya yang baru disinkronkan, ide yang
   // barusan dilepas tautannya akan tertinggal berstatus direalisasi
-  // selamanya.
+  // selamanya. Sync harus berjalan SEBELUM populate di bawah, supaya
+  // event.ideas[].status yang dikembalikan ke klien sudah mencerminkan
+  // status pasca-sync, bukan status sebelum sync.
   let ideaChanges = [];
   if (ideas !== undefined) {
     const currentIdeaIds = (event.ideas || []).map((i) => i.toString());
@@ -466,6 +467,9 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
       actorId: userId,
     });
   }
+
+  // Populate for response
+  const populatedEvent = await populateEvent(Event.findById(event._id)).lean();
 
   // Attach task count
   const taskCount = await Task.countDocuments({

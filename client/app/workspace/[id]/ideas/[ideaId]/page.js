@@ -229,7 +229,10 @@ export default function IdeaDetailPage({ params }) {
             Event Terkait
             {idea.relatedEvents?.length > 0 && ` (${idea.relatedEvents.length})`}
           </TabsTrigger>
-          <TabsTrigger value="discussion">Diskusi</TabsTrigger>
+          <TabsTrigger value="discussion">
+            Diskusi
+            {idea.commentCount > 0 && ` (${idea.commentCount})`}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="mt-4">
           <IdeaOverviewTab

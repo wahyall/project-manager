@@ -7,8 +7,10 @@ import { cn } from "@/lib/utils";
 /**
  * Tombol dukungan, tersusun vertikal: panah di atas, angka di bawah.
  *
- * Angka diperbarui optimistis supaya terasa seketika, lalu dikoreksi
- * dari balikan server. Kalau gagal, nilai dikembalikan seperti semula.
+ * Angka diperbarui optimistis supaya terasa seketika. Begitu request
+ * selesai (berhasil maupun gagal), state optimistis dikosongkan lagi
+ * supaya komponen kembali percaya pada prop voteCount/hasVoted asli —
+ * termasuk update real-time dari user lain lewat socket idea:voted.
  */
 export function IdeaVoteButton({
   voteCount = 0,
@@ -39,8 +41,12 @@ export function IdeaVoteButton({
     setOptimistic(next);
     setBusy(true);
     try {
-      const result = shownVoted ? await onUnvote() : await onVote();
-      if (result) setOptimistic(result);
+      await (shownVoted ? onUnvote() : onVote());
+      // Kembali percaya ke props asli (voteCount/hasVoted), termasuk
+      // update real-time lewat socket idea:voted dari user lain. Kalau
+      // optimistic tidak pernah dikosongkan, komponen ini akan terus
+      // mengabaikan prop baru selamanya setelah klik pertama.
+      setOptimistic(null);
     } catch {
       setOptimistic(null);
     } finally {

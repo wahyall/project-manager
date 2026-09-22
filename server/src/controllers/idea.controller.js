@@ -348,11 +348,22 @@ exports.getIdea = catchAsync(async (req, res, next) => {
     .sort({ startDate: -1 })
     .lean();
 
+  // Catatan: sama seperti listIdeas, tidak ada filter isDeleted di sini —
+  // Comment tidak punya hook soft-delete, dan utas diskusi memang sengaja
+  // menampilkan komentar terhapus sebagai tombstone.
+  const commentCount = await Comment.countDocuments({
+    targetType: "idea",
+    targetId: idea._id,
+  });
+
   res.status(200).json({
     status: "success",
     data: {
       idea: {
-        ...shapeIdea(idea, userId, { eventCount: relatedEvents.length }),
+        ...shapeIdea(idea, userId, {
+          eventCount: relatedEvents.length,
+          commentCount,
+        }),
         relatedEvents,
       },
     },
@@ -413,6 +424,21 @@ exports.updateIdea = catchAsync(async (req, res, next) => {
     if (!IDEA_STATUSES.includes(status)) {
       return next(new AppError("Status tidak valid", 400));
     }
+    // "direalisasi" hanya boleh ditulis oleh syncRealizationStatus, tidak
+    // pernah oleh input manual — berlaku selalu, terlepas dari apakah ide
+    // ini sedang punya Event tertaut atau tidak. Tanpa penjaga ini,
+    // statusBeforeRealized bisa tetap null padahal status sudah
+    // "direalisasi" secara manual, yang membuat sync/unlink berikutnya
+    // salah menjatuhkan status ke "baru" dan diam-diam kehilangan status
+    // asli yang dipilih user.
+    if (status === "direalisasi") {
+      return next(
+        new AppError(
+          "Status direalisasi ditentukan otomatis dari Event terkait, tidak bisa diatur manual",
+          400,
+        ),
+      );
+    }
     // Status ditentukan sistem selama ide punya Event tertaut. Tanpa
     // penjaga ini, perubahan manual dan otomatis saling menimpa diam-diam.
     // countDocuments melewati hook pre(/^find/) Event, jadi isDeleted
@@ -434,11 +460,31 @@ exports.updateIdea = catchAsync(async (req, res, next) => {
   await idea.save();
 
   const populated = await populateIdea(Idea.findById(idea._id)).lean();
-  const shaped = shapeIdea(populated, userId);
 
+  // eventCount dan commentCount dihitung ulang di sini supaya status lock
+  // dan badge di klien tidak salah menganggap ide lepas dari Event/komentar
+  // setelah penyuntingan field lain (title/description/label).
+  const eventCount = await Event.countDocuments({
+    workspaceId: workspace._id,
+    ideas: idea._id,
+    isDeleted: { $ne: true },
+  });
+  const commentCount = await Comment.countDocuments({
+    targetType: "idea",
+    targetId: idea._id,
+  });
+
+  const shaped = shapeIdea(populated, userId, { eventCount, commentCount });
+
+  // hasVoted sengaja tidak disiarkan ke klien lain: nilainya spesifik untuk
+  // user yang meminta perubahan ini, bukan kebenaran universal. Menyiarkannya
+  // akan membuat status tombol vote pengguna lain ikut berubah mengikuti
+  // status vote si penyunting.
+  const { hasVoted: _ownHasVoted, ...broadcastIdea } = shaped;
   emitIdeaEvent(workspace._id.toString(), "idea:updated", {
-    idea: shaped,
+    idea: broadcastIdea,
     userId,
+    partial: true,
   });
 
   if (changedFields.length > 0) {
@@ -507,6 +553,10 @@ exports.deleteIdea = catchAsync(async (req, res, next) => {
     { workspaceId: workspace._id, ideas: idea._id },
     { $pull: { ideas: idea._id } },
   );
+
+  // Tidak perlu memanggil syncRealizationStatus di sini: ide sudah
+  // soft-deleted di atas, jadi Idea.findOne di dalam service akan
+  // disaring hook pre(/^find/) dan panggilannya otomatis no-op.
 
   emitIdeaEvent(workspace._id.toString(), "idea:deleted", {
     ideaId: idea._id,

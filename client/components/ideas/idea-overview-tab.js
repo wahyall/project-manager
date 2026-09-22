@@ -221,7 +221,9 @@ export function IdeaOverviewTab({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {IDEA_STATUS_ORDER.map((status) => (
+                    {IDEA_STATUS_ORDER.filter(
+                      (status) => status !== "direalisasi",
+                    ).map((status) => (
                       <SelectItem key={status} value={status}>
                         <span className="flex items-center gap-2">
                           <span
@@ -259,11 +261,30 @@ export function IdeaOverviewTab({
 
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Label</p>
-            <IdeaLabelPicker
-              workspaceId={workspaceId}
-              value={(idea.labels || []).map((l) => l._id || l)}
-              onChange={(next) => saveField("labels", next)}
-            />
+            {canManage ? (
+              <IdeaLabelPicker
+                workspaceId={workspaceId}
+                value={(idea.labels || []).map((l) => l._id || l)}
+                onChange={(next) => saveField("labels", next)}
+              />
+            ) : (idea.labels || []).length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {(idea.labels || []).map((label) => (
+                  <span
+                    key={label._id || label}
+                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    style={{
+                      backgroundColor: `${label.color}1a`,
+                      color: label.color,
+                    }}
+                  >
+                    {label.name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Tidak ada label</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
