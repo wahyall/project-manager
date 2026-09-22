@@ -12,6 +12,7 @@ const EventDivision = require("../models/EventDivision");
 const BrainstormingBoard = require("../models/BrainstormingBoard");
 const SpreadsheetSheetData = require("../models/SpreadsheetSheetData");
 const SpreadsheetWorkbook = require("../models/SpreadsheetWorkbook");
+const Idea = require("../models/Idea");
 
 // ── Config ───────────────────────────────────────────
 const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || "text-embedding-004";
@@ -153,6 +154,43 @@ const _buildEventContent = (event) => {
       }
     } catch {
       // Not JSON
+    }
+    if (desc) parts.push(`Deskripsi: ${desc.substring(0, 500)}`);
+  }
+
+  return parts.join(" | ");
+};
+
+const _buildIdeaContent = (idea) => {
+  const parts = [`Ide: ${idea.title}`];
+  if (idea.status) parts.push(`Status: ${idea.status}`);
+
+  const voteCount = Array.isArray(idea.votes) ? idea.votes.length : 0;
+  parts.push(`Dukungan: ${voteCount}`);
+
+  if (idea.labels && idea.labels.length > 0) {
+    const names = idea.labels
+      .map((l) => (typeof l === "object" && l.name ? l.name : null))
+      .filter(Boolean);
+    if (names.length > 0) parts.push(`Label: ${names.join(", ")}`);
+  }
+
+  if (idea.createdBy && typeof idea.createdBy === "object" && idea.createdBy.name) {
+    parts.push(`Pengusul: ${idea.createdBy.name}`);
+  }
+
+  if (idea.description) {
+    let desc = idea.description;
+    try {
+      const parsed = JSON.parse(desc);
+      if (Array.isArray(parsed)) {
+        desc = parsed
+          .map((block) => block.content?.map((c) => c.text).join("") || "")
+          .filter(Boolean)
+          .join(" ");
+      }
+    } catch {
+      // Bukan JSON, pakai apa adanya
     }
     if (desc) parts.push(`Deskripsi: ${desc.substring(0, 500)}`);
   }
@@ -364,6 +402,7 @@ const syncWorkspace = async (workspaceId) => {
   const counts = {
     task: 0,
     event: 0,
+    idea: 0,
     event_note: 0,
     division: 0,
     comment: 0,
@@ -417,6 +456,28 @@ const syncWorkspace = async (workspaceId) => {
       },
     });
     if (ok) counts.event++;
+    else errors++;
+  }
+
+  // 2.2 Ideas (Bank Ide)
+  const ideas = await Idea.find({ workspaceId, isDeleted: { $ne: true } })
+    .populate("createdBy", "name")
+    .populate("labels", "name")
+    .lean();
+
+  for (const idea of ideas) {
+    const ok = await upsert({
+      workspaceId,
+      sourceType: "idea",
+      sourceId: idea._id,
+      content: _buildIdeaContent(idea),
+      metadata: {
+        title: idea.title,
+        status: idea.status,
+        sourceUrl: `/workspace/${workspaceId}/ideas/${idea._id}`,
+      },
+    });
+    if (ok) counts.idea++;
     else errors++;
   }
 
@@ -630,6 +691,7 @@ module.exports = {
   // Exposed content builders for controller hooks
   _buildTaskContent,
   _buildEventContent,
+  _buildIdeaContent,
   _buildCommentContent,
   _buildActivityContent,
   _buildMemberContent,
