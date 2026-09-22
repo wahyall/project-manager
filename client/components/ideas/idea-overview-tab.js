@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react"
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
@@ -42,6 +43,7 @@ export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
   const [saving, setSaving] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const descValueRef = useRef(idea.description || "");
+  const descTimerRef = useRef(null);
 
   useEffect(() => {
     descValueRef.current = idea.description || "";
@@ -68,12 +70,30 @@ export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
   const eventCount = idea.eventCount || 0;
   const statusLocked = eventCount > 0;
 
-  const handleDescSave = async () => {
-    setEditingDesc(false);
-    if (descValueRef.current !== (idea.description || "")) {
-      await saveField("description", descValueRef.current);
+  // Deskripsi — auto-save dengan debounce, mengikuti pola tab Ringkasan
+  // Event (event-overview-tab.js). MentionEditor tidak menerima prop
+  // onBlur, jadi penyimpanan dipicu dari onChange (debounced) dan dari
+  // tombol "Selesai" saat menutup mode sunting.
+  const handleDescChange = useCallback(
+    (jsonString) => {
+      descValueRef.current = jsonString;
+      if (descTimerRef.current) clearTimeout(descTimerRef.current);
+      descTimerRef.current = setTimeout(() => {
+        if (descValueRef.current !== idea.description) {
+          saveField("description", descValueRef.current);
+        }
+      }, 800);
+    },
+    [idea.description, saveField],
+  );
+
+  const saveDescAndClose = useCallback(() => {
+    if (descTimerRef.current) clearTimeout(descTimerRef.current);
+    if (descValueRef.current !== idea.description) {
+      saveField("description", descValueRef.current);
     }
-  };
+    setEditingDesc(false);
+  }, [idea.description, saveField]);
 
   return (
     <div className="space-y-4">
@@ -83,9 +103,21 @@ export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
             <AlignLeft className="h-4 w-4 text-muted-foreground" />
             Penjelasan
           </CardTitle>
-          {saving && (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-          )}
+          <div className="flex items-center gap-2">
+            {saving && (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            )}
+            {editingDesc && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[10px]"
+                onClick={saveDescAndClose}
+              >
+                Selesai
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Suspense
@@ -96,17 +128,13 @@ export function IdeaOverviewTab({ idea, onUpdate, members = [], workspaceId }) {
             }
           >
             {editingDesc ? (
-              <div className="rounded-md border border-input px-4 py-2">
+              <div className="rounded-md border border-input px-4 py-2 transition-shadow focus-within:ring-1 focus-within:ring-ring">
                 <MentionEditor
                   key={editorKey}
-                  initialContent={idea.description || null}
-                  onChange={(value) => {
-                    descValueRef.current = value;
-                  }}
-                  onBlur={handleDescSave}
-                  members={members}
                   workspaceId={workspaceId}
-                  placeholder="Kenapa ide ini layak dikerjakan?"
+                  initialContent={idea.description || null}
+                  onChange={handleDescChange}
+                  className="blocknote-compact"
                 />
               </div>
             ) : (
