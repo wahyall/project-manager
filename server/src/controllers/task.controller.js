@@ -8,7 +8,9 @@ const {
   getDoneColumnIds,
   isValidColumn,
   getNextColumnOrder,
+  computeDueDateFromOffset,
 } = require("../services/task.service");
+const Event = require("../models/Event");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
@@ -28,6 +30,51 @@ const emitTaskEvent = (workspaceId, event, data) => {
   if (io) {
     io.to(`workspace:${workspaceId}`).emit(event, data);
   }
+};
+
+// Validate + resolve phase-related fields shared by create and update.
+// Returns { phase, dueDateMode, dueOffsetDays, computedDueDate } or calls
+// next(AppError) and returns null.
+const resolvePhaseFields = async ({
+  phase,
+  dueDateMode,
+  dueOffsetDays,
+  eventId,
+  next,
+}) => {
+  if (phase === undefined) {
+    return { phase: undefined, dueDateMode: undefined, dueOffsetDays: undefined, computedDueDate: undefined };
+  }
+  if (phase !== null && !eventId) {
+    next(new AppError("Task dengan fase harus terhubung ke event", 400));
+    return null;
+  }
+  if (phase === null) {
+    return { phase: null, dueDateMode: null, dueOffsetDays: null, computedDueDate: null };
+  }
+  if (dueDateMode === "relative") {
+    if (dueOffsetDays === undefined || dueOffsetDays === null) {
+      next(new AppError("Offset hari harus diisi untuk mode relatif", 400));
+      return null;
+    }
+    const event = await Event.findById(eventId).select("startDate endDate").lean();
+    if (!event) {
+      next(new AppError("Event tidak ditemukan", 404));
+      return null;
+    }
+    return {
+      phase,
+      dueDateMode: "relative",
+      dueOffsetDays: Number(dueOffsetDays),
+      computedDueDate: computeDueDateFromOffset(event, phase, dueOffsetDays),
+    };
+  }
+  return {
+    phase,
+    dueDateMode: dueDateMode || "absolute",
+    dueOffsetDays: null,
+    computedDueDate: undefined, // caller keeps whatever dueDate was passed in
+  };
 };
 
 // ──────────────────────────────────────────────
@@ -145,6 +192,9 @@ exports.createTask = catchAsync(async (req, res, next) => {
     eventId,
     subtasks,
     blockedBy,
+    phase,
+    dueDateMode,
+    dueOffsetDays,
   } = req.body;
 
   if (!title || !title.trim()) {
@@ -196,6 +246,15 @@ exports.createTask = catchAsync(async (req, res, next) => {
       }))
     : [];
 
+  const resolvedPhase = await resolvePhaseFields({
+    phase,
+    dueDateMode,
+    dueOffsetDays,
+    eventId: eventId || null,
+    next,
+  });
+  if (resolvedPhase === null) return; // resolvePhaseFields already called next()
+
   const task = await Task.create({
     workspaceId: workspace._id,
     title: title.trim(),
@@ -205,13 +264,19 @@ exports.createTask = catchAsync(async (req, res, next) => {
     assignees: assignees || [],
     watchers: [userId], // Creator auto-watches
     startDate: startDate || null,
-    dueDate: dueDate || null,
+    dueDate:
+      resolvedPhase.computedDueDate !== undefined
+        ? resolvedPhase.computedDueDate
+        : dueDate || null,
     priority: priority || "medium",
     labels: labels || [],
     eventId: eventId || null,
     subtasks: processedSubtasks,
     blockedBy: blockedBy || [],
     createdBy: userId,
+    phase: resolvedPhase.phase ?? null,
+    dueDateMode: resolvedPhase.dueDateMode ?? null,
+    dueOffsetDays: resolvedPhase.dueOffsetDays ?? null,
   });
 
   // Populate for response
@@ -368,6 +433,9 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     eventId,
     subtasks,
     blockedBy,
+    phase,
+    dueDateMode,
+    dueOffsetDays,
   } = req.body;
 
   // Track if column changed (for "moved" event)
@@ -453,6 +521,39 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   // Event
   if (eventId !== undefined) {
     task.eventId = eventId || null;
+  }
+
+  // Phase (pipeline)
+  if (phase !== undefined) {
+    const resolvedPhase = await resolvePhaseFields({
+      phase,
+      dueDateMode,
+      dueOffsetDays,
+      eventId: eventId !== undefined ? eventId : task.eventId,
+      next,
+    });
+    if (resolvedPhase === null) return;
+    task.phase = resolvedPhase.phase;
+    task.dueDateMode = resolvedPhase.dueDateMode;
+    task.dueOffsetDays = resolvedPhase.dueOffsetDays;
+    if (resolvedPhase.computedDueDate !== undefined) {
+      task.dueDate = resolvedPhase.computedDueDate;
+    }
+  } else if (dueDateMode !== undefined && task.phase) {
+    // Changing due date mode without changing phase itself
+    const resolvedPhase = await resolvePhaseFields({
+      phase: task.phase,
+      dueDateMode,
+      dueOffsetDays,
+      eventId: task.eventId,
+      next,
+    });
+    if (resolvedPhase === null) return;
+    task.dueDateMode = resolvedPhase.dueDateMode;
+    task.dueOffsetDays = resolvedPhase.dueOffsetDays;
+    if (resolvedPhase.computedDueDate !== undefined) {
+      task.dueDate = resolvedPhase.computedDueDate;
+    }
   }
 
   // Subtasks
