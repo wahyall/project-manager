@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { PHASES } = require("../utils/pipelinePhases");
 
 // ── Subtask (embedded) ──────────────────────────────
 const subtaskSchema = new mongoose.Schema(
@@ -124,6 +125,23 @@ const taskSchema = new mongoose.Schema(
       ref: "Event",
       default: null,
     },
+    phase: {
+      type: String,
+      enum: {
+        values: PHASES,
+        message: `Fase harus salah satu dari: ${PHASES.join(", ")}`,
+      },
+      default: null,
+    },
+    dueDateMode: {
+      type: String,
+      enum: ["absolute", "relative"],
+      default: null,
+    },
+    dueOffsetDays: {
+      type: Number,
+      default: null,
+    },
     subtasks: {
       type: [subtaskSchema],
       default: [],
@@ -170,6 +188,7 @@ taskSchema.index({ workspaceId: 1, isDeleted: 1 });
 taskSchema.index({ workspaceId: 1, columnId: 1 });
 taskSchema.index({ assignees: 1 });
 taskSchema.index({ eventId: 1 });
+taskSchema.index({ eventId: 1, phase: 1 });
 taskSchema.index({ dueDate: 1 });
 taskSchema.index({ workspaceId: 1, isArchived: 1 });
 taskSchema.index({ columnId: 1, columnOrder: 1 });
