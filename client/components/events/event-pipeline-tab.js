@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { DragDropContext } from "@hello-pangea/dnd";
-import { LayoutTemplate, Save } from "lucide-react";
+import { LayoutTemplate, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +19,7 @@ export function EventPipelineTab({ event, workspaceId, workspace, members }) {
     phases,
     labels,
     loading,
+    error,
     activeTaskId,
     setActiveTaskId,
     activeTask,
@@ -32,6 +33,7 @@ export function EventPipelineTab({ event, workspaceId, workspace, members }) {
     unwatchTask,
     applyTemplate,
     saveAsTemplate,
+    refetch,
   } = useEventPipeline(workspaceId, event._id);
 
   const [quickCreatePhase, setQuickCreatePhase] = useState(null);
@@ -118,6 +120,18 @@ export function EventPipelineTab({ event, workspaceId, workspace, members }) {
         {[1, 2, 3, 4, 5].map((i) => (
           <Skeleton key={i} className="h-64 w-72 rounded-lg" />
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <p className="text-sm text-muted-foreground">Gagal memuat pipeline</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Coba Lagi
+        </Button>
       </div>
     );
   }
