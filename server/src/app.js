@@ -89,6 +89,7 @@ const pushRoutes = require("./routes/push.routes");
 const spreadsheetRoutes = require("./routes/spreadsheet.routes");
 const eventNoteRoutes = require("./routes/eventNote.routes");
 const eventDivisionRoutes = require("./routes/eventDivision.routes");
+const eventPipelineRoutes = require("./routes/eventPipeline.routes");
 const embeddingRoutes = require("./routes/embedding.routes");
 const copilotkitRoutes = require("./routes/copilotkit.routes");
 
@@ -104,6 +105,7 @@ app.use("/api/workspaces/:id/events", eventRoutes);
 app.use("/api/workspaces/:id/ideas", ideaRoutes);
 app.use("/api/workspaces/:id/events/:eventId/notes", eventNoteRoutes);
 app.use("/api/workspaces/:id/events/:eventId/divisions", eventDivisionRoutes);
+app.use("/api/workspaces/:id/events/:eventId/pipeline", eventPipelineRoutes);
 app.use("/api/workspaces/:id/activity", activityRoutes);
 app.use("/api/workspaces/:id/dashboard", dashboardRoutes);
 app.use("/api/workspaces/:id/export", exportRoutes);
