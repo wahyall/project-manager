@@ -527,8 +527,8 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   if (phase !== undefined) {
     const resolvedPhase = await resolvePhaseFields({
       phase,
-      dueDateMode,
-      dueOffsetDays,
+      dueDateMode: dueDateMode !== undefined ? dueDateMode : task.dueDateMode,
+      dueOffsetDays: dueOffsetDays !== undefined ? dueOffsetDays : task.dueOffsetDays,
       eventId: eventId !== undefined ? eventId : task.eventId,
       next,
     });

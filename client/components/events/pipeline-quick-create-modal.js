@@ -23,6 +23,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PHASE_LABELS } from "@/lib/pipeline-phases";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function PipelineQuickCreateModal({
   open,
@@ -60,6 +61,8 @@ export function PipelineQuickCreateModal({
       };
       await onCreateTask(phase, taskData);
       onOpenChange(false);
+    } catch (err) {
+      toast.error("Gagal membuat item");
     } finally {
       setCreating(false);
     }

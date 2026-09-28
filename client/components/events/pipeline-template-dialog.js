@@ -9,6 +9,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,10 +40,13 @@ export function PipelineTemplateDialog({
   onApplyTemplate,
   onSaveAsTemplate,
 }) {
-  const { templates, loading, deleteTemplate } = usePipelineTemplates(workspaceId);
+  const { templates, loading, fetchTemplates, deleteTemplate } =
+    usePipelineTemplates(workspaceId);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
 
   const handleApply = async () => {
     if (!selectedTemplateId) return;
@@ -54,12 +67,27 @@ export function PipelineTemplateDialog({
     setBusy(true);
     try {
       await onSaveAsTemplate(newName.trim(), "");
+      await fetchTemplates();
       toast.success("Template disimpan");
       onOpenChange(false);
     } catch (err) {
       toast.error("Gagal menyimpan template");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!templateToDelete) return;
+    setDeletingId(templateToDelete._id);
+    try {
+      await deleteTemplate(templateToDelete._id);
+      toast.success("Template dihapus");
+    } catch (err) {
+      toast.error("Gagal menghapus template");
+    } finally {
+      setDeletingId(null);
+      setTemplateToDelete(null);
     }
   };
 
@@ -122,9 +150,14 @@ export function PipelineTemplateDialog({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 text-destructive"
-                      onClick={() => deleteTemplate(t._id)}
+                      disabled={deletingId !== null}
+                      onClick={() => setTemplateToDelete(t)}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {deletingId === t._id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
                     </Button>
                   </div>
                 ))}
@@ -150,6 +183,41 @@ export function PipelineTemplateDialog({
           )}
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog
+        open={!!templateToDelete}
+        onOpenChange={(next) => {
+          if (!next && deletingId === null) setTemplateToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Yakin ingin menghapus template{" "}
+              <strong className="text-foreground">
+                &ldquo;{templateToDelete?.name}&rdquo;
+              </strong>
+              ? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleConfirmDelete}
+              disabled={deletingId !== null}
+            >
+              {deletingId !== null && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

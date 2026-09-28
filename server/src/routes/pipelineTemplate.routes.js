@@ -16,7 +16,7 @@ router.put(
 
 router.delete(
   "/:templateId",
-  workspaceMember("owner", "admin"),
+  workspaceMember(),
   templateController.deleteTemplate,
 );
 

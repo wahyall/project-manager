@@ -43,14 +43,28 @@ exports.updateTemplate = catchAsync(async (req, res, next) => {
 exports.deleteTemplate = catchAsync(async (req, res, next) => {
   const { templateId } = req.params;
   const workspace = req.workspace;
+  const userId = req.user.id;
+  const memberRole = req.workspaceMember.role;
 
-  const template = await PipelineTemplate.findOneAndDelete({
+  const template = await PipelineTemplate.findOne({
     _id: templateId,
     workspaceId: workspace._id,
   });
   if (!template) {
     return next(new AppError("Template tidak ditemukan", 404));
   }
+
+  // Permission check: creator, admin, or owner
+  const isCreator = template.createdBy.toString() === userId;
+  const isAdminOrOwner = ["owner", "admin"].includes(memberRole);
+
+  if (!isCreator && !isAdminOrOwner) {
+    return next(
+      new AppError("Anda tidak memiliki izin untuk menghapus template ini", 403),
+    );
+  }
+
+  await template.deleteOne();
 
   res.status(200).json({ status: "success", message: "Template dihapus" });
 });
