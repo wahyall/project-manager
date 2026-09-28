@@ -590,6 +590,12 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     task.blockedBy = blockedBy;
   }
 
+  // Invariant: a task with a phase must remain linked to an event, even if
+  // eventId was cleared independently of phase/dueDateMode in this request.
+  if (task.phase && !task.eventId) {
+    return next(new AppError("Task dengan fase harus terhubung ke event", 400));
+  }
+
   await task.save();
 
   // Populate for response
