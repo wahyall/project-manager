@@ -11,6 +11,7 @@ import { EventTasksTab } from "@/components/events/event-tasks-tab";
 import { EventSpreadsheetTab } from "@/components/spreadsheet/event-spreadsheet-tab";
 import { EventActivityTab } from "@/components/activity/event-activity-tab";
 import { EventNotesTab } from "@/components/events/event-notes-tab";
+import { EventPipelineTab } from "@/components/events/event-pipeline-tab";
 import { DeleteEventDialog } from "@/components/events/delete-event-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ import {
   ListTodo,
   Table2,
   History,
+  GitBranch,
   Loader2,
   FileText,
   Download,
@@ -250,7 +252,7 @@ export default function EventDetailPage({ params }) {
         onValueChange={setActiveTab}
         className="space-y-4"
       >
-        <TabsList className="w-full grid grid-cols-5 h-10">
+        <TabsList className="w-full grid grid-cols-6 h-10">
           <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
             <FileText className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Overview</span>
@@ -263,6 +265,10 @@ export default function EventDetailPage({ params }) {
                 {event.taskCount}
               </span>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="pipeline" className="gap-1.5 text-xs sm:text-sm">
+            <GitBranch className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Pipeline</span>
           </TabsTrigger>
           <TabsTrigger value="notes" className="gap-1.5 text-xs sm:text-sm">
             <StickyNote className="h-3.5 w-3.5" />
@@ -297,6 +303,16 @@ export default function EventDetailPage({ params }) {
             event={event}
             workspaceId={id}
             workspace={currentWorkspace}
+          />
+        </TabsContent>
+
+        {/* Tab: Pipeline */}
+        <TabsContent value="pipeline" className="mt-0">
+          <EventPipelineTab
+            event={event}
+            workspaceId={id}
+            workspace={currentWorkspace}
+            members={members}
           />
         </TabsContent>
 
