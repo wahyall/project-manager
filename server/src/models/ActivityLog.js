@@ -40,6 +40,9 @@ const activityLogSchema = new mongoose.Schema(
         "event.participant_added",
         "event.participant_removed",
         "event.status_changed",
+        // Event Pipeline
+        "event_pipeline.template_applied",
+        "event_pipeline.template_saved",
         // Idea (Bank Ide)
         "idea.created",
         "idea.updated",
