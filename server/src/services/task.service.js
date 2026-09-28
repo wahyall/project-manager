@@ -1,4 +1,5 @@
 const Task = require("../models/Task");
+const { PHASE_ANCHOR } = require("../utils/pipelinePhases");
 
 /**
  * Validasi circular dependency
@@ -97,9 +98,57 @@ const getNextColumnOrder = async (workspaceId, columnId) => {
   return lastTask ? lastTask.columnOrder + 1 : 0;
 };
 
+/**
+ * Hitung dueDate absolut dari offset hari relatif terhadap tanggal event.
+ * Fase evaluation dihitung dari endDate, fase lain dari startDate.
+ *
+ * @param {Object} event - Event document (butuh startDate & endDate)
+ * @param {string} phase - Salah satu dari PHASES
+ * @param {number} offsetDays - Bisa negatif (sebelum) atau positif (sesudah)
+ * @returns {Date}
+ */
+const computeDueDateFromOffset = (event, phase, offsetDays) => {
+  const anchorField = PHASE_ANCHOR[phase] || "startDate";
+  const anchor = new Date(event[anchorField]);
+  const result = new Date(anchor);
+  result.setDate(result.getDate() + Number(offsetDays));
+  return result;
+};
+
+/**
+ * Recompute dueDate semua task dengan dueDateMode "relative" milik satu event,
+ * dipanggil setelah startDate/endDate event berubah.
+ *
+ * @param {string} eventId
+ * @param {Object} event - Event document dengan startDate/endDate TERBARU
+ * @returns {Promise<string[]>} ID task yang berubah
+ */
+const recalculateRelativeDueDates = async (eventId, event) => {
+  const tasks = await Task.find({
+    eventId,
+    dueDateMode: "relative",
+  }).select("_id phase dueOffsetDays");
+
+  if (tasks.length === 0) return [];
+
+  const bulkOps = tasks.map((t) => ({
+    updateOne: {
+      filter: { _id: t._id },
+      update: {
+        dueDate: computeDueDateFromOffset(event, t.phase, t.dueOffsetDays),
+      },
+    },
+  }));
+  await Task.bulkWrite(bulkOps);
+
+  return tasks.map((t) => t._id.toString());
+};
+
 module.exports = {
   hasCircularDependency,
   getDoneColumnIds,
   isValidColumn,
   getNextColumnOrder,
+  computeDueDateFromOffset,
+  recalculateRelativeDueDates,
 };

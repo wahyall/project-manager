@@ -11,6 +11,7 @@ const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
 const googleSheetsService = require("../services/googleSheets.service");
 const { syncRealizationStatus } = require("../services/ideaRealization.service");
+const { recalculateRelativeDueDates } = require("../services/task.service");
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -428,6 +429,8 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
     );
   }
 
+  const datesChanged = startDate !== undefined || endDate !== undefined;
+
   // Color
   if (color !== undefined) {
     event.color = color;
@@ -452,6 +455,12 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   }
 
   await event.save();
+
+  // Recalculate relative due dates of pipeline tasks when event dates change
+  let recalculatedTaskIds = [];
+  if (datesChanged) {
+    recalculatedTaskIds = await recalculateRelativeDueDates(event._id, event);
+  }
 
   // Gabungan lama dan baru. Kalau hanya yang baru disinkronkan, ide yang
   // barusan dilepas tautannya akan tertinggal berstatus direalisasi
@@ -482,6 +491,24 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
     event: { ...populatedEvent, taskCount },
     userId,
   });
+
+  // Notify clients about recalculated pipeline task due dates
+  if (recalculatedTaskIds.length > 0) {
+    const recalculatedTasks = await Task.find({
+      _id: { $in: recalculatedTaskIds },
+    })
+      .populate("assignees", "name email avatar")
+      .populate("watchers", "name email avatar")
+      .populate("labels", "name color")
+      .populate("createdBy", "name email avatar")
+      .lean();
+    recalculatedTasks.forEach((t) => {
+      emitEventEvent(workspace._id.toString(), "task:updated", {
+        task: t,
+        userId,
+      });
+    });
+  }
 
   // Activity log
   const changedFields = [];
