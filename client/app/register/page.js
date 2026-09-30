@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    whatsappNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -43,6 +44,27 @@ export default function RegisterPage() {
     setError("");
     setResendMessage("");
 
+    if (!form.whatsappNumber.trim()) {
+      setError("Nomor WhatsApp wajib diisi");
+      return;
+    }
+
+    let cleanedWa = form.whatsappNumber.trim().replace(/[\s-]/g, "");
+    if (cleanedWa.startsWith("0")) {
+      cleanedWa = "+62" + cleanedWa.slice(1);
+    } else if (cleanedWa.startsWith("62")) {
+      cleanedWa = "+" + cleanedWa;
+    } else if (!cleanedWa.startsWith("+")) {
+      cleanedWa = "+" + cleanedWa;
+    }
+
+    if (!/^\+\d{8,15}$/.test(cleanedWa)) {
+      setError(
+        "Format nomor WhatsApp tidak valid (contoh: 081234567890 atau +6281234567890)",
+      );
+      return;
+    }
+
     if (form.password !== form.confirmPassword) {
       setError("Password dan konfirmasi password tidak cocok");
       return;
@@ -61,6 +83,7 @@ export default function RegisterPage() {
         form.email,
         form.password,
         form.confirmPassword,
+        cleanedWa,
       );
       setSuccess(true);
     } catch (err) {
@@ -170,6 +193,22 @@ export default function RegisterPage() {
                   required
                   autoComplete="email"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsappNumber">Nomor WhatsApp</Label>
+                <Input
+                  id="whatsappNumber"
+                  name="whatsappNumber"
+                  type="tel"
+                  placeholder="Contoh: 081234567890 atau +6281234567890"
+                  value={form.whatsappNumber}
+                  onChange={handleChange}
+                  required
+                  autoComplete="tel"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Gunakan format internasional atau diawali 08 (contoh: 081234567890 / +6281234567890)
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>

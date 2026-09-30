@@ -45,12 +45,19 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const register = async (name, email, password, confirmPassword) => {
+  const register = async (
+    name,
+    email,
+    password,
+    confirmPassword,
+    whatsappNumber,
+  ) => {
     const { data } = await api.post("/auth/register", {
       name,
       email,
       password,
       confirmPassword,
+      whatsappNumber,
     });
     return data;
   };

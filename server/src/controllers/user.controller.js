@@ -42,12 +42,20 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
   // Validasi whatsapp
   if (whatsappNumber !== undefined) {
     if (whatsappNumber && whatsappNumber.trim()) {
-      // Format: harus diawali + dan hanya angka setelahnya
-      const cleaned = whatsappNumber.trim();
+      // Format: normalisasi dan validasi nomor internasional
+      let cleaned = whatsappNumber.trim().replace(/[\s-]/g, "");
+      if (cleaned.startsWith("0")) {
+        cleaned = "+62" + cleaned.slice(1);
+      } else if (cleaned.startsWith("62")) {
+        cleaned = "+" + cleaned;
+      } else if (!cleaned.startsWith("+")) {
+        cleaned = "+" + cleaned;
+      }
+
       if (!/^\+\d{8,15}$/.test(cleaned)) {
         return next(
           new AppError(
-            "Format nomor WhatsApp tidak valid. Gunakan format internasional (contoh: +6281234567890)",
+            "Format nomor WhatsApp tidak valid. Gunakan format internasional atau diawali 08 (contoh: 081234567890 atau +6281234567890)",
             400,
           ),
         );

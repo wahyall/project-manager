@@ -36,11 +36,30 @@ const setRefreshTokenCookie = (res, refreshToken) => {
 // POST /api/auth/register
 // ──────────────────────────────────────────────
 exports.register = catchAsync(async (req, res, next) => {
-  const { name, email, password, confirmPassword } = req.body;
+  const { name, email, password, confirmPassword, whatsappNumber } = req.body;
 
   // Validasi
-  if (!name || !email || !password || !confirmPassword) {
+  if (!name || !email || !password || !confirmPassword || !whatsappNumber) {
     return next(new AppError("Semua field harus diisi", 400));
+  }
+
+  // Normalisasi & validasi nomor WhatsApp
+  let cleanedWa = whatsappNumber.trim().replace(/[\s-]/g, "");
+  if (cleanedWa.startsWith("0")) {
+    cleanedWa = "+62" + cleanedWa.slice(1);
+  } else if (cleanedWa.startsWith("62")) {
+    cleanedWa = "+" + cleanedWa;
+  } else if (!cleanedWa.startsWith("+")) {
+    cleanedWa = "+" + cleanedWa;
+  }
+
+  if (!/^\+\d{8,15}$/.test(cleanedWa)) {
+    return next(
+      new AppError(
+        "Format nomor WhatsApp tidak valid. Gunakan format internasional atau diawali 08 (contoh: 081234567890 atau +6281234567890)",
+        400,
+      ),
+    );
   }
 
   if (password !== confirmPassword) {
@@ -60,7 +79,12 @@ exports.register = catchAsync(async (req, res, next) => {
   }
 
   // Buat user
-  const user = await User.create({ name, email, password });
+  const user = await User.create({
+    name,
+    email,
+    password,
+    whatsappNumber: cleanedWa,
+  });
 
   // Buat token verifikasi + kirim email
   const { rawToken } = await EmailVerificationToken.createToken(user._id);
@@ -119,6 +143,7 @@ exports.login = catchAsync(async (req, res, next) => {
       name: user.name,
       email: user.email,
       avatar: user.avatar,
+      whatsappNumber: user.whatsappNumber,
     },
   });
 });
