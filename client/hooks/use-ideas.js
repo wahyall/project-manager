@@ -100,7 +100,9 @@ export function useIdeas(workspaceId) {
     };
 
     // Vote dipisah dari update supaya angka dukungan bisa berubah
-    // tanpa menyusun ulang seluruh kartu.
+    // tanpa menyusun ulang seluruh kartu. Hanya voteCount yang
+    // diperbarui — hasVoted milik tiap user dibiarkan apa adanya
+    // karena event broadcast tidak membawa status per-user.
     const handleVoted = ({ ideaId, voteCount }) => {
       setIdeas((prev) =>
         prev.map((i) => (i._id === ideaId ? { ...i, voteCount } : i)),
@@ -168,6 +170,17 @@ export function useIdeas(workspaceId) {
       const { data } = await api.post(
         `/workspaces/${workspaceId}/ideas/${ideaId}/vote`,
       );
+      // Update state lokal supaya hasVoted langsung true. Tanpa ini,
+      // IdeaVoteButton kembali ke prop lama setelah optimistic
+      // dikosongkan (socket idea:voted hanya membawa voteCount),
+      // sehingga klik kedua mengira belum vote dan unvote tak terjangkau.
+      setIdeas((prev) =>
+        prev.map((i) =>
+          i._id === ideaId
+            ? { ...i, voteCount: data.data.voteCount, hasVoted: true }
+            : i,
+        ),
+      );
       return data.data;
     },
     [workspaceId],
@@ -177,6 +190,13 @@ export function useIdeas(workspaceId) {
     async (ideaId) => {
       const { data } = await api.delete(
         `/workspaces/${workspaceId}/ideas/${ideaId}/vote`,
+      );
+      setIdeas((prev) =>
+        prev.map((i) =>
+          i._id === ideaId
+            ? { ...i, voteCount: data.data.voteCount, hasVoted: false }
+            : i,
+        ),
       );
       return data.data;
     },
