@@ -41,6 +41,7 @@ import {
   ListTodo,
   Sparkles,
   Sprout,
+  Users,
 } from "lucide-react";
 
 // ─── Navigation structure ────────────────────────────
@@ -49,6 +50,11 @@ const NAV_MAIN = [
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "",
+  },
+  {
+    label: "Divisi",
+    icon: Users,
+    href: "/divisions",
   },
   {
     label: "Event",

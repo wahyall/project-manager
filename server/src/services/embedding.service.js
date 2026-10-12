@@ -9,6 +9,7 @@ const WorkspaceLabel = require("../models/WorkspaceLabel");
 const User = require("../models/User");
 const EventNote = require("../models/EventNote");
 const EventDivision = require("../models/EventDivision");
+const WorkspaceDivision = require("../models/WorkspaceDivision");
 const BrainstormingBoard = require("../models/BrainstormingBoard");
 const SpreadsheetSheetData = require("../models/SpreadsheetSheetData");
 const SpreadsheetWorkbook = require("../models/SpreadsheetWorkbook");
@@ -268,7 +269,7 @@ const _buildEventNoteContent = (note, eventTitle = "") => {
 };
 
 const _buildDivisionContent = (division, eventTitle = "") => {
-  const parts = [`Divisi: ${division.name}`];
+  const parts = [`Divisi Event: ${division.name}`];
   if (eventTitle) parts.push(`Event: ${eventTitle}`);
   if (division.description) parts.push(`Deskripsi: ${division.description}`);
 
@@ -280,6 +281,28 @@ const _buildDivisionContent = (division, eventTitle = "") => {
             ? m.userId.name
             : m.userId;
         const role = m.role === "leader" ? " (leader)" : "";
+        return `${name}${role}`;
+      })
+      .filter(Boolean);
+    if (memberParts.length > 0)
+      parts.push(`Anggota: ${memberParts.join(", ")}`);
+  }
+
+  return parts.join(" | ");
+};
+
+const _buildWorkspaceDivisionContent = (division) => {
+  const parts = [`Divisi Workspace: ${division.name}`];
+  if (division.description) parts.push(`Deskripsi: ${division.description}`);
+
+  if (division.members && division.members.length > 0) {
+    const memberParts = division.members
+      .map((m) => {
+        const name =
+          typeof m.userId === "object" && m.userId?.name
+            ? m.userId.name
+            : m.userId;
+        const role = m.role === "leader" ? " (ketua)" : "";
         return `${name}${role}`;
       })
       .filter(Boolean);
@@ -405,6 +428,7 @@ const syncWorkspace = async (workspaceId) => {
     idea: 0,
     event_note: 0,
     division: 0,
+    workspace_division: 0,
     comment: 0,
     activity: 0,
     member: 0,
@@ -529,6 +553,29 @@ const syncWorkspace = async (workspaceId) => {
       },
     });
     if (ok) counts.division++;
+    else errors++;
+  }
+
+  // 2.8 Workspace Divisions (Divisi Workspace — bukan Divisi Event)
+  const wsDivisions = await WorkspaceDivision.find({
+    workspaceId,
+    isDeleted: { $ne: true },
+  })
+    .populate("members.userId", "name email")
+    .lean();
+
+  for (const div of wsDivisions) {
+    const ok = await upsert({
+      workspaceId,
+      sourceType: "workspace_division",
+      sourceId: div._id,
+      content: _buildWorkspaceDivisionContent(div),
+      metadata: {
+        title: div.name,
+        sourceUrl: `/workspace/${workspaceId}/divisions`,
+      },
+    });
+    if (ok) counts.workspace_division++;
     else errors++;
   }
 
@@ -700,4 +747,5 @@ module.exports = {
   _buildLabelContent,
   _buildEventNoteContent,
   _buildDivisionContent,
+  _buildWorkspaceDivisionContent,
 };
