@@ -42,7 +42,7 @@ export function EventPipelineTab({ event, workspaceId, workspace, members }) {
   const totalTasks = phases.reduce((sum, p) => sum + p.tasks.length, 0);
 
   // Wrap hook mutations with toasts, matching the pattern used on the
-  // main Kanban page (client/app/workspace/[id]/tasks/kanban/page.js).
+  // main Task page (client/app/workspace/[id]/tasks/page.js).
   const handleUpdateTask = useCallback(
     async (taskId, updates) => {
       try {

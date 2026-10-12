@@ -166,7 +166,7 @@ export default function WorkspaceDashboardPage({ params }) {
           label="Task Aktif Saya"
           value={data?.stats?.activeTasks || 0}
           color="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-          href="/tasks/kanban"
+          href="/tasks"
           workspaceId={id}
           loading={loading}
         />
@@ -175,7 +175,7 @@ export default function WorkspaceDashboardPage({ params }) {
           label="Task Selesai Minggu Ini"
           value={data?.stats?.completedThisWeek || 0}
           color="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
-          href="/tasks/kanban"
+          href="/tasks"
           workspaceId={id}
           loading={loading}
         />
@@ -184,7 +184,7 @@ export default function WorkspaceDashboardPage({ params }) {
           label="Task Overdue"
           value={data?.stats?.overdueTasks || 0}
           color="bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
-          href="/tasks/kanban"
+          href="/tasks"
           workspaceId={id}
           loading={loading}
         />
@@ -244,7 +244,7 @@ export default function WorkspaceDashboardPage({ params }) {
               <ListTodo className="h-5 w-5 text-primary" />
               Task Saya
             </h2>
-            <Link href={`/workspace/${id}/tasks/kanban`}>
+            <Link href={`/workspace/${id}/tasks`}>
               <Button variant="ghost" size="sm" className="text-xs">
                 Lihat Semua <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
@@ -275,7 +275,7 @@ export default function WorkspaceDashboardPage({ params }) {
                   return (
                     <Link
                       key={task._id}
-                      href={`/workspace/${id}/tasks/kanban?task=${task._id}`}
+                      href={`/workspace/${id}/tasks?task=${task._id}`}
                     >
                       <div className="p-4 hover:bg-muted/50 transition-colors flex gap-3 group">
                         <div

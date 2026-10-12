@@ -232,12 +232,12 @@ export function EventTasksTab({ event, workspaceId, workspace }) {
   }, [fetchTasks]);
 
   const navigateToTask = (task) => {
-    router.push(`/workspace/${workspaceId}/tasks/kanban?taskId=${task._id}`);
+    router.push(`/workspace/${workspaceId}/tasks?taskId=${task._id}`);
   };
 
   const createTaskForEvent = () => {
     router.push(
-      `/workspace/${workspaceId}/tasks/kanban?newTask=true&eventId=${event._id}`,
+      `/workspace/${workspaceId}/tasks?newTask=true&eventId=${event._id}`,
     );
   };
 

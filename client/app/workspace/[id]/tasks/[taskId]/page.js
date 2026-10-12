@@ -133,7 +133,7 @@ export default function TaskDetailPage({ params }) {
     const handleTaskDeleted = ({ taskId: deletedId }) => {
       if (deletedId === taskId) {
         toast.info("Task ini telah dihapus");
-        router.push(`/workspace/${workspaceId}/tasks/kanban`);
+        router.push(`/workspace/${workspaceId}/tasks`);
       }
     };
 
@@ -182,7 +182,7 @@ export default function TaskDetailPage({ params }) {
     try {
       await api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`);
       toast.success("Task berhasil dihapus");
-      router.push(`/workspace/${workspaceId}/tasks/kanban`);
+      router.push(`/workspace/${workspaceId}/tasks`);
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal menghapus task");
     }
@@ -300,10 +300,10 @@ export default function TaskDetailPage({ params }) {
           <p className="text-sm text-muted-foreground mb-4">
             Task ini mungkin telah dihapus atau tidak tersedia.
           </p>
-          <Link href={`/workspace/${workspaceId}/tasks/kanban`}>
+          <Link href={`/workspace/${workspaceId}/tasks`}>
             <Button variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Kembali ke Kanban Board
+              Kembali ke Task
             </Button>
           </Link>
         </div>
@@ -327,7 +327,7 @@ export default function TaskDetailPage({ params }) {
       {/* Breadcrumb & actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link href={`/workspace/${workspaceId}/tasks/kanban`}>
+          <Link href={`/workspace/${workspaceId}/tasks`}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>

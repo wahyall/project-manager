@@ -17,7 +17,7 @@ export function BottomNav({ workspaceId, onMoreClick }) {
   const tabs = [
     { label: "Dashboard", href: "", icon: Home },
     { label: "Event", href: "/events", icon: CalendarRange },
-    { label: "Task", href: "/tasks/kanban", icon: Columns3 },
+    { label: "Task", href: "/tasks", icon: Columns3 },
     { label: "Board", href: "/brainstorming", icon: Lightbulb },
   ];
 

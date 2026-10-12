@@ -31,14 +31,12 @@ import {
   LayoutDashboard,
   CalendarRange,
   Columns3,
-  Calendar,
   Lightbulb,
   History,
   Settings,
   ChevronsUpDown,
   Plus,
   ChevronLeft,
-  ListTodo,
   Sparkles,
   Sprout,
   Users,
@@ -62,6 +60,11 @@ const NAV_MAIN = [
     href: "/events",
   },
   {
+    label: "Task",
+    icon: Columns3,
+    href: "/tasks",
+  },
+  {
     label: "Bank Ide",
     icon: Sprout,
     href: "/ideas",
@@ -76,19 +79,6 @@ const NAV_MAIN = [
   //   icon: Sparkles,
   //   href: "/ai-chat",
   // },
-];
-
-const NAV_TASKS = [
-  {
-    label: "Task Board",
-    icon: Columns3,
-    href: "/tasks/kanban",
-  },
-  {
-    label: "Kalender Task",
-    icon: Calendar,
-    href: "/tasks/calendar",
-  },
 ];
 
 const NAV_OTHER = [
@@ -234,21 +224,6 @@ export function AppSidebar({ workspaceId, workspace, ...props }) {
           <SidebarGroupContent>
             <NavGroup
               items={NAV_MAIN}
-              basePath={basePath}
-              pathname={pathname}
-            />
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Task navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            <ListTodo className="mr-1" />
-            Task
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <NavGroup
-              items={NAV_TASKS}
               basePath={basePath}
               pathname={pathname}
             />

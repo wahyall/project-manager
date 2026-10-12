@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  Calendar,
+  Columns3,
   History,
   Settings,
   LogOut,
@@ -149,15 +149,13 @@ export function MoreDrawer({ open, onOpenChange, workspace, workspaceId }) {
             <Button
               variant="ghost"
               className="w-full justify-between font-normal h-12 rounded-xl"
-              onClick={() =>
-                handleNavigate(`/workspace/${workspaceId}/tasks/calendar`)
-              }
+              onClick={() => handleNavigate(`/workspace/${workspaceId}/tasks`)}
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20">
-                  <Calendar className="h-4 w-4" />
+                  <Columns3 className="h-4 w-4" />
                 </div>
-                Kalender Task
+                Task
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
             </Button>
