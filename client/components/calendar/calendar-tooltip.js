@@ -164,13 +164,20 @@ function EventTooltipContent({ eventData, event }) {
   const startDate = eventData?.startDate ? new Date(eventData.startDate) : null;
   const endDate = eventData?.endDate ? new Date(eventData.endDate) : null;
 
+  const isSameDay =
+    startDate &&
+    endDate &&
+    startDate.toDateString() === endDate.toDateString();
+
   const formattedDates =
     startDate && endDate
-      ? `${format(startDate, "d MMM yyyy", { locale: localeId })} – ${format(
-          endDate,
-          "d MMM yyyy",
-          { locale: localeId }
-        )}`
+      ? isSameDay
+        ? format(startDate, "d MMM yyyy", { locale: localeId })
+        : `${format(startDate, "d MMM yyyy", { locale: localeId })} – ${format(
+            endDate,
+            "d MMM yyyy",
+            { locale: localeId }
+          )}`
       : startDate
       ? format(startDate, "d MMM yyyy", { locale: localeId })
       : null;
@@ -259,15 +266,6 @@ function EventTooltipContent({ eventData, event }) {
                     ` & ${participants.length - 2} lainnya`}
                 </span>
               </div>
-            </div>
-          )}
-
-          {eventData?.description && (
-            <div className="cal-tooltip__row">
-              <span className="cal-tooltip__label">Info</span>
-              <span className="cal-tooltip__value line-clamp-2 text-[10px] text-muted-foreground font-normal">
-                {eventData.description}
-              </span>
             </div>
           )}
         </div>
