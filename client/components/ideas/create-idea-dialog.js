@@ -14,15 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlignLeft, Loader2, Sprout } from "lucide-react";
 
-// BlockNote di-lazy-load untuk menghindari masalah SSR, sama seperti
-// yang dilakukan create-event-dialog.
-const BlockNoteEditor = lazy(() =>
-  import("@/components/blocknote-editor").then((m) => ({
-    default: m.BlockNoteEditor,
+// MentionEditor di-lazy-load untuk menghindari masalah SSR, sama seperti
+// yang dilakukan create-event-dialog. Dipakai (bukan BlockNoteEditor polos)
+// supaya @mention bisa disisipkan sejak ide dibuat.
+const MentionEditor = lazy(() =>
+  import("@/components/mention-editor").then((m) => ({
+    default: m.MentionEditor,
   })),
 );
 
-export function CreateIdeaDialog({ open, onOpenChange, onCreate }) {
+export function CreateIdeaDialog({ open, onOpenChange, onCreate, workspaceId }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [editorKey, setEditorKey] = useState(0);
@@ -107,11 +108,12 @@ export function CreateIdeaDialog({ open, onOpenChange, onCreate }) {
                     </div>
                   }
                 >
-                  <BlockNoteEditor
+                  <MentionEditor
                     key={editorKey}
+                    workspaceId={workspaceId}
                     initialContent={null}
                     onChange={setDescription}
-                    placeholder="Kenapa ide ini layak dikerjakan?"
+                    placeholder="Kenapa ide ini layak dikerjakan? Ketik @ untuk mention"
                     className="blocknote-compact"
                   />
                 </Suspense>

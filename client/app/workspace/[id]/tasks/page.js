@@ -720,6 +720,7 @@ export default function TasksPage({ params }) {
         columns={columns}
         members={members}
         events={events}
+        workspaceId={workspaceId}
         divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
         defaultColumnId={quickCreateColumnId || columns[0]?._id}
         defaultDueDate={quickCreateDefaultDueDate}

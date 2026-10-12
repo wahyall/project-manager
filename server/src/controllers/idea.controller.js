@@ -8,6 +8,7 @@ const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
+const { extractMentions } = require("../utils/extractMentions");
 
 const IDEA_STATUSES = ["baru", "dipertimbangkan", "direalisasi", "diarsipkan"];
 
@@ -93,6 +94,9 @@ const syncIdeaEmbedding = (workspaceId, idea) => {
 
 // Helper: kirim notifikasi mention dari deskripsi BlockNote.
 // Hanya mention yang benar-benar baru yang dinotifikasi.
+// Deskripsi disimpan sebagai array blocks BlockNote polos
+// (MentionEditor mengirim JSON.stringify(blocks)), jadi mention
+// diekstrak langsung dari inline node.
 const notifyMentions = async ({
   workspaceId,
   ideaId,
@@ -101,34 +105,22 @@ const notifyMentions = async ({
   newDescription,
   oldDescription = null,
 }) => {
-  try {
-    const parseMentions = (raw) => {
-      if (!raw) return [];
-      const obj = JSON.parse(raw);
-      return Array.isArray(obj?.mentions)
-        ? obj.mentions.map((m) => m.userId.toString())
-        : [];
-    };
+  const next = extractMentions(newDescription).map((m) => m.userId.toString());
+  const prev = extractMentions(oldDescription).map((m) => m.userId.toString());
+  const fresh = next.filter((uid) => !prev.includes(uid));
 
-    const next = parseMentions(newDescription);
-    const prev = parseMentions(oldDescription);
-    const fresh = next.filter((uid) => !prev.includes(uid));
+  if (fresh.length === 0) return;
 
-    if (fresh.length === 0) return;
-
-    await NotificationService.createForMany({
-      workspaceId,
-      recipientIds: fresh,
-      actorId,
-      type: "mention",
-      targetType: "idea",
-      targetId: ideaId,
-      message: `menyebut kamu di deskripsi ide "${ideaTitle}"`,
-      url: `/workspace/${workspaceId}/ideas/${ideaId}`,
-    });
-  } catch {
-    // Deskripsi bukan JSON valid, abaikan
-  }
+  await NotificationService.createForMany({
+    workspaceId,
+    recipientIds: fresh,
+    actorId,
+    type: "mention",
+    targetType: "idea",
+    targetId: ideaId,
+    message: `menyebut kamu di deskripsi ide "${ideaTitle}"`,
+    url: `/workspace/${workspaceId}/ideas/${ideaId}`,
+  });
 };
 
 // ──────────────────────────────────────────────

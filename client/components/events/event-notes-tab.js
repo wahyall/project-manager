@@ -207,10 +207,10 @@ export function EventNotesTab({ event, workspaceId, members, memberRole }) {
   const [saving, setSaving] = useState(false);
 
   const handleCreate = useCallback(
-    async ({ title, content }) => {
+    async ({ title, content, mentions }) => {
       setSaving(true);
       try {
-        await createNote({ title, content });
+        await createNote({ title, content, mentions });
         setShowCreateForm(false);
         toast.success("Catatan berhasil ditambahkan");
       } catch (err) {
@@ -223,11 +223,11 @@ export function EventNotesTab({ event, workspaceId, members, memberRole }) {
   );
 
   const handleUpdate = useCallback(
-    async ({ title, content }) => {
+    async ({ title, content, mentions }) => {
       if (!editingNote) return;
       setSaving(true);
       try {
-        await updateNote(editingNote._id, { title, content });
+        await updateNote(editingNote._id, { title, content, mentions });
         setEditingNote(null);
         toast.success("Catatan berhasil diperbarui");
       } catch (err) {

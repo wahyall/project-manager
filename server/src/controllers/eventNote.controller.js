@@ -5,6 +5,7 @@ const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
+const { extractMentions: extractMentionsFromContent } = require("../utils/extractMentions");
 
 const getIO = () => {
   try {
@@ -23,37 +24,6 @@ const emitToWorkspace = (workspaceId, event, data) => {
 
 const populateNote = (query) => {
   return query.populate("authorId", "name email avatar");
-};
-
-const extractMentionsFromContent = (content) => {
-  if (!content) return [];
-  try {
-    const blocks = JSON.parse(content);
-    if (!Array.isArray(blocks)) return [];
-    const mentions = [];
-    const traverse = (items) => {
-      for (const item of items) {
-        if (item.type === "mention" && item.props?.userId) {
-          if (!mentions.some((m) => m.userId === item.props.userId)) {
-            mentions.push({
-              userId: item.props.userId,
-              name: item.props.name || "Unknown",
-            });
-          }
-        }
-        if (item.content && Array.isArray(item.content)) {
-          traverse(item.content);
-        }
-        if (item.children && Array.isArray(item.children)) {
-          traverse(item.children);
-        }
-      }
-    };
-    traverse(blocks);
-    return mentions;
-  } catch {
-    return [];
-  }
 };
 
 // ──────────────────────────────────────────────

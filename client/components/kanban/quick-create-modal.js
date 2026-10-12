@@ -42,10 +42,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { getInitials } from "./task-card";
 
-// Lazy-load BlockNote to avoid SSR issues and reduce initial bundle
-const BlockNoteEditor = lazy(() =>
-  import("@/components/blocknote-editor").then((m) => ({
-    default: m.BlockNoteEditor,
+// Lazy-load MentionEditor to avoid SSR issues and reduce initial bundle.
+// Dipakai (bukan BlockNoteEditor polos) supaya @mention bisa disisipkan
+// sejak task dibuat.
+const MentionEditor = lazy(() =>
+  import("@/components/mention-editor").then((m) => ({
+    default: m.MentionEditor,
   })),
 );
 
@@ -59,6 +61,7 @@ export function QuickCreateModal({
   defaultColumnId,
   defaultDueDate,
   defaultDivisionId,
+  workspaceId,
   onCreateTask,
   onCreateAndOpen,
 }) {
@@ -199,11 +202,12 @@ export function QuickCreateModal({
                     </div>
                   }
                 >
-                  <BlockNoteEditor
+                  <MentionEditor
                     key={editorKey}
+                    workspaceId={workspaceId}
                     initialContent={null}
                     onChange={setDescription}
-                    placeholder="Deskripsi task (opsional)..."
+                    placeholder="Deskripsi task (opsional)... ketik @ untuk mention"
                     className="blocknote-compact"
                   />
                 </Suspense>

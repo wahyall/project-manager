@@ -15,10 +15,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// Lazy-load BlockNote to avoid SSR issues and reduce initial bundle
-const BlockNoteEditor = lazy(() =>
-  import("@/components/blocknote-editor").then((m) => ({
-    default: m.BlockNoteEditor,
+// Lazy-load MentionEditor to avoid SSR issues and reduce initial bundle.
+// Dipakai (bukan BlockNoteEditor polos) supaya @mention bisa disisipkan
+// sejak event dibuat.
+const MentionEditor = lazy(() =>
+  import("@/components/mention-editor").then((m) => ({
+    default: m.MentionEditor,
   })),
 );
 import {
@@ -186,11 +188,12 @@ export function CreateEventDialog({
                     </div>
                   }
                 >
-                  <BlockNoteEditor
+                  <MentionEditor
                     key={editorKey}
+                    workspaceId={workspaceId}
                     initialContent={null}
                     onChange={setDescription}
-                    placeholder="Jelaskan tentang event ini..."
+                    placeholder="Jelaskan tentang event ini... ketik @ untuk mention"
                     className="blocknote-compact"
                   />
                 </Suspense>

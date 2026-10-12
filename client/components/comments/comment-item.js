@@ -149,6 +149,7 @@ export function CommentItem({
                         onClick={() => {
                           setIsEditing(true);
                           setEditContent(comment.content);
+                          setEditMentions(comment.mentions || []);
                         }}
                       >
                         <Pencil className="h-3 w-3" />

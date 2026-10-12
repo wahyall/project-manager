@@ -196,6 +196,7 @@ export default function IdeasPage({ params }) {
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreate={handleCreate}
+        workspaceId={id}
       />
     </div>
   );

@@ -9,6 +9,7 @@ const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
+const { extractMentions } = require("../utils/extractMentions");
 const googleSheetsService = require("../services/googleSheets.service");
 const { syncRealizationStatus } = require("../services/ideaRealization.service");
 const { recalculateRelativeDueDates } = require("../services/task.service");
@@ -333,28 +334,23 @@ exports.createEvent = catchAsync(async (req, res, next) => {
   const eventUrl = `/workspace/${workspace._id}/events/${event._id}`;
 
   // Mention Notification (from description)
+  // Deskripsi disimpan sebagai array blocks BlockNote polos
+  // (MentionEditor mengirim JSON.stringify(blocks)), jadi mention
+  // diekstrak langsung dari inline node, bukan dari field .mentions.
   if (description) {
-    try {
-      const descObj = JSON.parse(description);
-      if (
-        descObj &&
-        Array.isArray(descObj.mentions) &&
-        descObj.mentions.length > 0
-      ) {
-        const mentionedUserIds = descObj.mentions.map((m) => m.userId);
-        await NotificationService.createForMany({
-          workspaceId: workspace._id,
-          recipientIds: mentionedUserIds,
-          actorId: userId,
-          type: "mention",
-          targetType: "event",
-          targetId: event._id,
-          message: `menyebut kamu di deskripsi event "${event.title}"`,
-          url: eventUrl,
-        });
-      }
-    } catch (err) {
-      // Ignore JSON parse errors
+    const mentions = extractMentions(description);
+    if (mentions.length > 0) {
+      const mentionedUserIds = mentions.map((m) => m.userId);
+      await NotificationService.createForMany({
+        workspaceId: workspace._id,
+        recipientIds: mentionedUserIds,
+        actorId: userId,
+        type: "mention",
+        targetType: "event",
+        targetId: event._id,
+        message: `menyebut kamu di deskripsi event "${event.title}"`,
+        url: eventUrl,
+      });
     }
   }
 
@@ -586,38 +582,30 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
 
   // ── Trigger Notifications ──
   // Mention Notification (from new description)
+  // Hanya mention yang benar-benar baru yang dinotifikasi.
   if (description !== undefined && description !== oldDescription) {
-    try {
-      const newDescObj = JSON.parse(description);
-      const oldDescObj = oldDescription
-        ? JSON.parse(oldDescription)
-        : { mentions: [] };
+    const newMentions = extractMentions(description).map((m) =>
+      m.userId.toString(),
+    );
+    const oldMentions = extractMentions(oldDescription).map((m) =>
+      m.userId.toString(),
+    );
 
-      const newMentions = Array.isArray(newDescObj.mentions)
-        ? newDescObj.mentions.map((m) => m.userId.toString())
-        : [];
-      const oldMentions = Array.isArray(oldDescObj.mentions)
-        ? oldDescObj.mentions.map((m) => m.userId.toString())
-        : [];
+    const newlyMentionedUserIds = newMentions.filter(
+      (id) => !oldMentions.includes(id),
+    );
 
-      const newlyMentionedUserIds = newMentions.filter(
-        (id) => !oldMentions.includes(id),
-      );
-
-      if (newlyMentionedUserIds.length > 0) {
-        await NotificationService.createForMany({
-          workspaceId: workspace._id,
-          recipientIds: newlyMentionedUserIds,
-          actorId: userId,
-          type: "mention",
-          targetType: "event",
-          targetId: event._id,
-          message: `menyebut kamu di deskripsi event "${event.title}"`,
-          url: `/workspace/${workspace._id}/events/${event._id}`,
-        });
-      }
-    } catch (err) {
-      // Ignore JSON parse errors
+    if (newlyMentionedUserIds.length > 0) {
+      await NotificationService.createForMany({
+        workspaceId: workspace._id,
+        recipientIds: newlyMentionedUserIds,
+        actorId: userId,
+        type: "mention",
+        targetType: "event",
+        targetId: event._id,
+        message: `menyebut kamu di deskripsi event "${event.title}"`,
+        url: `/workspace/${workspace._id}/events/${event._id}`,
+      });
     }
   }
 
