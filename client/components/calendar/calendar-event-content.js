@@ -4,24 +4,54 @@ import { memo } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/components/kanban/task-card";
-import { Calendar } from "lucide-react";
 
-const PRIORITY_DOT = {
-  low: "bg-slate-400",
-  medium: "bg-amber-400",
-  high: "bg-orange-500",
-  critical: "bg-red-500",
+// ── Priority system ─────────────────────────────────────────────
+const PRIORITY_CONFIG = {
+  low: {
+    bar: "bg-slate-400",
+    dot: "bg-slate-400",
+    ring: "ring-slate-200 dark:ring-slate-700",
+    label: "Low",
+  },
+  medium: {
+    bar: "bg-amber-400",
+    dot: "bg-amber-400",
+    ring: "ring-amber-200 dark:ring-amber-800",
+    label: "Med",
+  },
+  high: {
+    bar: "bg-orange-500",
+    dot: "bg-orange-500",
+    ring: "ring-orange-200 dark:ring-orange-800",
+    label: "High",
+  },
+  critical: {
+    bar: "bg-rose-500",
+    dot: "bg-rose-500",
+    ring: "ring-rose-200 dark:ring-rose-800",
+    label: "Crit",
+  },
 };
 
-const STATUS_LABEL = {
-  upcoming: "Akan Datang",
-  ongoing: "Berlangsung",
-  completed: "Selesai",
+// ── Event status system ─────────────────────────────────────────
+const STATUS_CONFIG = {
+  upcoming: {
+    pulse: "bg-sky-300",
+    label: "Akan Datang",
+  },
+  ongoing: {
+    pulse: "bg-emerald-400",
+    label: "Berlangsung",
+  },
+  completed: {
+    pulse: "bg-white/40",
+    label: "Selesai",
+  },
 };
 
 /**
  * Custom event content renderer for FullCalendar.
- * Renders task chips (with priority dot + assignee) or event bars (with calendar icon).
+ * Renders task chips (with priority accent + assignee) or event bars (with status + participants).
  */
 export const CalendarEventContent = memo(function CalendarEventContent({
   eventInfo,
@@ -36,91 +66,114 @@ export const CalendarEventContent = memo(function CalendarEventContent({
   return <TaskChipContent event={event} />;
 });
 
-/** Task chip: priority dot + title + assignee avatar */
+// ── Task Chip ───────────────────────────────────────────────────
 function TaskChipContent({ event }) {
-  const { priority, assignees, columnName } = event.extendedProps;
+  const { priority, assignees, columnName, columnColor } = event.extendedProps;
+  const config = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
   const firstAssignee = assignees?.[0];
+  const extraCount = assignees?.length > 1 ? assignees.length - 1 : 0;
 
   return (
     <div
-      className={cn(
-        "flex items-center gap-1 px-1.5 py-0.5 min-w-0 w-full overflow-hidden rounded-sm",
-        "cursor-pointer select-none"
-      )}
-      title={`${event.title}${columnName ? ` • ${columnName}` : ""}${
-        firstAssignee ? ` • ${firstAssignee.name}` : ""
+      className="cal-task-chip"
+      title={`${event.title}${columnName ? ` · ${columnName}` : ""}${
+        firstAssignee ? ` · ${firstAssignee.name}` : ""
       }`}
     >
-      {/* Priority dot */}
-      <span
-        className={cn(
-          "h-1.5 w-1.5 rounded-full shrink-0",
-          PRIORITY_DOT[priority] || PRIORITY_DOT.medium
-        )}
-      />
+      {/* Priority accent bar */}
+      <span className={cn("cal-task-chip__bar", config.bar)} />
 
-      {/* Title */}
-      <span className="text-[11px] font-medium truncate leading-tight flex-1 min-w-0">
-        {event.title}
-      </span>
+      {/* Content */}
+      <span className="cal-task-chip__body">
+        {/* Title */}
+        <span className="cal-task-chip__title">{event.title}</span>
 
-      {/* Assignee avatar (only first, small) */}
-      {firstAssignee && (
-        <Avatar className="h-4 w-4 shrink-0 border border-background">
-          <AvatarFallback className="text-[7px] bg-white/30 text-inherit font-semibold">
-            {getInitials(firstAssignee.name)}
-          </AvatarFallback>
-        </Avatar>
-      )}
+        {/* Meta row */}
+        <span className="cal-task-chip__meta">
+          {/* Column status dot */}
+          {columnColor && (
+            <span
+              className="cal-task-chip__status-dot"
+              style={{ backgroundColor: columnColor }}
+            />
+          )}
 
-      {/* Extra assignee count */}
-      {assignees?.length > 1 && (
-        <span className="text-[9px] opacity-70 shrink-0">
-          +{assignees.length - 1}
+          {/* Assignees */}
+          {firstAssignee && (
+            <span className="cal-task-chip__avatars">
+              <Avatar
+                className={cn(
+                  "cal-task-chip__avatar",
+                  config.ring
+                )}
+              >
+                <AvatarFallback className="cal-task-chip__avatar-fallback">
+                  {getInitials(firstAssignee.name)}
+                </AvatarFallback>
+              </Avatar>
+              {extraCount > 0 && (
+                <span className="cal-task-chip__extra">+{extraCount}</span>
+              )}
+            </span>
+          )}
         </span>
-      )}
+      </span>
     </div>
   );
 }
 
-/** Event bar: calendar icon + title + status badge */
+// ── Event Bar ───────────────────────────────────────────────────
 function EventBarContent({ event }) {
   const { status, participants } = event.extendedProps;
+  const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.upcoming;
+  const participantCount = participants?.length ?? 0;
 
   return (
     <div
-      className={cn(
-        "flex items-center gap-1.5 px-2 py-0.5 min-w-0 w-full overflow-hidden rounded-sm",
-        "cursor-pointer select-none"
-      )}
-      title={`${event.title}${status ? ` • ${STATUS_LABEL[status] || status}` : ""}`}
+      className="cal-event-bar"
+      title={`${event.title}${status ? ` · ${statusCfg.label}` : ""}${
+        participantCount > 0 ? ` · ${participantCount} peserta` : ""
+      }`}
     >
-      {/* Calendar icon to distinguish from tasks */}
-      <Calendar className="h-3 w-3 shrink-0 opacity-80" />
-
-      {/* Title */}
-      <span className="text-[11px] font-semibold truncate leading-tight flex-1 min-w-0">
-        {event.title}
-      </span>
-
-      {/* Status dot */}
-      {status && (
+      {/* Status pulse indicator */}
+      <span className="cal-event-bar__pulse-wrap">
         <span
           className={cn(
-            "h-1.5 w-1.5 rounded-full shrink-0",
-            status === "ongoing" && "bg-green-300",
-            status === "upcoming" && "bg-white/50",
-            status === "completed" && "bg-white/30"
+            "cal-event-bar__pulse",
+            statusCfg.pulse,
+            status === "ongoing" && "cal-event-bar__pulse--live"
           )}
         />
-      )}
+      </span>
 
-      {/* Participant count */}
-      {participants?.length > 0 && (
-        <span className="text-[9px] opacity-70 shrink-0">
-          {participants.length}
-        </span>
-      )}
+      {/* Title */}
+      <span className="cal-event-bar__title">{event.title}</span>
+
+      {/* Right meta */}
+      <span className="cal-event-bar__right">
+        {/* Participant count chip */}
+        {participantCount > 0 && (
+          <span className="cal-event-bar__count">
+            <svg
+              width="8"
+              height="8"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="shrink-0"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            {participantCount}
+          </span>
+        )}
+      </span>
     </div>
   );
 }

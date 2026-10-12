@@ -1,22 +1,46 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { format, isPast, isToday } from "date-fns";
+import { format, isPast, isToday, isFuture } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/components/kanban/task-card";
 
-const PRIORITY_LABELS = {
-  low: { label: "Low", color: "bg-slate-400", text: "text-slate-700" },
-  medium: { label: "Medium", color: "bg-amber-400", text: "text-amber-700" },
-  high: { label: "High", color: "bg-orange-500", text: "text-orange-700" },
-  critical: { label: "Critical", color: "bg-red-500", text: "text-red-700" },
+// ── Priority config ─────────────────────────────────────────────
+const PRIORITY_CONFIG = {
+  low: {
+    label: "Low",
+    color: "#94a3b8",
+    bg: "bg-slate-100 dark:bg-slate-800",
+    text: "text-slate-600 dark:text-slate-300",
+    dot: "bg-slate-400",
+  },
+  medium: {
+    label: "Medium",
+    color: "#f59e0b",
+    bg: "bg-amber-50 dark:bg-amber-900/30",
+    text: "text-amber-700 dark:text-amber-400",
+    dot: "bg-amber-400",
+  },
+  high: {
+    label: "High",
+    color: "#f97316",
+    bg: "bg-orange-50 dark:bg-orange-900/30",
+    text: "text-orange-700 dark:text-orange-400",
+    dot: "bg-orange-500",
+  },
+  critical: {
+    label: "Critical",
+    color: "#ef4444",
+    bg: "bg-rose-50 dark:bg-rose-900/30",
+    text: "text-rose-700 dark:text-rose-400",
+    dot: "bg-rose-500",
+  },
 };
 
 /**
- * Floating tooltip that appears on hover over calendar events.
+ * Floating tooltip on calendar event hover.
  * Shows task details: title, assignees, due date, status, priority.
  */
 export function CalendarTooltip({ calendarRef }) {
@@ -52,15 +76,7 @@ export function CalendarTooltip({ calendarRef }) {
       const el = e.target.closest(".fc-event");
       if (!el) return;
 
-      // Find the FullCalendar event data from the DOM
-      const fcEventEl = el;
-      const rect = fcEventEl.getBoundingClientRect();
-
-      // Get event ID from the element
-      const eventId = el.getAttribute("data-event-id") ||
-        el.closest("[data-event-id]")?.getAttribute("data-event-id");
-
-      // We'll use a simpler approach - attach data via eventDidMount
+      const rect = el.getBoundingClientRect();
       const tooltipData = el.__tooltipData;
       if (tooltipData) {
         showTooltip(tooltipData, rect);
@@ -84,10 +100,14 @@ export function CalendarTooltip({ calendarRef }) {
 
   if (!tooltip) return null;
 
-  const { task } = tooltip;
-  const priorityConfig = PRIORITY_LABELS[task.priority] || PRIORITY_LABELS.medium;
+  const { task, event } = tooltip;
+  const priorityConfig = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
   const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate);
+  const isDueToday = dueDate && isToday(dueDate);
+  const isUpcoming = dueDate && isFuture(dueDate) && !isDueToday;
+  const columnName = event.extendedProps?.columnName;
+  const columnColor = event.extendedProps?.columnColor;
 
   return (
     <div
@@ -95,105 +115,124 @@ export function CalendarTooltip({ calendarRef }) {
       className="fixed z-[9999] pointer-events-none"
       style={{
         left: tooltip.x,
-        top: tooltip.y - 8,
+        top: tooltip.y - 10,
         transform: "translate(-50%, -100%)",
       }}
       onMouseEnter={() => clearTimeout(hideTimeoutRef.current)}
       onMouseLeave={hideTooltip}
     >
-      <div className="bg-popover text-popover-foreground border rounded-lg shadow-lg p-3 max-w-[280px] min-w-[200px]">
-        {/* Title */}
-        <p className="font-semibold text-sm leading-tight mb-2 line-clamp-2">
-          {task.title}
-        </p>
+      <div className="cal-tooltip">
+        {/* Priority accent strip */}
+        <div
+          className="cal-tooltip__accent"
+          style={{ backgroundColor: priorityConfig.color }}
+        />
 
-        <div className="space-y-1.5">
-          {/* Priority */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground w-14">
-              Prioritas
-            </span>
-            <Badge
-              variant="secondary"
-              className={cn("text-[10px] h-4 px-1.5 gap-1")}
+        <div className="cal-tooltip__content">
+          {/* Header */}
+          <div className="cal-tooltip__header">
+            <p className="cal-tooltip__title">{task.title}</p>
+
+            {/* Priority pill */}
+            <span
+              className={cn(
+                "cal-tooltip__priority-pill",
+                priorityConfig.bg,
+                priorityConfig.text
+              )}
             >
-              <span
-                className={cn("h-1.5 w-1.5 rounded-full", priorityConfig.color)}
-              />
+              <span className={cn("cal-tooltip__priority-dot", priorityConfig.dot)} />
               {priorityConfig.label}
-            </Badge>
+            </span>
           </div>
 
-          {/* Due Date */}
-          {dueDate && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground w-14">
-                Due Date
-              </span>
-              <span
-                className={cn(
-                  "text-xs font-medium",
-                  isOverdue && "text-red-500"
-                )}
-              >
-                {format(dueDate, "d MMM yyyy", { locale: localeId })}
-                {isOverdue && " (overdue)"}
-              </span>
-            </div>
-          )}
+          {/* Divider */}
+          <div className="cal-tooltip__divider" />
 
-          {/* Status */}
-          {tooltip.event.extendedProps?.columnName && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground w-14">
-                Status
-              </span>
-              <Badge variant="outline" className="text-[10px] h-4 px-1.5 gap-1">
-                <span
-                  className="h-1.5 w-1.5 rounded-full"
-                  style={{
-                    backgroundColor:
-                      tooltip.event.extendedProps?.columnColor || "#888",
-                  }}
-                />
-                {tooltip.event.extendedProps.columnName}
-              </Badge>
-            </div>
-          )}
-
-          {/* Assignees */}
-          {task.assignees?.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground w-14">
-                Assignee
-              </span>
-              <div className="flex items-center gap-1">
-                {task.assignees.slice(0, 3).map((a) => (
-                  <div key={a._id} className="flex items-center gap-1">
-                    <Avatar className="h-4 w-4">
-                      <AvatarFallback className="text-[7px] bg-primary/10 text-primary">
-                        {getInitials(a.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-[10px]">{a.name.split(" ")[0]}</span>
-                  </div>
-                ))}
-                {task.assignees.length > 3 && (
-                  <span className="text-[10px] text-muted-foreground">
-                    +{task.assignees.length - 3}
-                  </span>
-                )}
+          {/* Info rows */}
+          <div className="cal-tooltip__rows">
+            {/* Column/Status */}
+            {columnName && (
+              <div className="cal-tooltip__row">
+                <span className="cal-tooltip__label">Status</span>
+                <span className="cal-tooltip__value">
+                  <span
+                    className="cal-tooltip__status-dot"
+                    style={{ backgroundColor: columnColor || "#888" }}
+                  />
+                  {columnName}
+                </span>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Due Date */}
+            {dueDate && (
+              <div className="cal-tooltip__row">
+                <span className="cal-tooltip__label">Due</span>
+                <span
+                  className={cn(
+                    "cal-tooltip__value",
+                    isOverdue && "cal-tooltip__value--overdue",
+                    isDueToday && "cal-tooltip__value--today"
+                  )}
+                >
+                  {format(dueDate, "d MMM yyyy", { locale: localeId })}
+                  {isOverdue && (
+                    <span className="cal-tooltip__badge cal-tooltip__badge--overdue">
+                      Overdue
+                    </span>
+                  )}
+                  {isDueToday && (
+                    <span className="cal-tooltip__badge cal-tooltip__badge--today">
+                      Today
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* Assignees */}
+            {task.assignees?.length > 0 && (
+              <div className="cal-tooltip__row cal-tooltip__row--assignees">
+                <span className="cal-tooltip__label">Assignee</span>
+                <div className="cal-tooltip__assignees">
+                  {task.assignees.slice(0, 4).map((a, i) => (
+                    <div
+                      key={a._id}
+                      className="cal-tooltip__assignee"
+                      style={{ zIndex: task.assignees.length - i }}
+                    >
+                      <Avatar className="cal-tooltip__avatar">
+                        <AvatarFallback className="cal-tooltip__avatar-fallback">
+                          {getInitials(a.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  ))}
+                  {task.assignees.length > 4 && (
+                    <span className="cal-tooltip__assignee-extra">
+                      +{task.assignees.length - 4}
+                    </span>
+                  )}
+                  <span className="cal-tooltip__assignee-names">
+                    {task.assignees
+                      .slice(0, 2)
+                      .map((a) => a.name.split(" ")[0])
+                      .join(", ")}
+                    {task.assignees.length > 2 &&
+                      ` & ${task.assignees.length - 2} lainnya`}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Arrow */}
-        <div className="absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-full">
-          <div className="w-2 h-2 rotate-45 bg-popover border-r border-b -mt-1" />
+        {/* Caret */}
+        <div className="cal-tooltip__caret">
+          <div className="cal-tooltip__caret-inner" />
         </div>
       </div>
     </div>
   );
 }
-

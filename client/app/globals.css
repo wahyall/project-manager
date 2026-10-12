@@ -225,26 +225,463 @@
   background-color: oklch(0.17 0 0);
 }
 
-/* Events */
+/* ── Calendar Event Items — Premium Redesign ─── */
+
+/* Base event container */
 .calendar-wrapper .fc .fc-event {
-  border-radius: 4px !important;
+  border-radius: 5px !important;
   border: none !important;
   margin: 1px 2px;
   padding: 0;
   font-size: 11px;
   cursor: pointer;
+  overflow: visible !important;
   transition:
-    box-shadow 0.15s ease,
-    transform 0.1s ease;
+    box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.15s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.15s ease;
 }
 
 .calendar-wrapper .fc .fc-event:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px -2px rgba(0, 0, 0, 0.12),
+    0 2px 6px -1px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px) scale(1.005);
+  z-index: 5;
+}
+
+.calendar-wrapper .fc .fc-event:active {
+  transform: translateY(0) scale(0.99);
+  transition-duration: 0.08s;
 }
 
 .calendar-wrapper .fc .fc-event .fc-event-main {
   padding: 0;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+/* ── Task Chip — BEM Component ─────────────────── */
+
+.cal-task-chip {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Left accent bar — communicates priority tier at a glance */
+.cal-task-chip__bar {
+  display: block;
+  width: 3px;
+  flex-shrink: 0;
+  border-radius: 2px 0 0 2px;
+  opacity: 0.9;
+  transition: width 0.15s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.cal-task-chip:hover .cal-task-chip__bar {
+  width: 4px;
+  opacity: 1;
+}
+
+/* Content area */
+.cal-task-chip__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 4px 2px 4px;
+  overflow: hidden;
+}
+
+/* Title */
+.cal-task-chip__title {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* Meta row: column dot + assignee */
+.cal-task-chip__meta {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cal-task-chip__status-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.cal-task-chip__avatars {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+}
+
+.cal-task-chip__avatar {
+  height: 14px !important;
+  width: 14px !important;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  ring-width: 1px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.25);
+}
+
+.cal-task-chip__avatar-fallback {
+  font-size: 7px !important;
+  font-weight: 700 !important;
+  background: transparent !important;
+  color: inherit !important;
+  letter-spacing: -0.02em;
+}
+
+.cal-task-chip__extra {
+  font-size: 8px;
+  opacity: 0.7;
+  flex-shrink: 0;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ── Event Bar — BEM Component ─────────────────── */
+
+.cal-event-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 5px;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Status pulse container */
+.cal-event-bar__pulse-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  position: relative;
+}
+
+.cal-event-bar__pulse {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* Live pulse ring for ongoing events */
+.cal-event-bar__pulse--live::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  animation: cal-live-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes cal-live-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Title */
+.cal-event-bar__title {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  letter-spacing: -0.01em;
+}
+
+/* Right meta cluster */
+.cal-event-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Participant count chip */
+.cal-event-bar__count {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 8.5px;
+  font-weight: 600;
+  opacity: 0.75;
+  background: rgba(255,255,255,0.18);
+  border-radius: 10px;
+  padding: 1px 4px;
+  letter-spacing: -0.01em;
+}
+
+/* ── Calendar Tooltip — Premium Redesign ────── */
+
+.cal-tooltip {
+  position: relative;
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow:
+    0 12px 32px -8px rgba(0, 0, 0, 0.18),
+    0 4px 12px -4px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  max-width: 280px;
+  min-width: 220px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Left priority accent bar */
+.cal-tooltip__accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 10px 0 0 10px;
+}
+
+/* Inner content area offset for accent bar */
+.cal-tooltip__content {
+  padding: 10px 12px 10px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Header: title + priority pill */
+.cal-tooltip__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cal-tooltip__title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--popover-foreground);
+  letter-spacing: -0.01em;
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cal-tooltip__priority-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 2px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cal-tooltip__priority-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Divider */
+.cal-tooltip__divider {
+  height: 1px;
+  background: var(--border);
+  opacity: 0.6;
+}
+
+/* Info rows */
+.cal-tooltip__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cal-tooltip__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.cal-tooltip__label {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  font-weight: 500;
+  width: 52px;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.cal-tooltip__value {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--popover-foreground);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-tooltip__value--overdue {
+  color: #ef4444;
+}
+
+.cal-tooltip__value--today {
+  color: #f97316;
+}
+
+.cal-tooltip__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Due date badges */
+.cal-tooltip__badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 99px;
+}
+
+.cal-tooltip__badge--overdue {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.cal-tooltip__badge--today {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+}
+
+/* Assignee row */
+.cal-tooltip__row--assignees {
+  align-items: flex-start;
+  padding-top: 1px;
+}
+
+.cal-tooltip__assignees {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+/* Stacked avatars */
+.cal-tooltip__assignee {
+  position: relative;
+  margin-left: -4px;
+}
+
+.cal-tooltip__assignee:first-child {
+  margin-left: 0;
+}
+
+.cal-tooltip__avatar {
+  height: 18px !important;
+  width: 18px !important;
+  border: 1.5px solid var(--popover) !important;
+  border-radius: 9999px;
+}
+
+.cal-tooltip__avatar-fallback {
+  font-size: 7px !important;
+  font-weight: 700 !important;
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  letter-spacing: -0.02em;
+}
+
+.cal-tooltip__assignee-extra {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  margin-left: 1px;
+}
+
+.cal-tooltip__assignee-names {
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+  font-weight: 400;
+  margin-left: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Caret arrow */
+.cal-tooltip__caret {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(100%);
+}
+
+.cal-tooltip__caret-inner {
+  width: 8px;
+  height: 8px;
+  background: var(--popover);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transform: rotate(45deg);
+  margin-top: -4px;
 }
 
 /* More link */
