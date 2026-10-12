@@ -13,6 +13,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { CalendarEventContent } from "./calendar-event-content";
+import { CalendarTooltip } from "./calendar-tooltip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -35,6 +36,7 @@ export const CalendarView = forwardRef(function CalendarView(
   ref
 ) {
   const calendarRef = useRef(null);
+  const wrapperRef = useRef(null);
   const [title, setTitle] = useState("");
 
   // ── Get FC API ─────────────────────────────────
@@ -143,6 +145,7 @@ export const CalendarView = forwardRef(function CalendarView(
 
   return (
     <div
+      ref={wrapperRef}
       className={cn(
         "calendar-wrapper relative",
         loading && "opacity-60 pointer-events-none"
@@ -197,6 +200,9 @@ export const CalendarView = forwardRef(function CalendarView(
         datesSet={handleDatesSet}
         // Rendering
         eventContent={renderEventContent}
+        eventDidMount={(info) => {
+          info.el.__tooltipData = info.event;
+        }}
         eventDisplay="block"
         // Time grid
         slotMinTime="06:00:00"
@@ -210,6 +216,8 @@ export const CalendarView = forwardRef(function CalendarView(
         allDayText="Sepanjang Hari"
         nowIndicator={true}
       />
+
+      <CalendarTooltip calendarRef={wrapperRef} />
     </div>
   );
 });

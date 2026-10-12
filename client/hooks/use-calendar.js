@@ -221,10 +221,25 @@ export function useCalendar(workspaceId, workspace, options = {}) {
       };
     });
 
+function hexToRgba(hex, alpha = 0.12) {
+  if (!hex || typeof hex !== "string" || !hex.startsWith("#")) {
+    return `rgba(139, 92, 246, ${alpha})`;
+  }
+  let cleanHex = hex.replace("#", "");
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex.split("").map((c) => c + c).join("");
+  }
+  const r = parseInt(cleanHex.substring(0, 2), 16) || 139;
+  const g = parseInt(cleanHex.substring(2, 4), 16) || 92;
+  const b = parseInt(cleanHex.substring(4, 6), 16) || 246;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
     // Event → FC events (all-day bars with event color)
     const eventItems = filteredEvents.map((event) => {
       const color = event.color || "#8B5CF6";
-      // Lighten the background for better text contrast
+      const bg = hexToRgba(color, 0.12);
+      const border = hexToRgba(color, 0.35);
       const endDate = new Date(event.endDate);
       endDate.setDate(endDate.getDate() + 1);
 
@@ -234,15 +249,22 @@ export function useCalendar(workspaceId, workspace, options = {}) {
         start: event.startDate,
         end: endDate.toISOString(),
         allDay: true,
-        backgroundColor: color,
-        borderColor: color,
-        textColor: "#fff",
+        backgroundColor: bg,
+        borderColor: border,
+        textColor: "inherit",
         editable: false, // Events are not drag/resizable from calendar
         extendedProps: {
           event,
           eventId: event._id,
+          color,
           status: event.status,
           participants: event.participants || [],
+          division: event.divisionId,
+          divisionName: event.divisionId?.name || "",
+          divisionColor: event.divisionId?.color || "",
+          startDate: event.startDate,
+          endDate: event.endDate,
+          description: event.description || "",
           isEvent: true,
         },
       };

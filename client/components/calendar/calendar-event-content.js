@@ -36,15 +36,18 @@ const PRIORITY_CONFIG = {
 // ── Event status system ─────────────────────────────────────────
 const STATUS_CONFIG = {
   upcoming: {
-    pulse: "bg-sky-300",
+    pulse: "bg-sky-400",
+    badge: "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30",
     label: "Akan Datang",
   },
   ongoing: {
-    pulse: "bg-emerald-400",
+    pulse: "bg-emerald-500",
+    badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
     label: "Berlangsung",
   },
   completed: {
-    pulse: "bg-white/40",
+    pulse: "bg-slate-400",
+    badge: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/25",
     label: "Selesai",
   },
 };
@@ -122,57 +125,90 @@ function TaskChipContent({ event }) {
   );
 }
 
-// ── Event Bar ───────────────────────────────────────────────────
+// ── Event Bar (Redesigned to modern two-line chip) ──────────────
 function EventBarContent({ event }) {
-  const { status, participants } = event.extendedProps;
+  const {
+    status = "upcoming",
+    participants = [],
+    color = "#8B5CF6",
+    divisionName,
+    divisionColor,
+  } = event.extendedProps;
+
   const statusCfg = STATUS_CONFIG[status] || STATUS_CONFIG.upcoming;
-  const participantCount = participants?.length ?? 0;
+  const firstParticipant = participants?.[0];
+  const extraCount = participants.length > 1 ? participants.length - 1 : 0;
 
   return (
     <div
-      className="cal-event-bar"
-      title={`${event.title}${status ? ` · ${statusCfg.label}` : ""}${
-        participantCount > 0 ? ` · ${participantCount} peserta` : ""
-      }`}
+      className="cal-event-chip"
+      title={`${event.title} · ${statusCfg.label}${
+        divisionName ? ` · ${divisionName}` : ""
+      }${participants.length > 0 ? ` · ${participants.length} peserta` : ""}`}
     >
-      {/* Status pulse indicator */}
-      <span className="cal-event-bar__pulse-wrap">
-        <span
-          className={cn(
-            "cal-event-bar__pulse",
-            statusCfg.pulse,
-            status === "ongoing" && "cal-event-bar__pulse--live"
-          )}
-        />
-      </span>
+      {/* Accent bar with event theme color */}
+      <span
+        className="cal-event-chip__bar"
+        style={{ backgroundColor: color }}
+      />
 
-      {/* Title */}
-      <span className="cal-event-bar__title">{event.title}</span>
-
-      {/* Right meta */}
-      <span className="cal-event-bar__right">
-        {/* Participant count chip */}
-        {participantCount > 0 && (
-          <span className="cal-event-bar__count">
-            <svg
-              width="8"
-              height="8"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="shrink-0"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            {participantCount}
+      {/* Content body */}
+      <span className="cal-event-chip__body">
+        {/* Row 1: Status pulse dot + Event title */}
+        <span className="cal-event-chip__title-row">
+          <span className="cal-event-chip__pulse-wrap">
+            <span
+              className={cn(
+                "cal-event-chip__pulse",
+                statusCfg.pulse,
+                status === "ongoing" && "cal-event-chip__pulse--live"
+              )}
+            />
           </span>
-        )}
+          <span className="cal-event-chip__title">{event.title}</span>
+        </span>
+
+        {/* Row 2: Status badge + Division dot/name + Participant avatars */}
+        <span className="cal-event-chip__meta">
+          <span
+            className={cn(
+              "cal-event-chip__status-badge",
+              statusCfg.badge
+            )}
+          >
+            {statusCfg.label}
+          </span>
+
+          {divisionName && (
+            <span className="cal-event-chip__division">
+              {divisionColor && (
+                <span
+                  className="cal-event-chip__division-dot"
+                  style={{ backgroundColor: divisionColor }}
+                />
+              )}
+              <span className="cal-event-chip__division-name">
+                {divisionName}
+              </span>
+            </span>
+          )}
+
+          {firstParticipant && (
+            <span className="cal-event-chip__avatars">
+              <Avatar
+                className="cal-event-chip__avatar"
+                style={{ borderColor: color }}
+              >
+                <AvatarFallback className="cal-event-chip__avatar-fallback">
+                  {getInitials(firstParticipant.name)}
+                </AvatarFallback>
+              </Avatar>
+              {extraCount > 0 && (
+                <span className="cal-event-chip__extra">+{extraCount}</span>
+              )}
+            </span>
+          )}
+        </span>
       </span>
     </div>
   );
