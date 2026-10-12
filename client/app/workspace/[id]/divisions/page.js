@@ -16,23 +16,25 @@ export default function WorkspaceDivisionsPage({ params }) {
   if (!currentWorkspace) return null;
 
   return (
-    <div className="p-4 lg:p-6 max-w-4xl mx-auto space-y-5">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Users className="h-6 w-6 text-violet-500" />
-          Divisi Workspace
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Kelola divisi tetap di workspace{" "}
-          <span className="font-medium text-foreground">
-            {currentWorkspace.name}
-          </span>
-          . Berbeda dengan Divisi Event yang hanya berlaku di satu event.
-        </p>
+    <div className="mx-auto max-w-4xl space-y-5 p-4 lg:p-6">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+          <Users className="h-5 w-5 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold leading-tight sm:text-2xl">
+            Divisi Workspace
+          </h1>
+          <p className="mt-1 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
+            Kelola divisi tetap di workspace{" "}
+            <span className="font-medium text-foreground">
+              {currentWorkspace.name}
+            </span>
+            . Divisi event diatur terpisah di dalam tiap event.
+          </p>
+        </div>
       </div>
 
-      {/* Alur: buat divisi (Nama + Warna) → tambah member → assign ketua */}
       <WorkspaceDivisionsSection workspaceId={id} members={members} />
     </div>
   );
