@@ -9,8 +9,13 @@ import { getSocket } from "@/lib/socket";
  *
  * Fetches events with filtering, sorting, pagination,
  * handles CRUD, participant management, and Socket.io real-time sync.
+ *
+ * @param {string} workspaceId
+ * @param {Object} [scopeGuard] - Guard realtime agar member terkunci tidak
+ *   melihat event divisi lain: { divisionIds: string[]|null, includeNone: bool }
+ *   divisionIds null = tak terbatas (owner/admin).
  */
-export function useEvents(workspaceId) {
+export function useEvents(workspaceId, scopeGuard = null) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,6 +34,11 @@ export function useEvents(workspaceId) {
     startDateTo: null,
     keyword: "",
   });
+
+  // ── Division scope ───────────────────────────────
+  // undefined = ikut scope server (all utk owner/admin, divisinya utk member),
+  // "none" = Tanpa Divisi, id = divisi spesifik.
+  const [divisionId, setDivisionId] = useState(undefined);
 
   // ── Sort state ───────────────────────────────────
   const [sortBy, setSortBy] = useState("startDate");
@@ -61,6 +71,9 @@ export function useEvents(workspaceId) {
         if (filters.keyword) {
           params.set("keyword", filters.keyword);
         }
+        if (divisionId) {
+          params.set("divisionId", divisionId);
+        }
         params.set("sortBy", sortBy);
         params.set("sortOrder", sortOrder);
         params.set("page", page.toString());
@@ -78,7 +91,7 @@ export function useEvents(workspaceId) {
         setLoading(false);
       }
     },
-    [workspaceId, filters, sortBy, sortOrder],
+    [workspaceId, filters, sortBy, sortOrder, divisionId],
   );
 
   // ── Auto-fetch on filter/sort change ─────────────
@@ -87,15 +100,35 @@ export function useEvents(workspaceId) {
   }, [fetchEvents]);
 
   // ── Socket.io real-time sync ─────────────────────
+  const guardRef = useRef(scopeGuard);
+  guardRef.current = scopeGuard;
+
+  const isInScope = useCallback((event) => {
+    const guard = guardRef.current;
+    if (!guard || guard.divisionIds === null) return true;
+    const divId =
+      typeof event?.divisionId === "string"
+        ? event.divisionId
+        : event?.divisionId?._id?.toString();
+    if (!divId) return guard.includeNone !== false;
+    return guard.divisionIds.includes(divId);
+  }, []);
+
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
 
     const handleCreated = ({ event: newEvent }) => {
+      if (!isInScope(newEvent)) return;
       setEvents((prev) => [newEvent, ...prev]);
     };
 
     const handleUpdated = ({ event: updatedEvent }) => {
+      if (!isInScope(updatedEvent)) {
+        // Keluar dari scope (mis. pindah divisi) → hilangkan dari daftar
+        setEvents((prev) => prev.filter((e) => e._id !== updatedEvent._id));
+        return;
+      }
       setEvents((prev) =>
         prev.map((e) => (e._id === updatedEvent._id ? updatedEvent : e)),
       );
@@ -114,7 +147,7 @@ export function useEvents(workspaceId) {
       socket.off("event:updated", handleUpdated);
       socket.off("event:deleted", handleDeleted);
     };
-  }, []);
+  }, [isInScope]);
 
   // ── CRUD Operations ──────────────────────────────
 
@@ -176,6 +209,8 @@ export function useEvents(workspaceId) {
     pagination,
     filters,
     setFilters,
+    divisionId,
+    setDivisionId,
     sortBy,
     setSortBy,
     sortOrder,

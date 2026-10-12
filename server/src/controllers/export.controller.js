@@ -4,6 +4,27 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ExportJob = require("../models/ExportJob");
 const exportService = require("../services/export.service");
+const { applyDivisionScope } = require("../utils/divisionScope");
+
+// ════════════════════════════════════════════════
+// Helper: terapkan scope divisi ke filter export.
+// Member/guest dikunci ke divisinya (+ Tanpa Divisi),
+// owner/admin default semua. Melempar 403/400 bila param tak diizinkan.
+// ════════════════════════════════════════════════
+async function scopeExportFilters(req, filters) {
+  const scopeFilter = {};
+  await applyDivisionScope({
+    filter: scopeFilter,
+    workspaceId: req.params.id,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+    divisionParam: filters.divisionId,
+  });
+  if (scopeFilter.divisionId !== undefined) {
+    filters.divisionId = scopeFilter.divisionId;
+  }
+  return filters;
+}
 
 // ════════════════════════════════════════════════
 // Helper: create job and run async
@@ -34,7 +55,7 @@ async function createAndRunJob(type, workspaceId, userId, params = {}) {
 exports.exportTaskCSV = catchAsync(async (req, res, next) => {
   const workspaceId = req.params.id;
   const userId = req.user.id;
-  const filters = req.body.filters || {};
+  const filters = await scopeExportFilters(req, req.body.filters || {});
 
   // For small exports, try instant download
   try {
@@ -78,7 +99,7 @@ exports.exportTaskCSV = catchAsync(async (req, res, next) => {
 exports.exportTaskXLSX = catchAsync(async (req, res, next) => {
   const workspaceId = req.params.id;
   const userId = req.user.id;
-  const filters = req.body.filters || {};
+  const filters = await scopeExportFilters(req, req.body.filters || {});
 
   const job = await createAndRunJob("task_xlsx", workspaceId, userId, {
     filters,
@@ -99,7 +120,7 @@ exports.exportTaskXLSX = catchAsync(async (req, res, next) => {
 exports.exportTaskPDF = catchAsync(async (req, res, next) => {
   const workspaceId = req.params.id;
   const userId = req.user.id;
-  const filters = req.body.filters || {};
+  const filters = await scopeExportFilters(req, req.body.filters || {});
 
   const job = await createAndRunJob("task_pdf", workspaceId, userId, {
     filters,
@@ -121,6 +142,25 @@ exports.exportEventPDF = catchAsync(async (req, res, next) => {
   const workspaceId = req.params.id;
   const { eventId } = req.params;
   const userId = req.user.id;
+
+  // Visibility divisi: member/guest di luar divisi event tidak boleh export
+  const Event = require("../models/Event");
+  const { assertCanViewDivisionItem } = require("../utils/divisionScope");
+  const event = await Event.findOne({
+    _id: eventId,
+    workspaceId,
+  })
+    .select("divisionId")
+    .lean();
+  if (!event) {
+    return next(new AppError("Event tidak ditemukan", 404));
+  }
+  await assertCanViewDivisionItem({
+    divisionId: event.divisionId,
+    workspaceId,
+    userId,
+    role: req.workspaceMember?.role,
+  });
 
   const job = await createAndRunJob("event_pdf", workspaceId, userId, {
     targetId: eventId,

@@ -125,6 +125,14 @@ const taskSchema = new mongoose.Schema(
       ref: "Event",
       default: null,
     },
+    // Divisi Workspace pemilik task ini. null = "Tanpa Divisi".
+    // Saat task dibuat dari event tanpa divisionId eksplisit,
+    // otomatis mengikuti divisionId event tersebut.
+    divisionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "WorkspaceDivision",
+      default: null,
+    },
     phase: {
       type: String,
       enum: {
@@ -186,6 +194,7 @@ const taskSchema = new mongoose.Schema(
 // ── Indexes ─────────────────────────────────────────
 taskSchema.index({ workspaceId: 1, isDeleted: 1 });
 taskSchema.index({ workspaceId: 1, columnId: 1 });
+taskSchema.index({ workspaceId: 1, divisionId: 1 });
 taskSchema.index({ assignees: 1 });
 taskSchema.index({ eventId: 1 });
 taskSchema.index({ eventId: 1, phase: 1 });

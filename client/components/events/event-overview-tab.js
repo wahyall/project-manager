@@ -89,6 +89,7 @@ export function EventOverviewTab({
   onUpdate,
   members = [],
   workspaceId,
+  divisions = [],
 }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
@@ -385,6 +386,55 @@ export function EventOverviewTab({
           </div>
 
           <Separator />
+
+          {/* Divisi Workspace */}
+          {divisions.length > 0 && (
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-xs text-muted-foreground font-medium shrink-0">
+                  Divisi
+                </label>
+                <Select
+                  value={
+                    event.divisionId
+                      ? typeof event.divisionId === "string"
+                        ? event.divisionId
+                        : event.divisionId._id?.toString()
+                      : "none"
+                  }
+                  onValueChange={(val) =>
+                    saveField("divisionId", val === "none" ? null : val)
+                  }
+                >
+                  <SelectTrigger className="w-[190px] h-8 text-xs">
+                    <SelectValue placeholder="Tanpa Divisi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      <span className="text-muted-foreground">
+                        Tanpa Divisi
+                      </span>
+                    </SelectItem>
+                    {divisions.map((div) => (
+                      <SelectItem key={div._id} value={div._id.toString()}>
+                        <span className="flex items-center gap-2">
+                          {div.color && (
+                            <span
+                              className="h-2 w-2 rounded-full inline-block"
+                              style={{ backgroundColor: div.color }}
+                            />
+                          )}
+                          {div.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Separator />
+            </>
+          )}
 
           {/* Color */}
           <div className="flex items-center justify-between">

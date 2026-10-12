@@ -81,6 +81,7 @@ export function TabDetail({
   members,
   labels,
   events,
+  divisions = [],
   currentUserId,
   onUpdate,
   onWatch,
@@ -539,6 +540,52 @@ export function TabDetail({
             </SelectContent>
           </Select>
         </FieldRow>
+
+        {/* Divisi Workspace */}
+        {(divisions || []).length > 0 && (
+          <FieldRow icon={Columns3} label="Divisi">
+            <Select
+              value={
+                task.divisionId
+                  ? typeof task.divisionId === "string"
+                    ? task.divisionId
+                    : task.divisionId._id
+                  : "none"
+              }
+              onValueChange={(val) =>
+                onUpdate({ divisionId: val === "none" ? null : val })
+              }
+              disabled={!!task.eventId}
+            >
+              <SelectTrigger className="h-8 text-xs w-auto min-w-[160px]">
+                <SelectValue placeholder="Tanpa Divisi" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">
+                  <span className="text-muted-foreground">Tanpa Divisi</span>
+                </SelectItem>
+                {(divisions || []).map((div) => (
+                  <SelectItem key={div._id} value={div._id.toString()}>
+                    <span className="flex items-center gap-2">
+                      {div.color && (
+                        <span
+                          className="h-2 w-2 rounded-full inline-block shrink-0"
+                          style={{ backgroundColor: div.color }}
+                        />
+                      )}
+                      {div.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FieldRow>
+        )}
+        {task.eventId && (divisions || []).length > 0 && (
+          <p className="-mt-2 text-[11px] text-muted-foreground pl-8">
+            Divisi mengikuti event terkait.
+          </p>
+        )}
 
         {/* Dependencies (read-only display) */}
         {task.blockedBy && task.blockedBy.length > 0 && (

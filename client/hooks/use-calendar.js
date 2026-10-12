@@ -17,8 +17,16 @@ const PRIORITY_COLORS = {
  *
  * Fetches tasks for visible date range, transforms to FullCalendar events,
  * handles filters, drag/resize updates, and Socket.io real-time sync.
+ *
+ * @param {string} workspaceId
+ * @param {Object} workspace
+ * @param {Object} [options]
+ * @param {"tasks"|"events"} [options.fixedType] - Kunci kalender ke satu jenis
+ *   (kalender Event vs kalender Task yang terpisah).
+ * @param {string} [options.divisionId] - Filter divisi ("none" = Tanpa Divisi).
  */
-export function useCalendar(workspaceId, workspace) {
+export function useCalendar(workspaceId, workspace, options = {}) {
+  const { fixedType = null, divisionId = undefined } = options;
   const [tasks, setTasks] = useState([]);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,7 +42,7 @@ export function useCalendar(workspaceId, workspace) {
     label: [],
     eventId: null,
     keyword: "",
-    type: "all", // "all" | "tasks" | "events"
+    type: fixedType || "all", // "all" | "tasks" | "events"
   });
 
   // Detail panel state
@@ -67,8 +75,12 @@ export function useCalendar(workspaceId, workspace) {
         const params = {
           startDate: start.toISOString(),
           endDate: end.toISOString(),
-          type: filters.type,
+          type: fixedType || filters.type,
         };
+
+        if (divisionId) {
+          params.divisionId = divisionId;
+        }
 
         if (filters.assignee.length === 1) {
           params.assignee = filters.assignee[0];
@@ -97,7 +109,7 @@ export function useCalendar(workspaceId, workspace) {
         setLoading(false);
       }
     },
-    [workspaceId, filters.type, filters.assignee, filters.priority, filters.label, filters.eventId]
+    [workspaceId, filters.type, filters.assignee, filters.priority, filters.label, filters.eventId, fixedType, divisionId]
   );
 
   // Refetch when date range or filters change
@@ -291,9 +303,9 @@ export function useCalendar(workspaceId, workspace) {
     if (filters.label.length > 0) count++;
     if (filters.eventId) count++;
     if (filters.keyword.trim()) count++;
-    if (filters.type !== "all") count++;
+    if (!fixedType && filters.type !== "all") count++;
     return count;
-  }, [filters]);
+  }, [filters, fixedType]);
 
   // ── Active task / event data ────────────────────
   const activeTask = useMemo(() => {

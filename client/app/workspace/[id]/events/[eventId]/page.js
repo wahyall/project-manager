@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useEvents } from "@/hooks/use-events";
 import { useExport } from "@/hooks/use-export";
+import { useDivisionScope } from "@/hooks/use-division-scope";
+import { useAuth } from "@/contexts/auth-context";
 import { EventOverviewTab } from "@/components/events/event-overview-tab";
 import { EventTasksTab } from "@/components/events/event-tasks-tab";
 import { EventSpreadsheetTab } from "@/components/spreadsheet/event-spreadsheet-tab";
@@ -70,6 +72,7 @@ export default function EventDetailPage({ params }) {
   const { id, eventId } = use(params);
   const router = useRouter();
   const { currentWorkspace, members, fetchMembers } = useWorkspace();
+  const { user } = useAuth();
   const {
     getEvent,
     updateEvent,
@@ -81,6 +84,12 @@ export default function EventDetailPage({ params }) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const { exporting, exportEventPDF } = useExport();
+
+  // Divisi workspace (untuk baris Divisi di tab Overview)
+  const scope = useDivisionScope(id, {
+    role: currentWorkspace?.role,
+    userId: user?._id,
+  });
 
   // Fetch event detail
   const fetchEventDetail = useCallback(async () => {
@@ -294,6 +303,9 @@ export default function EventDetailPage({ params }) {
             onUpdate={handleUpdate}
             members={members}
             workspaceId={id}
+            divisions={
+              scope.isLocked ? scope.myDivisions : scope.divisions
+            }
           />
         </TabsContent>
 

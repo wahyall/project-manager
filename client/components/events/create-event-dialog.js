@@ -63,6 +63,8 @@ export function CreateEventDialog({
   onOpenChange,
   onCreate,
   workspaceId,
+  divisions = [],
+  defaultDivisionId,
 }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -77,6 +79,7 @@ export function CreateEventDialog({
   );
   const [status, setStatus] = useState("upcoming");
   const [ideas, setIdeas] = useState([]);
+  const [divisionId, setDivisionId] = useState("");
 
   // Reset form on open
   useEffect(() => {
@@ -88,10 +91,11 @@ export function CreateEventDialog({
       setColor(EVENT_COLORS[Math.floor(Math.random() * EVENT_COLORS.length)]);
       setStatus("upcoming");
       setIdeas([]);
+      setDivisionId(defaultDivisionId || "");
       setErrors({});
       setEditorKey((k) => k + 1);
     }
-  }, [open]);
+  }, [open, defaultDivisionId]);
 
   const validate = () => {
     const newErrors = {};
@@ -119,6 +123,7 @@ export function CreateEventDialog({
         color,
         status,
         ideas,
+        divisionId: divisionId || null,
       });
       onOpenChange(false);
     } catch (err) {
@@ -348,6 +353,41 @@ export function CreateEventDialog({
               onChange={setIdeas}
             />
           </div>
+
+          {/* Divisi Workspace */}
+          {(divisions || []).length > 0 && (
+            <div className="space-y-2">
+              <Label>Divisi</Label>
+              <Select
+                value={divisionId || "none"}
+                onValueChange={(val) =>
+                  setDivisionId(val === "none" ? "" : val)
+                }
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Tanpa Divisi" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-muted-foreground">Tanpa Divisi</span>
+                  </SelectItem>
+                  {(divisions || []).map((div) => (
+                    <SelectItem key={div._id} value={div._id.toString()}>
+                      <span className="flex items-center gap-2">
+                        {div.color && (
+                          <span
+                            className="h-2 w-2 rounded-full inline-block"
+                            style={{ backgroundColor: div.color }}
+                          />
+                        )}
+                        {div.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Submit Error */}
           {errors.submit && (

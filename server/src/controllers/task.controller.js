@@ -14,6 +14,11 @@ const Event = require("../models/Event");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
+const {
+  resolveDivisionId,
+  applyDivisionScope,
+  assertCanViewDivisionItem,
+} = require("../utils/divisionScope");
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -88,6 +93,7 @@ exports.listTasks = catchAsync(async (req, res) => {
     label,
     priority,
     eventId,
+    divisionId,
     dueDateFrom,
     dueDateTo,
     keyword,
@@ -106,6 +112,18 @@ exports.listTasks = catchAsync(async (req, res) => {
   if (label) filter.labels = label;
   if (priority) filter.priority = priority;
   if (eventId) filter.eventId = eventId;
+
+  // Scope divisi: member/guest dikunci ke divisinya + Tanpa Divisi,
+  // owner/admin default semua.
+  await applyDivisionScope({
+    filter,
+    workspaceId,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+    divisionParam: divisionId,
+  });
+
+  // Archive filter (default: non-archived)
 
   // Archive filter (default: non-archived)
   if (isArchived === "true") {
@@ -150,6 +168,7 @@ exports.listTasks = catchAsync(async (req, res) => {
       .populate("assignees", "name email avatar")
       .populate("watchers", "name email avatar")
       .populate("labels", "name color")
+      .populate("divisionId", "name color")
       .populate("createdBy", "name email avatar")
       .populate("blockedBy", "title columnId isArchived")
       .sort(sort)
@@ -190,6 +209,7 @@ exports.createTask = catchAsync(async (req, res, next) => {
     priority,
     labels,
     eventId,
+    divisionId,
     subtasks,
     blockedBy,
     phase,
@@ -233,6 +253,50 @@ exports.createTask = catchAsync(async (req, res, next) => {
     }
   }
 
+  // Divisi Workspace: eksplisit dari body, atau mengikuti divisi event
+  // (task dibuat dari konteks event). null = Tanpa Divisi.
+  // Jika task terhubung ke event, divisinya harus sama dengan divisi event.
+  let resolvedDivisionId = null;
+  let parentEventDivision = null;
+  if (eventId) {
+    const parentEvent = await Event.findOne({
+      _id: eventId,
+      workspaceId: workspace._id,
+    })
+      .select("divisionId")
+      .lean();
+    if (!parentEvent) {
+      return next(new AppError("Event tidak ditemukan", 404));
+    }
+    parentEventDivision = parentEvent.divisionId || null;
+  }
+  if (divisionId !== undefined && divisionId !== null && divisionId !== "") {
+    resolvedDivisionId = await resolveDivisionId(divisionId, workspace._id);
+    if (eventId) {
+      const eventDivision = parentEventDivision
+        ? parentEventDivision.toString()
+        : null;
+      const taskDivision = resolvedDivisionId
+        ? resolvedDivisionId.toString()
+        : null;
+      if (eventDivision !== taskDivision) {
+        return next(
+          new AppError("Divisi task harus sama dengan divisi event", 400),
+        );
+      }
+    }
+  } else if (eventId) {
+    resolvedDivisionId = parentEventDivision;
+  }
+
+  // Member/guest hanya boleh membuat task di divisinya (+ Tanpa Divisi)
+  await assertCanViewDivisionItem({
+    divisionId: resolvedDivisionId,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
+
   // Calculate order
   const columnOrder = await getNextColumnOrder(workspace._id, targetColumnId);
 
@@ -271,6 +335,7 @@ exports.createTask = catchAsync(async (req, res, next) => {
     priority: priority || "medium",
     labels: labels || [],
     eventId: eventId || null,
+    divisionId: resolvedDivisionId,
     subtasks: processedSubtasks,
     blockedBy: blockedBy || [],
     createdBy: userId,
@@ -284,6 +349,7 @@ exports.createTask = catchAsync(async (req, res, next) => {
     .populate("assignees", "name email avatar")
     .populate("watchers", "name email avatar")
     .populate("labels", "name color")
+    .populate("divisionId", "name color")
     .populate("createdBy", "name email avatar")
     .populate("blockedBy", "title columnId")
     .lean();
@@ -382,6 +448,7 @@ exports.getTask = catchAsync(async (req, res, next) => {
     .populate("assignees", "name email avatar")
     .populate("watchers", "name email avatar")
     .populate("labels", "name color")
+    .populate("divisionId", "name color")
     .populate("createdBy", "name email avatar")
     .populate("blockedBy", "title columnId isArchived")
     .populate("subtasks.assignee", "name email avatar")
@@ -391,6 +458,14 @@ exports.getTask = catchAsync(async (req, res, next) => {
   if (!task) {
     return next(new AppError("Task tidak ditemukan", 404));
   }
+
+  // Visibility divisi
+  await assertCanViewDivisionItem({
+    divisionId: task.divisionId?._id || task.divisionId,
+    workspaceId: workspace._id,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+  });
 
   res.status(200).json({
     status: "success",
@@ -415,6 +490,14 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     return next(new AppError("Task tidak ditemukan", 404));
   }
 
+  // Visibility divisi: member/guest di luar divisi task tidak boleh mengubah
+  await assertCanViewDivisionItem({
+    divisionId: task.divisionId,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
+
   // Backup original state for comparison
   const oldAssignees = task.assignees.map((a) => a.toString());
   const oldColumnId = task.columnId.toString();
@@ -431,6 +514,7 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     priority,
     labels,
     eventId,
+    divisionId,
     subtasks,
     blockedBy,
     phase,
@@ -518,9 +602,80 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     task.labels = labels;
   }
 
-  // Event
+  // Event (+ divisi mengikuti event).
+  // - eventId diisi: task pindah ke event itu; divisi mengikuti divisi event
+  //   kecuali divisionId eksplisit diberikan (harus sama → jika beda, 400).
+  // - eventId null: lepas dari event, divisi tidak berubah.
   if (eventId !== undefined) {
-    task.eventId = eventId || null;
+    if (eventId) {
+      const parentEvent = await Event.findOne({
+        _id: eventId,
+        workspaceId: workspace._id,
+      })
+        .select("divisionId")
+        .lean();
+      if (!parentEvent) {
+        return next(new AppError("Event tidak ditemukan", 404));
+      }
+      if (divisionId !== undefined) {
+        const resolved = await resolveDivisionId(divisionId, workspace._id);
+        const eventDivision = parentEvent.divisionId
+          ? parentEvent.divisionId.toString()
+          : null;
+        const taskDivision = resolved ? resolved.toString() : null;
+        if (eventDivision !== taskDivision) {
+          return next(
+            new AppError("Divisi task harus sama dengan divisi event", 400),
+          );
+        }
+        await assertCanViewDivisionItem({
+          divisionId: resolved,
+          workspaceId: workspace._id,
+          userId,
+          role: req.workspaceMember?.role,
+        });
+        task.divisionId = resolved;
+      } else {
+        await assertCanViewDivisionItem({
+          divisionId: parentEvent.divisionId,
+          workspaceId: workspace._id,
+          userId,
+          role: req.workspaceMember?.role,
+        });
+        task.divisionId = parentEvent.divisionId || null;
+      }
+      task.eventId = eventId;
+    } else {
+      task.eventId = null;
+    }
+  } else if (divisionId !== undefined) {
+    // Pindah divisi tanpa ganti event — tidak boleh jika task terhubung
+    // ke event dari divisi lain (divisi harus sama dengan divisi event).
+    const resolved = await resolveDivisionId(divisionId, workspace._id);
+    if (task.eventId) {
+      const parentEvent = await Event.findOne({
+        _id: task.eventId,
+        workspaceId: workspace._id,
+      })
+        .select("divisionId")
+        .lean();
+      const eventDivision = parentEvent?.divisionId
+        ? parentEvent.divisionId.toString()
+        : null;
+      const taskDivision = resolved ? resolved.toString() : null;
+      if (eventDivision !== taskDivision) {
+        return next(
+          new AppError("Divisi task harus sama dengan divisi event", 400),
+        );
+      }
+    }
+    await assertCanViewDivisionItem({
+      divisionId: resolved,
+      workspaceId: workspace._id,
+      userId,
+      role: req.workspaceMember?.role,
+    });
+    task.divisionId = resolved;
   }
 
   // Phase (pipeline)
@@ -603,6 +758,7 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     .populate("assignees", "name email avatar")
     .populate("watchers", "name email avatar")
     .populate("labels", "name color")
+    .populate("divisionId", "name color")
     .populate("createdBy", "name email avatar")
     .populate("blockedBy", "title columnId")
     .lean();

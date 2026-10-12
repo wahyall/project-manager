@@ -55,8 +55,10 @@ export function QuickCreateModal({
   columns,
   members,
   events,
+  divisions = [],
   defaultColumnId,
   defaultDueDate,
+  defaultDivisionId,
   onCreateTask,
   onCreateAndOpen,
 }) {
@@ -68,6 +70,7 @@ export function QuickCreateModal({
   const [dueDate, setDueDate] = useState(null);
   const [selectedAssignees, setSelectedAssignees] = useState([]);
   const [eventId, setEventId] = useState("");
+  const [divisionId, setDivisionId] = useState("");
   const [creating, setCreating] = useState(false);
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
@@ -84,10 +87,11 @@ export function QuickCreateModal({
       setDueDate(defaultDueDate ? new Date(defaultDueDate) : null);
       setSelectedAssignees([]);
       setEventId("");
+      setDivisionId(defaultDivisionId || "");
       setEditorKey((k) => k + 1); // Force fresh editor instance
       setTimeout(() => titleInputRef.current?.focus(), 100);
     }
-  }, [open, defaultColumnId, defaultDueDate, columns]);
+  }, [open, defaultColumnId, defaultDueDate, defaultDivisionId, columns]);
 
   const toggleAssignee = (memberId) => {
     setSelectedAssignees((prev) =>
@@ -110,6 +114,9 @@ export function QuickCreateModal({
         dueDate: dueDate ? dueDate.toISOString() : null,
         assignees: selectedAssignees,
         eventId: eventId && eventId !== "none" ? eventId : null,
+        // divisionId: mengikuti divisi event jika terkait event,
+        // selain itu sesuai pilihan (null = Tanpa Divisi)
+        divisionId: linkedEventDivisionId || divisionId || null,
       };
       const task = await onCreateTask(taskData);
       onOpenChange(false);
@@ -128,6 +135,18 @@ export function QuickCreateModal({
     id: m.userId?._id || m.userId || m._id,
     name: m.userId?.name || m.name || "Member",
   }));
+
+  // Divisi event yang dipilih (task otomatis mengikuti divisinya)
+  const getEventDivisionId = (evt) => {
+    if (!evt?.divisionId) return "";
+    return typeof evt.divisionId === "string"
+      ? evt.divisionId
+      : evt.divisionId._id?.toString() || "";
+  };
+  const linkedEvent = (events || []).find((e) => e._id === eventId);
+  const linkedEventDivisionId = linkedEvent
+    ? getEventDivisionId(linkedEvent)
+    : "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -418,6 +437,53 @@ export function QuickCreateModal({
                           </Badge>
                         )}
                       </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {linkedEventDivisionId && (
+                <p className="text-[11px] text-muted-foreground">
+                  Otomatis mengikuti divisi event ini.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Divisi Workspace */}
+          {(divisions || []).length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <CalendarDays className="h-3 w-3" />
+                Divisi
+                <span className="text-muted-foreground font-normal">
+                  (opsional)
+                </span>
+              </Label>
+              <Select
+                value={linkedEventDivisionId || divisionId || "none"}
+                onValueChange={(val) =>
+                  setDivisionId(val === "none" ? "" : val)
+                }
+                disabled={!!linkedEventDivisionId}
+              >
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Tanpa Divisi" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-muted-foreground">Tanpa Divisi</span>
+                  </SelectItem>
+                  {(divisions || []).map((div) => (
+                    <SelectItem key={div._id} value={div._id.toString()}>
+                      <span className="flex items-center gap-2">
+                        {div.color && (
+                          <span
+                            className="h-2 w-2 rounded-full inline-block shrink-0"
+                            style={{ backgroundColor: div.color }}
+                          />
+                        )}
+                        {div.name}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

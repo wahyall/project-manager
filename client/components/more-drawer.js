@@ -157,7 +157,7 @@ export function MoreDrawer({ open, onOpenChange, workspace, workspaceId }) {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20">
                   <Calendar className="h-4 w-4" />
                 </div>
-                Kalender View
+                Kalender Task
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
             </Button>

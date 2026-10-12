@@ -151,16 +151,17 @@ export function FilterToolbar({
   };
 
   const clearAllFilters = () => {
-    setFilters({
+    setFilters((prev) => ({
       assignee: [],
       label: [],
       priority: [],
       eventId: null,
+      divisionId: prev.divisionId,
       dueDateFrom: null,
       dueDateTo: null,
       keyword: "",
       showArchived: false,
-    });
+    }));
   };
 
   return (

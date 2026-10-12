@@ -1,10 +1,14 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { useAuth } from "@/contexts/auth-context";
 import { useEvents } from "@/hooks/use-events";
-import { EventCard } from "@/components/events/event-card";
+import { useDivisionScope } from "@/hooks/use-division-scope";
+import { DivisionFilter } from "@/components/workspace/division-filter";
+import { EventKanbanBoard } from "@/components/events/event-kanban-board";
+import { EventCalendarView } from "@/components/events/event-calendar-view";
 import { EventFilterToolbar } from "@/components/events/event-filter-toolbar";
 import { CreateEventDialog } from "@/components/events/create-event-dialog";
 import { Button } from "@/components/ui/button";
@@ -17,7 +21,10 @@ import {
   Clock,
   MapPin,
   Inbox,
+  Columns3,
+  Calendar as CalendarIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -25,7 +32,15 @@ export default function EventsPage({ params }) {
   const { id } = use(params);
   const router = useRouter();
   const { currentWorkspace, members, fetchMembers } = useWorkspace();
+  const { user } = useAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState("kanban"); // "kanban" | "calendar"
+
+  // ── Scope divisi: otomatis sesuai divisi user, owner/admin bebas ──
+  const scope = useDivisionScope(id, {
+    role: currentWorkspace?.role,
+    userId: user?._id,
+  });
 
   const {
     events,
@@ -33,13 +48,24 @@ export default function EventsPage({ params }) {
     error,
     filters,
     setFilters,
+    divisionId,
+    setDivisionId,
     sortBy,
     setSortBy,
     sortOrder,
     setSortOrder,
     createEvent,
+    updateEvent,
     fetchEvents,
-  } = useEvents(id);
+  } = useEvents(id, {
+    divisionIds: scope.isLocked ? scope.myDivisionIds : null,
+    includeNone: true,
+  });
+
+  // Sinkronkan filter divisi hook dengan scope (auto per divisi user)
+  useEffect(() => {
+    setDivisionId(scope.apiParam);
+  }, [scope.apiParam, setDivisionId]);
 
   // Fetch members for participant filters & create dialog
   useEffect(() => {
@@ -66,8 +92,27 @@ export default function EventsPage({ params }) {
     return newEvent;
   };
 
+  const handleStatusChange = useCallback(
+    async (eventId, status) => {
+      try {
+        await updateEvent(eventId, { status });
+        toast.success(
+          status === "completed"
+            ? "Event selesai"
+            : status === "ongoing"
+              ? "Event berjalan"
+              : "Event dijadwalkan",
+        );
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Gagal mengubah status");
+      }
+    },
+    [updateEvent],
+  );
+
   const handleEventClick = (event) => {
-    router.push(`/workspace/${id}/events/${event._id}`);
+    const eventId = typeof event === "string" ? event : event._id;
+    router.push(`/workspace/${id}/events/${eventId}`);
   };
 
   if (!currentWorkspace) return null;
@@ -76,6 +121,15 @@ export default function EventsPage({ params }) {
   const upcomingCount = events.filter((e) => e.status === "upcoming").length;
   const ongoingCount = events.filter((e) => e.status === "ongoing").length;
   const completedCount = events.filter((e) => e.status === "completed").length;
+
+  // Divisi untuk picker (terkunci → hanya divisinya)
+  const divisionOptions = scope.isLocked ? scope.myDivisions : scope.divisions;
+  const defaultDivisionId =
+    scope.selected !== "all" &&
+    scope.selected !== "mine" &&
+    scope.selected !== "none"
+      ? scope.selected
+      : undefined;
 
   return (
     <div className="p-4 lg:p-6 space-y-5 max-w-6xl mx-auto">
@@ -89,16 +143,45 @@ export default function EventsPage({ params }) {
             Event
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Kelola jadwal, milestone, dan acara penting workspace
+            {scope.isLocked
+              ? "Event divisi kamu — dikelompokkan per divisi"
+              : "Kelola jadwal, milestone, dan acara penting per divisi"}
           </p>
         </div>
-        <Button
-          className="gap-2 shadow-sm"
-          onClick={() => setCreateDialogOpen(true)}
-        >
-          <Plus className="h-4 w-4" />
-          Buat Event
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* View mode: Kanban | Kalender */}
+          <div className="flex items-center rounded-lg border bg-background shadow-sm p-0.5">
+            {[
+              { value: "kanban", label: "Kanban", icon: Columns3 },
+              { value: "calendar", label: "Kalender", icon: CalendarIcon },
+            ].map((opt) => {
+              const Icon = opt.icon;
+              const isActive = viewMode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                  )}
+                  onClick={() => setViewMode(opt.value)}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <Button
+            className="gap-2 shadow-sm"
+            onClick={() => setCreateDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Buat Event
+          </Button>
+        </div>
       </div>
 
       {/* Quick stats */}
@@ -134,16 +217,21 @@ export default function EventsPage({ params }) {
         </div>
       )}
 
-      {/* Filter toolbar */}
-      <EventFilterToolbar
-        filters={filters}
-        setFilters={setFilters}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        members={members}
-      />
+      {/* Filter toolbar: divisi + filter event */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+        <DivisionFilter scope={scope} />
+        <div className="flex-1 min-w-0">
+          <EventFilterToolbar
+            filters={filters}
+            setFilters={setFilters}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            members={members}
+          />
+        </div>
+      </div>
 
       {/* Error */}
       {error && (
@@ -181,21 +269,30 @@ export default function EventsPage({ params }) {
         </div>
       )}
 
-      {/* Event grid */}
-      {!loading && events.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {events.map((event) => (
-            <EventCard
-              key={event._id}
-              event={event}
-              onClick={handleEventClick}
-            />
-          ))}
-        </div>
+      {/* View: Kanban */}
+      {!loading && viewMode === "kanban" && events.length > 0 && (
+        <EventKanbanBoard
+          events={events}
+          getDivision={scope.getDivision}
+          onEventClick={handleEventClick}
+          onStatusChange={handleStatusChange}
+        />
       )}
 
-      {/* Empty state */}
-      {!loading && events.length === 0 && !error && (
+      {/* View: Kalender Event */}
+      {!loading && viewMode === "calendar" && (
+        <EventCalendarView
+          workspaceId={id}
+          workspace={currentWorkspace}
+          divisionId={divisionId}
+          members={members}
+          onEventClick={handleEventClick}
+          onDateClick={() => setCreateDialogOpen(true)}
+        />
+      )}
+
+      {/* Empty state (kanban) */}
+      {!loading && viewMode === "kanban" && events.length === 0 && !error && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-20 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/10 mb-6">
@@ -232,6 +329,8 @@ export default function EventsPage({ params }) {
         onOpenChange={setCreateDialogOpen}
         onCreate={handleCreate}
         workspaceId={id}
+        divisions={divisionOptions}
+        defaultDivisionId={defaultDivisionId}
       />
     </div>
   );

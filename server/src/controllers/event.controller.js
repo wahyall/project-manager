@@ -12,6 +12,11 @@ const EmbeddingService = require("../services/embedding.service");
 const googleSheetsService = require("../services/googleSheets.service");
 const { syncRealizationStatus } = require("../services/ideaRealization.service");
 const { recalculateRelativeDueDates } = require("../services/task.service");
+const {
+  resolveDivisionId,
+  applyDivisionScope,
+  assertCanViewDivisionItem,
+} = require("../utils/divisionScope");
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -35,6 +40,7 @@ const populateEvent = (query) => {
   return query
     .populate("participants", "name email avatar")
     .populate("createdBy", "name email avatar")
+    .populate("divisionId", "name color")
     .populate("ideas", "title status");
 };
 
@@ -78,6 +84,7 @@ exports.listEvents = catchAsync(async (req, res) => {
   const {
     status,
     participant,
+    divisionId,
     startDateFrom,
     startDateTo,
     keyword,
@@ -89,6 +96,16 @@ exports.listEvents = catchAsync(async (req, res) => {
 
   // Build filter
   const filter = { workspaceId };
+
+  // Scope divisi: member/guest dikunci ke divisinya + Tanpa Divisi,
+  // owner/admin default semua. Param divisionId: id | "none" | comma-separated.
+  await applyDivisionScope({
+    filter,
+    workspaceId,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+    divisionParam: divisionId,
+  });
 
   // Status filter (supports comma-separated for multiselect)
   if (status) {
@@ -195,6 +212,7 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     color,
     status,
     ideas,
+    divisionId,
   } = req.body;
 
   if (!title || !title.trim()) {
@@ -237,6 +255,19 @@ exports.createEvent = catchAsync(async (req, res, next) => {
   const ideaIds =
     ideas === undefined ? [] : await resolveIdeaIds(ideas, workspace._id);
 
+  // Divisi Workspace pemilik event (null = Tanpa Divisi).
+  // Member/guest hanya boleh membuat event di divisinya sendiri.
+  const resolvedDivisionId = await resolveDivisionId(
+    divisionId,
+    workspace._id,
+  );
+  await assertCanViewDivisionItem({
+    divisionId: resolvedDivisionId,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
+
   const event = await Event.create({
     workspaceId: workspace._id,
     title: title.trim(),
@@ -247,6 +278,7 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     status: status || "upcoming",
     participants: [],
     ideas: ideaIds,
+    divisionId: resolvedDivisionId,
     googleSpreadsheetId,
     googleSpreadsheetUrl,
     createdBy: userId,
@@ -363,6 +395,14 @@ exports.getEvent = catchAsync(async (req, res, next) => {
     return next(new AppError("Event tidak ditemukan", 404));
   }
 
+  // Visibility divisi: member/guest di luar divisi event tidak boleh melihat
+  await assertCanViewDivisionItem({
+    divisionId: event.divisionId,
+    workspaceId: workspace._id,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+  });
+
   // Attach task count
   const taskCount = await Task.countDocuments({
     eventId: event._id,
@@ -395,7 +435,7 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   // Backup original state
   const oldDescription = event.description;
 
-  const { title, description, startDate, endDate, color, status, ideas } =
+  const { title, description, startDate, endDate, color, status, ideas, divisionId } =
     req.body;
 
   // Title
@@ -418,7 +458,6 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   if (endDate !== undefined) {
     event.endDate = new Date(endDate);
   }
-
   // Validate dates after updates
   if (event.endDate < event.startDate) {
     return next(
@@ -442,6 +481,19 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
       return next(new AppError("Status tidak valid", 400));
     }
     event.status = status;
+  }
+
+  // Divisi Workspace (null = Tanpa Divisi).
+  // Member/guest hanya boleh memindahkan ke divisinya sendiri.
+  if (divisionId !== undefined) {
+    const resolved = await resolveDivisionId(divisionId, workspace._id);
+    await assertCanViewDivisionItem({
+      divisionId: resolved,
+      workspaceId: workspace._id,
+      userId,
+      role: req.workspaceMember?.role,
+    });
+    event.divisionId = resolved;
   }
 
   const previousIdeaIds = (event.ideas || []).map((i) => i.toString());
@@ -519,6 +571,7 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   if (color !== undefined) changedFields.push("color");
   if (status !== undefined) changedFields.push("status");
   if (ideas !== undefined) changedFields.push("ideas");
+  if (divisionId !== undefined) changedFields.push("divisionId");
   if (changedFields.length > 0) {
     ActivityLogService.log({
       workspaceId: workspace._id,
@@ -677,12 +730,21 @@ exports.getEventTasks = catchAsync(async (req, res, next) => {
     return next(new AppError("Event tidak ditemukan", 404));
   }
 
+  // Visibility divisi
+  await assertCanViewDivisionItem({
+    divisionId: event.divisionId,
+    workspaceId: workspace._id,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+  });
+
   const tasks = await Task.find({
     eventId: event._id,
     workspaceId: workspace._id,
   })
     .populate("assignees", "name email avatar")
     .populate("labels", "name color")
+    .populate("divisionId", "name color")
     .populate("createdBy", "name email avatar")
     .sort({ columnId: 1, columnOrder: 1 })
     .lean();

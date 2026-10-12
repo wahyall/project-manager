@@ -27,6 +27,7 @@ export function useKanban(workspaceId, workspace) {
     label: [],
     priority: [],
     eventId: null,
+    divisionId: undefined, // undefined = ikut scope server (all/mine), "none" = Tanpa Divisi, id = divisi spesifik
     dueDateFrom: null,
     dueDateTo: null,
     keyword: "",
@@ -77,6 +78,7 @@ export function useKanban(workspaceId, workspace) {
           sortOrder: "asc",
         };
         if (filters.showArchived) params.isArchived = "all";
+        if (filters.divisionId) params.divisionId = filters.divisionId;
 
         const { data } = await api.get(`/workspaces/${workspaceId}/tasks`, {
           params,
@@ -135,7 +137,7 @@ export function useKanban(workspaceId, workspace) {
         }));
       }
     },
-    [workspaceId, filters.showArchived]
+    [workspaceId, filters.showArchived, filters.divisionId]
   );
 
   // ── Load more for a column (infinite scroll) ─────
@@ -203,6 +205,15 @@ export function useKanban(workspaceId, workspace) {
     }
   }, [filters.showArchived, fetchAllColumns]);
 
+  // Re-fetch when division filter changes
+  const prevDivisionId = useRef(filters.divisionId);
+  useEffect(() => {
+    if (prevDivisionId.current !== filters.divisionId && initialFetchDone.current) {
+      prevDivisionId.current = filters.divisionId;
+      fetchAllColumns();
+    }
+  }, [filters.divisionId, fetchAllColumns]);
+
   // ── Filter tasks client-side ─────────────────────
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -239,6 +250,19 @@ export function useKanban(workspaceId, workspace) {
             ? task.eventId
             : task.eventId?._id;
         if (taskEventId !== filters.eventId) return false;
+      }
+
+      // Division filter (client-side, untuk data dari socket realtime)
+      if (filters.divisionId) {
+        const taskDivId =
+          typeof task.divisionId === "string"
+            ? task.divisionId
+            : task.divisionId?._id?.toString();
+        if (filters.divisionId === "none") {
+          if (taskDivId) return false;
+        } else if ((taskDivId || null) !== filters.divisionId) {
+          return false;
+        }
       }
 
       // Due date range
@@ -296,6 +320,7 @@ export function useKanban(workspaceId, workspace) {
     if (filters.label.length > 0) count++;
     if (filters.priority.length > 0) count++;
     if (filters.eventId) count++;
+    if (filters.divisionId) count++;
     if (filters.dueDateFrom || filters.dueDateTo) count++;
     if (filters.keyword.trim()) count++;
     if (filters.showArchived) count++;

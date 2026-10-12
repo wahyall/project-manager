@@ -2,9 +2,12 @@
 
 import { use, useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useCalendar } from "@/hooks/use-calendar";
+import { useDivisionScope } from "@/hooks/use-division-scope";
+import { DivisionFilter } from "@/components/workspace/division-filter";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { QuickCreateModal } from "@/components/kanban/quick-create-modal";
@@ -24,7 +27,9 @@ import {
   RefreshCw,
   Keyboard,
   AlertCircle,
+  Columns3,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -34,8 +39,17 @@ export default function CalendarPage({ params }) {
   const { user } = useAuth();
   const router = useRouter();
 
-  // ── Calendar hook ──────────────────────────────
-  const calendar = useCalendar(workspaceId, currentWorkspace);
+  // ── Scope divisi: otomatis sesuai divisi user, owner/admin bebas ──
+  const scope = useDivisionScope(workspaceId, {
+    role: currentWorkspace?.role,
+    userId: user?._id,
+  });
+
+  // ── Calendar hook (khusus Task — terpisah dari kalender Event) ──
+  const calendar = useCalendar(workspaceId, currentWorkspace, {
+    fixedType: "tasks",
+    divisionId: scope.apiParam,
+  });
   const isMobile = useIsMobile();
 
   // ── View state ─────────────────────────────────
@@ -265,7 +279,6 @@ export default function CalendarPage({ params }) {
   if (!currentWorkspace) return null;
 
   const taskCount = calendar.tasks.length;
-  const eventCount = calendar.events.length;
 
   // ── Events list for selectors ──────────────────────
   const [events, setEvents] = useState([]);
@@ -294,15 +307,36 @@ export default function CalendarPage({ params }) {
               <CalendarDays className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Kalender</h1>
+              <h1 className="text-xl font-bold text-foreground">Kalender Task</h1>
               <p className="text-xs text-muted-foreground">
-                {taskCount} task{eventCount > 0 ? ` • ${eventCount} event` : ""}{" "}
-                dalam tampilan
+                {taskCount} task dalam tampilan
+                {scope.selected !== "all" &&
+                  scope.selected !== "mine" &&
+                  scope.getDivision(scope.selected) &&
+                  ` • ${scope.getDivision(scope.selected).name}`}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* View mode: Kanban | Kalender */}
+            <div className="flex items-center rounded-lg border bg-background shadow-sm p-0.5">
+              <Link
+                href={`/workspace/${workspaceId}/tasks/kanban`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+              >
+                <Columns3 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Kanban</span>
+              </Link>
+              <span
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground shadow-sm",
+                )}
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Kalender</span>
+              </span>
+            </div>
             {/* Keyboard shortcuts hint */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -357,19 +391,25 @@ export default function CalendarPage({ params }) {
         </div>
 
         {/* ── Toolbar: nav + view switcher + filters ── */}
-        <CalendarToolbar
-          title={calendarTitle}
-          currentView={currentView}
-          onViewChange={setCurrentView}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          onToday={handleToday}
-          filters={calendar.filters}
-          onFiltersChange={calendar.setFilters}
-          activeFilterCount={calendar.activeFilterCount}
-          members={members}
-          labels={labels}
-        />
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+          <DivisionFilter scope={scope} />
+          <div className="flex-1 min-w-0">
+            <CalendarToolbar
+              title={calendarTitle}
+              currentView={currentView}
+              onViewChange={setCurrentView}
+              onPrev={handlePrev}
+              onNext={handleNext}
+              onToday={handleToday}
+              filters={calendar.filters}
+              onFiltersChange={calendar.setFilters}
+              activeFilterCount={calendar.activeFilterCount}
+              members={members}
+              labels={labels}
+              fixedType="tasks"
+            />
+          </div>
+        </div>
       </div>
 
       <Separator />
@@ -447,8 +487,16 @@ export default function CalendarPage({ params }) {
         onOpenChange={setQuickCreateOpen}
         columns={calendar.columns}
         members={members}
+        divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
         defaultColumnId={calendar.columns[0]?._id}
         defaultDueDate={quickCreateDefaultDueDate}
+        defaultDivisionId={
+          scope.selected !== "all" &&
+          scope.selected !== "mine" &&
+          scope.selected !== "none"
+            ? scope.selected
+            : undefined
+        }
         onCreateTask={handleCreateTask}
         onCreateAndOpen={(taskId) => calendar.setActiveTaskId(taskId)}
       />
@@ -461,6 +509,7 @@ export default function CalendarPage({ params }) {
         columns={calendar.columns}
         members={members}
         labels={labels}
+        divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
         currentUserId={user?._id}
         workspaceId={workspaceId}
         onUpdate={handleUpdateTask}

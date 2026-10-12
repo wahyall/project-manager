@@ -58,6 +58,7 @@ export function TaskDetailPanel({
   members,
   labels,
   events,
+  divisions = [],
   currentUserId,
   workspaceId,
   onUpdate,
@@ -242,6 +243,7 @@ export function TaskDetailPanel({
                       members={members}
                       labels={labels}
                       events={events}
+                      divisions={divisions}
                       currentUserId={currentUserId}
                       onUpdate={handleUpdate}
                       onWatch={() => onWatch?.(task._id)}

@@ -2,9 +2,11 @@ const Task = require("../models/Task");
 const Event = require("../models/Event");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
+const { applyDivisionScope } = require("../utils/divisionScope");
 
 // ──────────────────────────────────────────────
 // GET /api/workspaces/:id/calendar — Calendar data
+// Query: type=all|tasks|events, divisionId=id|none|comma-separated
 // ──────────────────────────────────────────────
 exports.getCalendarData = catchAsync(async (req, res, next) => {
   const workspace = req.workspace;
@@ -15,6 +17,7 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
     priority,
     label,
     eventId,
+    divisionId,
     type = "all",
   } = req.query;
 
@@ -31,12 +34,24 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
     return next(new AppError("Format tanggal tidak valid", 400));
   }
 
+  // ── Scope divisi (berlaku untuk task maupun event) ──
+  // member/guest dikunci ke divisinya + Tanpa Divisi, owner/admin default semua.
+  const divisionScope = {};
+  await applyDivisionScope({
+    filter: divisionScope,
+    workspaceId: workspace._id,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+    divisionParam: divisionId,
+  });
+
   // ── Fetch tasks ────────────────────────────────
   let tasks = [];
 
   if (type === "all" || type === "tasks") {
     const taskFilter = {
       workspaceId: workspace._id,
+      ...divisionScope,
       isArchived: { $ne: true },
       // Task visible in calendar if it has dueDate OR startDate in the range
       $or: [
@@ -75,6 +90,7 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
       .populate("assignees", "name email avatar")
       .populate("watchers", "name email avatar")
       .populate("labels", "name color")
+      .populate("divisionId", "name color")
       .populate("createdBy", "name email avatar")
       .populate("blockedBy", "title columnId isArchived")
       .sort({ dueDate: 1 })
@@ -87,6 +103,7 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
   if (type === "all" || type === "events") {
     const eventFilter = {
       workspaceId: workspace._id,
+      ...divisionScope,
       $or: [
         // Event with startDate in range
         { startDate: { $gte: rangeStart, $lte: rangeEnd } },
@@ -102,6 +119,7 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
 
     events = await Event.find(eventFilter)
       .populate("participants", "name email avatar")
+      .populate("divisionId", "name color")
       .populate("createdBy", "name email avatar")
       .sort({ startDate: 1 })
       .lean();

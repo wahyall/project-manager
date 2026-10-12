@@ -1,10 +1,13 @@
 "use client";
 
 import { use, useRef, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useAuth } from "@/contexts/auth-context";
 import { useKanban } from "@/hooks/use-kanban";
 import { useExport } from "@/hooks/use-export";
+import { useDivisionScope } from "@/hooks/use-division-scope";
+import { DivisionFilter } from "@/components/workspace/division-filter";
 import api from "@/lib/api";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { FilterToolbar } from "@/components/kanban/filter-toolbar";
@@ -28,7 +31,9 @@ import {
   Keyboard,
   Loader2,
   AlertCircle,
+  Calendar as CalendarIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function KanbanPage({ params }) {
@@ -40,6 +45,22 @@ export default function KanbanPage({ params }) {
   const kanban = useKanban(workspaceId, currentWorkspace);
   const { exporting, exportTaskCSV, exportTaskXLSX, exportTaskPDF } =
     useExport();
+
+  // ── Scope divisi: otomatis sesuai divisi user, owner/admin bebas ──
+  const scope = useDivisionScope(workspaceId, {
+    role: currentWorkspace?.role,
+    userId: user?._id,
+  });
+
+  // Sinkronkan filter divisi ke hook kanban (memicu refetch per kolom)
+  useEffect(() => {
+    kanban.setFilters((prev) =>
+      prev.divisionId === scope.apiParam
+        ? prev
+        : { ...prev, divisionId: scope.apiParam },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope.apiParam]);
 
   // ── Quick create modal state ─────────────────────
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
@@ -270,15 +291,37 @@ export default function KanbanPage({ params }) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">
-                Kanban Board
+                Task Board
               </h1>
               <p className="text-xs text-muted-foreground">
                 {totalTasks} task aktif di {columns.length} kolom
+                {scope.selected !== "all" &&
+                  scope.selected !== "mine" &&
+                  scope.getDivision(scope.selected) &&
+                  ` • ${scope.getDivision(scope.selected).name}`}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* View mode: Kanban | Kalender */}
+            <div className="flex items-center rounded-lg border bg-background shadow-sm p-0.5">
+              <span
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground shadow-sm",
+                )}
+              >
+                <Columns3 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Kanban</span>
+              </span>
+              <Link
+                href={`/workspace/${workspaceId}/tasks/calendar`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+              >
+                <CalendarIcon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Kalender</span>
+              </Link>
+            </div>
             {/* Keyboard shortcuts hint */}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -342,14 +385,19 @@ export default function KanbanPage({ params }) {
         </div>
 
         {/* Filter toolbar */}
-        <FilterToolbar
-          filters={kanban.filters}
-          setFilters={kanban.setFilters}
-          activeFilterCount={kanban.activeFilterCount}
-          members={members}
-          labels={kanban.labels}
-          searchInputRef={searchInputRef}
-        />
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+          <DivisionFilter scope={scope} />
+          <div className="flex-1 min-w-0">
+            <FilterToolbar
+              filters={kanban.filters}
+              setFilters={kanban.setFilters}
+              activeFilterCount={kanban.activeFilterCount}
+              members={members}
+              labels={kanban.labels}
+              searchInputRef={searchInputRef}
+            />
+          </div>
+        </div>
       </div>
 
       <Separator />
@@ -421,7 +469,15 @@ export default function KanbanPage({ params }) {
         columns={columns}
         members={members}
         events={events}
+        divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
         defaultColumnId={quickCreateColumnId}
+        defaultDivisionId={
+          scope.selected !== "all" &&
+          scope.selected !== "mine" &&
+          scope.selected !== "none"
+            ? scope.selected
+            : undefined
+        }
         onCreateTask={handleCreateTask}
         onCreateAndOpen={(taskId) => kanban.setActiveTaskId(taskId)}
       />
@@ -435,6 +491,7 @@ export default function KanbanPage({ params }) {
         members={members}
         labels={kanban.labels}
         events={events}
+        divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
         currentUserId={user?._id}
         workspaceId={workspaceId}
         onUpdate={handleUpdateTask}

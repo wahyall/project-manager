@@ -66,6 +66,8 @@ export function CalendarToolbar({
   activeFilterCount,
   members = [],
   labels = [],
+  fixedType = null,
+  searchPlaceholder = "Cari task...",
 }) {
   // Get member list with proper structure
   const memberList = useMemo(
@@ -94,7 +96,7 @@ export function CalendarToolbar({
       label: [],
       eventId: null,
       keyword: "",
-      type: "all",
+      type: fixedType || "all",
     });
   };
 
@@ -184,7 +186,7 @@ export function CalendarToolbar({
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Cari task..."
+            placeholder={searchPlaceholder}
             value={filters.keyword}
             onChange={(e) =>
               onFiltersChange((prev) => ({ ...prev, keyword: e.target.value }))

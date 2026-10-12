@@ -80,12 +80,12 @@ const NAV_MAIN = [
 
 const NAV_TASKS = [
   {
-    label: "Kanban Board",
+    label: "Task Board",
     icon: Columns3,
     href: "/tasks/kanban",
   },
   {
-    label: "Kalender",
+    label: "Kalender Task",
     icon: Calendar,
     href: "/tasks/calendar",
   },
