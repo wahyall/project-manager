@@ -118,7 +118,6 @@ export function DivisionManager({
   allowAddAsLeader = false,
   actions,
   memberSearchHint = "Cari nama atau email member",
-  detailBaseUrl = null,
 }) {
   const [query, setQuery] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -582,19 +581,6 @@ export function DivisionManager({
                               <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-[10px]">
                                 {memberList.length}
                               </Badge>
-                              {detailBaseUrl && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 shrink-0 gap-1 px-2 text-[11px] text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                                  asChild
-                                >
-                                  <Link href={`${detailBaseUrl}/${div._id}`}>
-                                    <Activity className="h-3.5 w-3.5" />
-                                    <span className="hidden sm:inline">Tracking & Detail</span>
-                                  </Link>
-                                </Button>
-                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -618,14 +604,6 @@ export function DivisionManager({
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  {detailBaseUrl && (
-                                    <DropdownMenuItem asChild className="gap-2 text-sm text-emerald-600">
-                                      <Link href={`${detailBaseUrl}/${div._id}`}>
-                                        <Activity className="h-4 w-4" />
-                                        Tracking & Detail Divisi
-                                      </Link>
-                                    </DropdownMenuItem>
-                                  )}
                                   <DropdownMenuItem
                                     onClick={() => {
                                       setEditingDiv(div._id);

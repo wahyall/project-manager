@@ -21,7 +21,10 @@ import {
   Download,
   Sparkles,
   Sprout,
+  HeartHandshake,
 } from "lucide-react";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { useWorkspaceDivisions } from "@/hooks/use-workspace-divisions";
 import { useState, useEffect } from "react";
 import { usePushNotification } from "@/hooks/use-push";
 import { Switch } from "@/components/ui/switch";
@@ -30,6 +33,30 @@ import { Bell, BellOff, Loader2 } from "lucide-react";
 export function MoreDrawer({ open, onOpenChange, workspace, workspaceId }) {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { currentWorkspace } = useWorkspace();
+  const { divisions } = useWorkspaceDivisions(workspaceId);
+
+  const canAccessBM = Boolean(
+    (() => {
+      const role = workspace?.role || currentWorkspace?.role;
+      if (role === "owner" || role === "admin") return true;
+      if (!user || !divisions) return false;
+      const uid = user._id?.toString() || user.id?.toString();
+      const bmDiv = divisions.find(
+        (d) =>
+          d.divisionType === "bm" ||
+          /baitul\s*ma[a]?l|^bm\b|\(bm\)/i.test(d.name)
+      );
+      if (!bmDiv) return false;
+      return (bmDiv.members || []).some((m) => {
+        const memberUid =
+          typeof m.userId === "object"
+            ? m.userId?._id?.toString()
+            : m.userId?.toString();
+        return memberUid === uid;
+      });
+    })()
+  );
 
   const [canInstall, setCanInstall] = useState(false);
   const {
@@ -131,6 +158,22 @@ export function MoreDrawer({ open, onOpenChange, workspace, workspaceId }) {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
             </Button>
+
+            {canAccessBM && (
+              <Button
+                variant="ghost"
+                className="w-full justify-between font-normal h-12 rounded-xl"
+                onClick={() => handleNavigate(`/workspace/${workspaceId}/baitul-mal`)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20">
+                    <HeartHandshake className="h-4 w-4" />
+                  </div>
+                  Baitul Maal (BM)
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+              </Button>
+            )}
 
             <Button
               variant="ghost"

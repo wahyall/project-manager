@@ -1,8 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/contexts/auth-context";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { useWorkspaceDivisions } from "@/hooks/use-workspace-divisions";
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +43,7 @@ import {
   Sparkles,
   Sprout,
   Users,
+  HeartHandshake,
 } from "lucide-react";
 
 // ─── Navigation structure ────────────────────────────
@@ -208,6 +212,41 @@ function NavGroup({ items, basePath, pathname }) {
 export function AppSidebar({ workspaceId, workspace, ...props }) {
   const pathname = usePathname();
   const basePath = `/workspace/${workspaceId}`;
+  const { user } = useAuth();
+  const { currentWorkspace } = useWorkspace();
+  const { divisions } = useWorkspaceDivisions(workspaceId);
+
+  const canAccessBM = useMemo(() => {
+    const role = workspace?.role || currentWorkspace?.role;
+    if (role === "owner" || role === "admin") return true;
+    if (!user || !divisions) return false;
+    const uid = user._id?.toString() || user.id?.toString();
+    const bmDiv = divisions.find(
+      (d) =>
+        d.divisionType === "bm" ||
+        /baitul\s*ma[a]?l|^bm\b|\(bm\)/i.test(d.name)
+    );
+    if (!bmDiv) return false;
+    return (bmDiv.members || []).some((m) => {
+      const memberUid =
+        typeof m.userId === "object"
+          ? m.userId?._id?.toString()
+          : m.userId?.toString();
+      return memberUid === uid;
+    });
+  }, [workspace, currentWorkspace, user, divisions]);
+
+  const navItems = useMemo(() => {
+    const items = [...NAV_MAIN];
+    if (canAccessBM) {
+      items.splice(2, 0, {
+        label: "Baitul Maal (BM)",
+        icon: HeartHandshake,
+        href: "/baitul-mal",
+      });
+    }
+    return items;
+  }, [canAccessBM]);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -223,7 +262,7 @@ export function AppSidebar({ workspaceId, workspace, ...props }) {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <NavGroup
-              items={NAV_MAIN}
+              items={navItems}
               basePath={basePath}
               pathname={pathname}
             />

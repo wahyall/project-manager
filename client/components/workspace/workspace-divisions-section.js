@@ -24,7 +24,6 @@ export function WorkspaceDivisionsSection({ workspaceId, members = [] }) {
       allowAddAsLeader
       actions={divisions}
       memberSearchHint="Cari member workspace"
-      detailBaseUrl={`/workspace/${workspaceId}/divisions`}
     />
   );
 }
