@@ -21,6 +21,15 @@ const {
   assertCanViewDivisionItem,
 } = require("../utils/divisionScope");
 
+const divisionPopulate = {
+  path: "divisionId",
+  select: "name color members",
+  populate: {
+    path: "members.userId",
+    select: "name email avatar",
+  },
+};
+
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
   try {
@@ -169,7 +178,7 @@ exports.listTasks = catchAsync(async (req, res) => {
       .populate("assignees", "name email avatar")
       .populate("watchers", "name email avatar")
       .populate("labels", "name color")
-      .populate("divisionId", "name color")
+      .populate(divisionPopulate)
       .populate("createdBy", "name email avatar")
       .populate("blockedBy", "title columnId isArchived")
       .sort(sort)
@@ -350,7 +359,7 @@ exports.createTask = catchAsync(async (req, res, next) => {
     .populate("assignees", "name email avatar")
     .populate("watchers", "name email avatar")
     .populate("labels", "name color")
-    .populate("divisionId", "name color")
+    .populate(divisionPopulate)
     .populate("createdBy", "name email avatar")
     .populate("blockedBy", "title columnId")
     .lean();
@@ -444,7 +453,7 @@ exports.getTask = catchAsync(async (req, res, next) => {
     .populate("assignees", "name email avatar")
     .populate("watchers", "name email avatar")
     .populate("labels", "name color")
-    .populate("divisionId", "name color")
+    .populate(divisionPopulate)
     .populate("createdBy", "name email avatar")
     .populate("blockedBy", "title columnId isArchived")
     .populate("subtasks.assignee", "name email avatar")
@@ -754,7 +763,7 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     .populate("assignees", "name email avatar")
     .populate("watchers", "name email avatar")
     .populate("labels", "name color")
-    .populate("divisionId", "name color")
+    .populate(divisionPopulate)
     .populate("createdBy", "name email avatar")
     .populate("blockedBy", "title columnId")
     .lean();

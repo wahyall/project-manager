@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import {
@@ -16,6 +16,7 @@ import {
   Columns3,
   AlignLeft,
   Loader2,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,6 +140,29 @@ export function TabDetail({
     id: m.userId?._id || m.userId || m._id,
     name: m.userId?.name || m.name || "Member",
   }));
+
+  // Resolve current division & leader(s)
+  const selectedDivision = useMemo(() => {
+    if (!task.divisionId) return null;
+    const divId =
+      typeof task.divisionId === "object"
+        ? (task.divisionId._id || task.divisionId.id)?.toString()
+        : task.divisionId.toString();
+    const found = (divisions || []).find((d) => d._id?.toString() === divId);
+    if (found) return found;
+    return typeof task.divisionId === "object" ? task.divisionId : null;
+  }, [task.divisionId, divisions]);
+
+  const divisionLeaders = useMemo(() => {
+    if (!selectedDivision?.members) return [];
+    return selectedDivision.members
+      .filter((m) => m.role === "leader")
+      .map((m) => {
+        const u = m.userId;
+        if (u && typeof u === "object") return u;
+        return { _id: u || m._id, name: "Ketua" };
+      });
+  }, [selectedDivision]);
 
   // Current assignee IDs
   const assigneeIds = (task.assignees || []).map((a) =>
@@ -585,6 +609,24 @@ export function TabDetail({
           <p className="-mt-2 text-[11px] text-muted-foreground pl-8">
             Divisi mengikuti event terkait.
           </p>
+        )}
+
+        {/* Ketua Divisi */}
+        {divisionLeaders.length > 0 && (
+          <FieldRow icon={Crown} label="Ketua Divisi">
+            <div className="flex flex-wrap items-center gap-1.5 py-0.5">
+              {divisionLeaders.map((leader) => (
+                <Badge
+                  key={leader._id}
+                  variant="secondary"
+                  className="text-xs h-6 gap-1 px-2 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/25"
+                >
+                  <Crown className="h-3 w-3 text-amber-500 shrink-0" />
+                  <span className="font-medium">{leader.name}</span>
+                </Badge>
+              ))}
+            </div>
+          </FieldRow>
         )}
 
         {/* Dependencies (read-only display) */}

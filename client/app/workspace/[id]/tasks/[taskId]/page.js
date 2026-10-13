@@ -66,6 +66,7 @@ export default function TaskDetailPage({ params }) {
   // Workspace data for tab-detail
   const [labels, setLabels] = useState([]);
   const [events, setEvents] = useState([]);
+  const [divisions, setDivisions] = useState([]);
 
   // Columns from workspace
   const columns = (currentWorkspace?.kanbanColumns || [])
@@ -109,6 +110,12 @@ export default function TaskDetailPage({ params }) {
           `/workspaces/${workspaceId}/events?limit=200&sortBy=startDate&sortOrder=desc`,
         )
         .then((res) => setEvents(res.data?.data?.events || []))
+        .catch(() => {});
+
+      // Fetch divisions
+      api
+        .get(`/workspaces/${workspaceId}/divisions`)
+        .then((res) => setDivisions(res.data?.data?.divisions || []))
         .catch(() => {});
     }
   }, [workspaceId, fetchMembers]);
@@ -468,6 +475,7 @@ export default function TaskDetailPage({ params }) {
                 members={members}
                 labels={labels}
                 events={events}
+                divisions={divisions}
                 currentUserId={user?._id}
                 onUpdate={handleUpdate}
                 onWatch={handleWatch}

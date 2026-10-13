@@ -1,22 +1,22 @@
 1. Revisi Struktur Kanban Board
 
-- [ ] Memisahkan board berdasarkan divisi atau program kerja.
-- [ ] Menyediakan halaman khusus untuk setiap divisi.
-- [ ] Menyediakan board khusus untuk setiap program atau event.
-- [ ] Memisahkan task antar-divisi agar tidak tercampur dan menumpuk dalam satu board.
+- [x] Memisahkan board berdasarkan divisi atau program kerja.
+- [x] Menyediakan halaman khusus untuk setiap divisi.
+- [x] Menyediakan board khusus untuk setiap program atau event.
+- [x] Memisahkan task antar-divisi agar tidak tercampur dan menumpuk dalam satu board.
 - [ ] Menyediakan filter berdasarkan bulan, tahun, divisi, dan status pekerjaan.
 - [ ] Menyediakan tampilan ringkasan progres seluruh divisi.
 
 2. Revisi Data dan Identitas Task
 
 - [ ] Menambahkan field bulan dan tahun periode kerja.
-- [ ] Menambahkan pilihan divisi terkait.
-- [ ] Menambahkan nama ketua divisi.
-- [ ] Menambahkan daftar anggota setiap divisi.
-- [ ] Menambahkan PIC atau penanggung jawab setiap task.
-- [ ] Menambahkan tenggat waktu (deadline).
-- [ ] Menambahkan status: To Do, In Progress, Review, dan Done.
-- [ ] Menambahkan deskripsi, catatan, dan lampiran jika diperlukan.
+- [x] Menambahkan pilihan divisi terkait.
+- [x] Menambahkan nama ketua divisi.
+- [x] Menambahkan daftar anggota setiap divisi.
+- [x] Menambahkan PIC atau penanggung jawab setiap task.
+- [x] Menambahkan tenggat waktu (deadline).
+- [x] Menambahkan status: To Do, In Progress, Review, dan Done.
+- [x] Menambahkan deskripsi, catatan, dan lampiran jika diperlukan.
 
 3. Template Tracking Bulanan Divisi BM
 
@@ -30,15 +30,15 @@
 
 4. Template Tracking Divisi Event
 
-- [ ] Mencatat rencana dan progres event bulanan.
-- [ ] Mencatat kebutuhan internal tim event.
+- [x] Mencatat rencana dan progres event bulanan.
+- [x] Mencatat kebutuhan internal tim event.
 - [ ] Mencatat kebutuhan koordinasi antar-divisi.
-- [ ] Mengumpulkan ide konten untuk mendukung event.
+- [x] Mengumpulkan ide konten untuk mendukung event.
 - [ ] Mengumpulkan masukan terkait pemateri atau narasumber.
-- [ ] Membuat checklist persiapan event.
-- [ ] Mencatat timeline dan deadline persiapan.
-- [ ] Memantau progres setiap kebutuhan sampai selesai.
-- [ ] Membuat evaluasi setelah event selesai.
+- [x] Membuat checklist persiapan event.
+- [x] Mencatat timeline dan deadline persiapan.
+- [x] Memantau progres setiap kebutuhan sampai selesai.
+- [x] Membuat evaluasi setelah event selesai.
 
 5. Fitur Koordinasi Antar-Divisi
 
@@ -46,26 +46,26 @@
 - [ ] Setiap kebutuhan memiliki divisi peminta dan divisi terkait.
 - [ ] Menentukan PIC dari masing-masing divisi yang terlibat.
 - [ ] Menyediakan kolom kendala, bantuan yang dibutuhkan, dan tindak lanjut.
-- [ ] Memberikan notifikasi saat ada task baru atau perubahan status.
-- [ ] Menyediakan komentar atau diskusi dalam setiap task.
+- [x] Memberikan notifikasi saat ada task baru atau perubahan status.
+- [x] Menyediakan komentar atau diskusi dalam setiap task.
 
 6. Dashboard dan Monitoring Ketua
 
 - [ ] Menampilkan progres setiap divisi secara terpisah.
-- [ ] Menampilkan jumlah task berdasarkan status.
-- [ ] Menampilkan task yang terlambat atau mendekati deadline.
+- [x] Menampilkan jumlah task berdasarkan status.
+- [x] Menampilkan task yang terlambat atau mendekati deadline.
 - [ ] Menampilkan kebutuhan antar-divisi yang belum selesai.
 - [ ] Menampilkan ringkasan laporan per bulan dan tahun.
-- [ ] Menyediakan akses monitoring untuk ketua dan pengurus terkait.
+- [x] Menyediakan akses monitoring untuk ketua dan pengurus terkait.
 
 7. Hak Akses dan Pengelolaan Data
 
-- [ ] Ketua dapat melihat dan memantau progres divisinya.
-- [ ] Anggota dapat melihat dan memperbarui task sesuai hak akses.
-- [ ] Ketua umum atau admin dapat memantau seluruh divisi.
+- [x] Ketua dapat melihat dan memantau progres divisinya.
+- [x] Anggota dapat melihat dan memperbarui task sesuai hak akses.
+- [x] Ketua umum atau admin dapat memantau seluruh divisi.
 - [ ] Mengatur hak akses untuk data sensitif seperti kas dan infaq.
-- [ ] Menyimpan riwayat perubahan task dan laporan.
-- [ ] Menyediakan fitur arsip untuk program atau periode yang selesai.
+- [x] Menyimpan riwayat perubahan task dan laporan.
+- [x] Menyediakan fitur arsip untuk program atau periode yang selesai.
 
 - laman kanban board saran >> mungkin kalau bisa dalam progress tiap divisi atau program bisa dipisah agar bisa fokus tracking progress nya, tidak teecampur dan ketumpuk-tumpuk.
 - Nanti task nya isi aja bulan, tahun, divisi, nama dari ketua sampai anggota masing² divisi (kan katanya mau dirilis jg ke tim yg lain ya).

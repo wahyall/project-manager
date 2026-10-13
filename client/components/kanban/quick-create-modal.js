@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   AlignLeft,
   CalendarDays,
+  Crown,
 } from "lucide-react";
 import {
   Dialog,
@@ -150,6 +151,21 @@ export function QuickCreateModal({
   const linkedEventDivisionId = linkedEvent
     ? getEventDivisionId(linkedEvent)
     : "";
+
+  const effectiveDivisionId = linkedEventDivisionId || divisionId;
+  const selectedDivisionLeaders = useMemo(() => {
+    if (!effectiveDivisionId) return [];
+    const div = (divisions || []).find(
+      (d) => d._id?.toString() === effectiveDivisionId.toString(),
+    );
+    if (!div?.members) return [];
+    return div.members
+      .filter((m) => m.role === "leader")
+      .map((m) => {
+        const u = m.userId;
+        return typeof u === "object" ? u : { _id: u || m._id, name: "Ketua" };
+      });
+  }, [effectiveDivisionId, divisions]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -492,6 +508,17 @@ export function QuickCreateModal({
                   ))}
                 </SelectContent>
               </Select>
+              {selectedDivisionLeaders.length > 0 && (
+                <div className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
+                  <Crown className="h-3 w-3 text-amber-500 shrink-0" />
+                  <span>
+                    Ketua:{" "}
+                    <strong className="text-foreground font-medium">
+                      {selectedDivisionLeaders.map((l) => l.name).join(", ")}
+                    </strong>
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>

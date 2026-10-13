@@ -11,6 +11,7 @@ import {
   Eye,
   Calendar,
   CheckCircle2,
+  Crown,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -150,6 +151,15 @@ function TaskCardInner({
   const commentCount = task.commentCount || 0;
   const attachmentCount = (task.attachments || []).length;
 
+  const division = typeof task.divisionId === "object" ? task.divisionId : null;
+  const divisionLeader = useMemo(() => {
+    if (!division?.members) return null;
+    const leaderMember = division.members.find((m) => m.role === "leader");
+    if (!leaderMember) return null;
+    const u = leaderMember.userId;
+    return typeof u === "object" ? u : { name: "Ketua" };
+  }, [division]);
+
   const renderCard = (provided = {}, snapshot = {}) => (
     <div
       ref={provided.innerRef}
@@ -200,6 +210,29 @@ function TaskCardInner({
       <h4 className="text-sm font-medium text-foreground leading-snug line-clamp-2 pr-1">
         {task.title}
       </h4>
+
+      {/* Division badge with leader */}
+      {division && (
+        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+          <Badge
+            variant="outline"
+            className="text-[10px] h-4.5 px-1.5 py-0 font-normal border-primary/20 bg-primary/5 text-primary gap-1"
+          >
+            {division.color && (
+              <span
+                className="h-1.5 w-1.5 rounded-full shrink-0"
+                style={{ backgroundColor: division.color }}
+              />
+            )}
+            <span className="truncate max-w-[120px]">{division.name}</span>
+            {divisionLeader && (
+              <span className="text-muted-foreground text-[9px] flex items-center gap-0.5 ml-0.5 font-normal">
+                • <Crown className="h-2.5 w-2.5 text-amber-500 inline shrink-0" /> {divisionLeader.name}
+              </span>
+            )}
+          </Badge>
+        </div>
+      )}
 
       {/* Labels */}
       {task.labels && task.labels.length > 0 && (
