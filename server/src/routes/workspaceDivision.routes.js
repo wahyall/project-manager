@@ -50,4 +50,17 @@ router.post(
   divisionController.moveMember,
 );
 
+// ── Division Google Spreadsheet ─────────────────────
+router.post(
+  "/:divisionId/google-sheet",
+  workspaceMember("owner", "admin", "member"),
+  divisionController.createDivisionGoogleSpreadsheet,
+);
+router.post(
+  "/:divisionId/google-sheet/sync",
+  workspaceMember("owner", "admin", "member"),
+  divisionController.syncDivisionGoogleSpreadsheet,
+);
+
 module.exports = router;
+

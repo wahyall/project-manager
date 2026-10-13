@@ -5,6 +5,10 @@ const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
+const googleSheetsService = require("../services/googleSheets.service");
+const DivisionCashTransaction = require("../models/DivisionCashTransaction");
+const DivisionInfaqRecord = require("../models/DivisionInfaqRecord");
+const DivisionCongregant = require("../models/DivisionCongregant");
 
 const getIO = () => {
   try {
@@ -612,3 +616,109 @@ exports.moveMember = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+// ──────────────────────────────────────────────
+// POST /api/workspaces/:id/divisions/:divisionId/google-sheet
+// ──────────────────────────────────────────────
+exports.createDivisionGoogleSpreadsheet = catchAsync(async (req, res, next) => {
+  const { divisionId } = req.params;
+  const workspace = req.workspace;
+
+  const division = await WorkspaceDivision.findOne({
+    _id: divisionId,
+    workspaceId: workspace._id,
+  });
+
+  if (!division) {
+    return next(new AppError("Divisi tidak ditemukan", 404));
+  }
+
+  if (division.googleSpreadsheetUrl) {
+    return res.status(200).json({
+      status: "success",
+      data: {
+        googleSpreadsheetId: division.googleSpreadsheetId,
+        googleSpreadsheetUrl: division.googleSpreadsheetUrl,
+      },
+    });
+  }
+
+  const sheetTitle = workspace?.name
+    ? `${workspace.name} - Divisi ${division.name}`
+    : `Divisi ${division.name}`;
+
+  const sheetResult = await googleSheetsService.createDivisionSpreadsheet(sheetTitle);
+  division.googleSpreadsheetId = sheetResult.spreadsheetId;
+  division.googleSpreadsheetUrl = sheetResult.spreadsheetUrl;
+  await division.save();
+
+  res.status(201).json({
+    status: "success",
+    data: {
+      googleSpreadsheetId: division.googleSpreadsheetId,
+      googleSpreadsheetUrl: division.googleSpreadsheetUrl,
+    },
+  });
+});
+
+// ──────────────────────────────────────────────
+// POST /api/workspaces/:id/divisions/:divisionId/google-sheet/sync
+// ──────────────────────────────────────────────
+exports.syncDivisionGoogleSpreadsheet = catchAsync(async (req, res, next) => {
+  const { divisionId } = req.params;
+  const workspace = req.workspace;
+
+  const division = await WorkspaceDivision.findOne({
+    _id: divisionId,
+    workspaceId: workspace._id,
+  });
+
+  if (!division) {
+    return next(new AppError("Divisi tidak ditemukan", 404));
+  }
+
+  if (!division.googleSpreadsheetId) {
+    return next(
+      new AppError("Google Spreadsheet belum dibuat untuk divisi ini", 400)
+    );
+  }
+
+  const [transactions, rawInfaq, congregants] = await Promise.all([
+    DivisionCashTransaction.find({
+      workspaceId: workspace._id,
+      divisionId,
+    })
+      .populate("createdBy", "name")
+      .sort({ date: 1 })
+      .lean(),
+    DivisionInfaqRecord.find({
+      workspaceId: workspace._id,
+      divisionId,
+    })
+      .populate("memberUserId", "name")
+      .lean(),
+    DivisionCongregant.find({
+      workspaceId: workspace._id,
+      divisionId,
+    })
+      .sort({ name: 1 })
+      .lean(),
+  ]);
+
+  const infaqRecords = rawInfaq.map((r) => ({
+    ...r,
+    member: r.memberUserId,
+  }));
+
+  const syncResult = await googleSheetsService.syncDivisionDataToSheet(
+    division.googleSpreadsheetId,
+    { transactions, infaqRecords, congregants }
+  );
+
+  res.status(200).json({
+    status: "success",
+    message: "Data divisi berhasil disinkronkan ke Google Spreadsheet",
+    data: syncResult,
+  });
+});
+
