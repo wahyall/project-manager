@@ -20,13 +20,13 @@
 
 3. Template Tracking Bulanan Divisi BM
 
-- [ ] Update uang kas bulanan.
-- [ ] Update infaq anggota.
-- [ ] Update data jamaah.
-- [ ] Mencatat kendala internal divisi BM.
-- [ ] Mencatat kebutuhan bantuan dari divisi lain.
-- [ ] Mencatat tindak lanjut dan penanggung jawab kendala.
-- [ ] Menyediakan riwayat laporan bulanan.
+- [x] Update uang kas bulanan.
+- [x] Update infaq anggota.
+- [x] Update data jamaah.
+- [x] Mencatat kendala internal divisi BM.
+- [x] Mencatat kebutuhan bantuan dari divisi lain.
+- [x] Mencatat tindak lanjut dan penanggung jawab kendala.
+- [x] Menyediakan riwayat laporan bulanan.
 
 4. Template Tracking Divisi Event
 
