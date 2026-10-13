@@ -51,6 +51,19 @@ const workspaceDivisionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    googleSpreadsheetId: {
+      type: String,
+      default: null,
+    },
+    googleSpreadsheetUrl: {
+      type: String,
+      default: null,
+    },
+    divisionType: {
+      type: String,
+      enum: ["general", "bm", "event"],
+      default: "general",
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
