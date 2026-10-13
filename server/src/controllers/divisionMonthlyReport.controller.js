@@ -4,6 +4,7 @@ const DivisionInfaqRecord = require("../models/DivisionInfaqRecord");
 const DivisionCongregant = require("../models/DivisionCongregant");
 const DivisionIssue = require("../models/DivisionIssue");
 const WorkspaceDivision = require("../models/WorkspaceDivision");
+const WorkspaceMember = require("../models/WorkspaceMember");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
@@ -137,7 +138,7 @@ exports.createMonthlyReport = catchAsync(async (req, res, next) => {
       totalCollected += rec.amount || 0;
     }
   }
-  const totalMembersCount = division.members?.length || 0;
+  const totalMembersCount = await WorkspaceMember.countDocuments({ workspaceId });
 
   // 3. Agregasi Jamaah
   const totalCongregants = await DivisionCongregant.countDocuments({

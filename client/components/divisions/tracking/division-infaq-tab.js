@@ -11,6 +11,7 @@ import {
   DollarSign,
   UserCheck,
   RotateCcw,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,8 @@ export function DivisionInfaqTab({ workspaceId, divisionId, canEdit = true }) {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const [formData, setFormData] = useState({
     amount: "20000",
@@ -80,6 +83,19 @@ export function DivisionInfaqTab({ workspaceId, divisionId, canEdit = true }) {
     summary.totalMembers > 0
       ? Math.round((summary.paidMembers / summary.totalMembers) * 100)
       : 0;
+
+  const filteredRecords = (records || []).filter((r) => {
+    if (statusFilter === "paid" && !r.isPaid) return false;
+    if (statusFilter === "unpaid" && r.isPaid) return false;
+    if (search && search.trim()) {
+      const q = search.trim().toLowerCase();
+      const name = (r.member?.name || "").toLowerCase();
+      const email = (r.member?.email || "").toLowerCase();
+      const notes = (r.notes || "").toLowerCase();
+      return name.includes(q) || email.includes(q) || notes.includes(q);
+    }
+    return true;
+  });
 
   const handleQuickToggle = async (rec) => {
     setTogglingId(rec.member._id);
@@ -175,35 +191,58 @@ export function DivisionInfaqTab({ workspaceId, divisionId, canEdit = true }) {
       </div>
 
       {/* ── Filter Bar ──────────────────────────────────── */}
-      <div className="flex items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
-        <div className="flex items-center gap-3">
-          <Calendar className="w-4 h-4 text-muted-foreground" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <select
+              value={month}
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="text-sm font-medium bg-background border border-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              {MONTH_NAMES.map((mName, idx) => (
+                <option key={idx} value={idx + 1}>
+                  {mName}
+                </option>
+              ))}
+            </select>
+            <select
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="text-sm font-medium bg-background border border-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              {[2024, 2025, 2026, 2027, 2028].map((yr) => (
+                <option key={yr} value={yr}>
+                  {yr}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <select
-            value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="text-sm font-medium bg-background border border-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
-            {MONTH_NAMES.map((mName, idx) => (
-              <option key={idx} value={idx + 1}>
-                {mName}
-              </option>
-            ))}
+            <option value="all">Semua Status</option>
+            <option value="paid">Lunas ({summary.paidMembers})</option>
+            <option value="unpaid">Belum Bayar ({summary.unpaidMembers})</option>
           </select>
-          <select
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="text-sm font-medium bg-background border border-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            {[2024, 2025, 2026, 2027, 2028].map((yr) => (
-              <option key={yr} value={yr}>
-                {yr}
-              </option>
-            ))}
-          </select>
+
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Cari anggota workspace..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
         </div>
 
-        <div className="text-xs text-muted-foreground hidden sm:block">
-          Standar iuran kas/infaq divisi: <span className="font-semibold text-foreground">Rp 20.000 / bln</span>
+        <div className="text-xs text-muted-foreground hidden lg:block">
+          Iuran seluruh anggota workspace: <span className="font-semibold text-foreground">Rp 20.000 / bln</span>
         </div>
       </div>
 
@@ -221,17 +260,17 @@ export function DivisionInfaqTab({ workspaceId, divisionId, canEdit = true }) {
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
             <span className="text-sm">Memuat data infaq anggota...</span>
           </div>
-        ) : records.length === 0 ? (
+        ) : filteredRecords.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
-            <p className="text-sm">Belum ada anggota yang terdaftar di divisi ini.</p>
+            <p className="text-sm">Tidak ada anggota workspace yang cocok dengan filter.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-muted/50 border-b border-border text-xs uppercase text-muted-foreground font-semibold">
                 <tr>
-                  <th className="px-4 py-3">Nama Anggota</th>
-                  <th className="px-4 py-3">Peran Divisi</th>
+                  <th className="px-4 py-3">Nama Anggota Workspace</th>
+                  <th className="px-4 py-3">Peran</th>
                   <th className="px-4 py-3">Status Infaq</th>
                   <th className="px-4 py-3 text-right">Nominal</th>
                   <th className="px-4 py-3">Tgl Bayar</th>
@@ -240,7 +279,7 @@ export function DivisionInfaqTab({ workspaceId, divisionId, canEdit = true }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {records.map((rec) => {
+                {filteredRecords.map((rec) => {
                   const isToggling = togglingId === rec.member._id;
                   return (
                     <tr
@@ -266,7 +305,12 @@ export function DivisionInfaqTab({ workspaceId, divisionId, canEdit = true }) {
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground capitalize">
-                        {rec.member.roleInDivision || "Anggota"}
+                        {rec.member.roleInWorkspace || "member"}
+                        {rec.member.roleInDivision && (
+                          <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-medium">
+                            BM: {rec.member.roleInDivision}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         {rec.isPaid ? (

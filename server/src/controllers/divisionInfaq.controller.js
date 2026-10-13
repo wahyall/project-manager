@@ -1,5 +1,6 @@
 const DivisionInfaqRecord = require("../models/DivisionInfaqRecord");
 const WorkspaceDivision = require("../models/WorkspaceDivision");
+const WorkspaceMember = require("../models/WorkspaceMember");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ActivityLogService = require("../services/activityLog.service");
@@ -29,15 +30,28 @@ exports.getInfaqRecords = catchAsync(async (req, res, next) => {
   const selectedMonth = month ? parseInt(month) : new Date().getMonth() + 1;
   const selectedYear = year ? parseInt(year) : new Date().getFullYear();
 
-  // Ambil data divisi beserta member
+  // Ambil data divisi untuk konteks dan role divisi
   const division = await WorkspaceDivision.findOne({
     _id: divisionId,
     workspaceId,
-  }).populate("members.userId", "name email avatar");
+  }).lean();
 
   if (!division) {
     return next(new AppError("Divisi tidak ditemukan", 404));
   }
+
+  // Peta role anggota di divisi jika ada
+  const divMemberMap = new Map();
+  (division.members || []).forEach((m) => {
+    const uid = (m.userId?._id || m.userId)?.toString();
+    if (uid) divMemberMap.set(uid, m.role);
+  });
+
+  // Ambil SELURUH member workspace (karena infaq ditarik dari semua anggota workspace)
+  const workspaceMembers = await WorkspaceMember.find({ workspaceId })
+    .populate("userId", "name email avatar")
+    .sort({ role: 1, createdAt: 1 })
+    .lean();
 
   // Ambil record infaq yang sudah tercatat di bulan & tahun ini
   const existingRecords = await DivisionInfaqRecord.find({
@@ -58,11 +72,11 @@ exports.getInfaqRecords = catchAsync(async (req, res, next) => {
   let paidMembers = 0;
   let totalAmountCollected = 0;
 
-  const membersInfaq = (division.members || [])
-    .filter((m) => m.userId) // filter out deleted users
-    .map((m) => {
+  const membersInfaq = workspaceMembers
+    .filter((wm) => wm.userId) // filter jika user telah terhapus
+    .map((wm) => {
       totalMembers++;
-      const user = m.userId;
+      const user = wm.userId;
       const rec = recordMap.get(user._id.toString());
       const isPaid = rec ? rec.isPaid : false;
       const amount = rec ? rec.amount : 0;
@@ -78,7 +92,8 @@ exports.getInfaqRecords = catchAsync(async (req, res, next) => {
           name: user.name,
           email: user.email,
           avatar: user.avatar,
-          roleInDivision: m.roleInDivision,
+          roleInWorkspace: wm.role,
+          roleInDivision: divMemberMap.get(user._id.toString()) || null,
         },
         recordId: rec ? rec._id : null,
         isPaid,
