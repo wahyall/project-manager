@@ -19,12 +19,74 @@ const subtaskSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    divisionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "WorkspaceDivision",
+      default: null,
+    },
+    dueDate: {
+      type: Date,
+      default: null,
+    },
+    notes: {
+      type: String,
+      default: "",
+      maxlength: [1000, "Catatan subtask maksimal 1000 karakter"],
+    },
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
     order: {
       type: Number,
       default: 0,
     },
   },
   { _id: true },
+);
+
+// ── PIC per divisi (embedded) ───────────────────────
+const divisionPicSchema = new mongoose.Schema(
+  {
+    divisionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "WorkspaceDivision",
+      required: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  { _id: false },
+);
+
+// ── Kolom koordinasi (embedded) ─────────────────────
+const coordinationSchema = new mongoose.Schema(
+  {
+    constraints: {
+      type: String,
+      default: "",
+      maxlength: [2000, "Kendala maksimal 2000 karakter"],
+    },
+    helpNeeded: {
+      type: String,
+      default: "",
+      maxlength: [2000, "Bantuan yang dibutuhkan maksimal 2000 karakter"],
+    },
+    followUp: {
+      type: String,
+      default: "",
+      maxlength: [2000, "Tindak lanjut maksimal 2000 karakter"],
+    },
+  },
+  { _id: false },
 );
 
 // ── Attachment (embedded) ───────────────────────────
@@ -133,6 +195,26 @@ const taskSchema = new mongoose.Schema(
       ref: "WorkspaceDivision",
       default: null,
     },
+    // Semua divisi yang terlibat, termasuk divisionId (divisi utama/peminta).
+    divisionIds: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "WorkspaceDivision",
+        },
+      ],
+      default: [],
+    },
+    // Satu PIC per divisi yang terlibat.
+    divisionPics: {
+      type: [divisionPicSchema],
+      default: [],
+    },
+    // Kolom koordinasi antar-divisi.
+    coordination: {
+      type: coordinationSchema,
+      default: () => ({}),
+    },
     phase: {
       type: String,
       enum: {
@@ -195,12 +277,53 @@ const taskSchema = new mongoose.Schema(
 taskSchema.index({ workspaceId: 1, isDeleted: 1 });
 taskSchema.index({ workspaceId: 1, columnId: 1 });
 taskSchema.index({ workspaceId: 1, divisionId: 1 });
+taskSchema.index({ workspaceId: 1, divisionIds: 1 });
+taskSchema.index({ "divisionPics.userId": 1 });
 taskSchema.index({ assignees: 1 });
 taskSchema.index({ eventId: 1 });
 taskSchema.index({ eventId: 1, phase: 1 });
 taskSchema.index({ dueDate: 1 });
 taskSchema.index({ workspaceId: 1, isArchived: 1 });
 taskSchema.index({ columnId: 1, columnOrder: 1 });
+
+// ── Pre-validate: jaga konsistensi divisi ───────────
+taskSchema.pre("validate", function (next) {
+  const toObjectId = (value) => {
+    if (!value) return null;
+    const raw = value._id || value;
+    if (raw instanceof mongoose.Types.ObjectId) return raw;
+    if (mongoose.Types.ObjectId.isValid(raw)) {
+      return new mongoose.Types.ObjectId(raw);
+    }
+    return null;
+  };
+
+  const ids = [];
+  for (const value of this.divisionIds || []) {
+    const id = toObjectId(value);
+    if (id && !ids.some((existing) => existing.equals(id))) {
+      ids.push(id);
+    }
+  }
+
+  const primary = toObjectId(this.divisionId);
+  if (primary && !ids.some((id) => id.equals(primary))) {
+    ids.unshift(primary);
+  }
+  if (!primary && ids.length > 0) {
+    this.divisionId = ids[0];
+  }
+
+  this.divisionIds = ids;
+
+  // Jangan simpan PIC untuk divisi yang tidak lagi terlibat.
+  const validIds = new Set(ids.map((id) => id.toString()));
+  this.divisionPics = (this.divisionPics || []).filter((pic) =>
+    validIds.has(pic.divisionId?.toString()),
+  );
+
+  next();
+});
 
 // ── Pre-find: exclude soft-deleted ──────────────────
 taskSchema.pre(/^find/, function (next) {

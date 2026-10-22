@@ -45,6 +45,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getInitials, PRIORITY_CONFIG } from "./task-card";
 import { SubtaskChecklist } from "./subtask-checklist";
+import { CoordinationSection } from "./coordination-section";
 import { AttachmentSection } from "./attachment-section";
 
 // Lazy-load MentionEditor to avoid SSR issues
@@ -76,6 +77,25 @@ function FieldRow({ icon: Icon, label, children }) {
   );
 }
 
+const toIdString = (value) => {
+  if (!value) return null;
+  return (value._id || value)?.toString?.() || String(value);
+};
+
+// Kirim hanya field yang dikenal API. Subtask dari server membawa assignee dan
+// divisionId dalam bentuk objek ter-populate; jangan kirim objek itu kembali.
+const serializeSubtasks = (subtasks = []) =>
+  subtasks.map((subtask) => ({
+    _id: subtask._id,
+    title: subtask.title,
+    isCompleted: subtask.isCompleted === true,
+    assignee: toIdString(subtask.assignee),
+    divisionId: toIdString(subtask.divisionId),
+    dueDate: subtask.dueDate || null,
+    notes: subtask.notes || "",
+    order: subtask.order,
+  }));
+
 export function TabDetail({
   task,
   columns,
@@ -83,7 +103,9 @@ export function TabDetail({
   labels,
   events,
   divisions = [],
+  allDivisions = [],
   currentUserId,
+  memberRole = "member",
   onUpdate,
   onWatch,
   onUnwatch,
@@ -163,6 +185,49 @@ export function TabDetail({
         return { _id: u || m._id, name: "Ketua" };
       });
   }, [selectedDivision]);
+
+  const creatorId =
+    typeof task.createdBy === "object"
+      ? task.createdBy?._id
+      : task.createdBy;
+
+  const taskDivisionIds = useMemo(
+    () =>
+      [
+        ...new Set(
+          [task.divisionId, ...(task.divisionIds || [])]
+            .map((value) =>
+              value
+                ? (value._id || value)?.toString?.() || value.toString()
+                : null,
+            )
+            .filter(Boolean),
+        ),
+      ],
+    [task.divisionId, task.divisionIds],
+  );
+
+  const canManageCoordination = useMemo(() => {
+    if (["owner", "admin"].includes(memberRole)) return true;
+    if (creatorId && creatorId.toString() === currentUserId) return true;
+
+    return (divisions || []).some((division) => {
+      if (!taskDivisionIds.includes(division._id?.toString())) return false;
+      return (division.members || []).some((member) => {
+        const memberId = member.userId?._id || member.userId;
+        return (
+          member.role === "leader" &&
+          memberId?.toString() === currentUserId
+        );
+      });
+    });
+  }, [
+    creatorId,
+    currentUserId,
+    divisions,
+    memberRole,
+    taskDivisionIds,
+  ]);
 
   // Current assignee IDs
   const assigneeIds = (task.assignees || []).map((a) =>
@@ -567,7 +632,7 @@ export function TabDetail({
 
         {/* Divisi Workspace */}
         {(divisions || []).length > 0 && (
-          <FieldRow icon={Columns3} label="Divisi">
+          <FieldRow icon={Columns3} label="Divisi Utama">
             <Select
               value={
                 task.divisionId
@@ -576,10 +641,44 @@ export function TabDetail({
                     : task.divisionId._id
                   : "none"
               }
-              onValueChange={(val) =>
-                onUpdate({ divisionId: val === "none" ? null : val })
-              }
-              disabled={!!task.eventId}
+              onValueChange={(val) => {
+                const nextPrimary = val === "none" ? null : val;
+                const oldPrimary = task.divisionId
+                  ? (task.divisionId._id || task.divisionId)?.toString?.()
+                  : null;
+                const currentIds = [
+                  ...(task.divisionIds || []).map((division) =>
+                    (division._id || division)?.toString?.(),
+                  ),
+                  oldPrimary,
+                ].filter(Boolean);
+
+                const divisionIds = nextPrimary
+                  ? [
+                      nextPrimary,
+                      ...new Set(
+                        currentIds.filter((id) => id !== nextPrimary),
+                      ),
+                    ]
+                  : [];
+                const nextDivisionIdSet = new Set(divisionIds);
+                const divisionPics = nextPrimary
+                  ? (task.divisionPics || []).filter((pic) => {
+                      const picDivision =
+                        pic.divisionId?._id || pic.divisionId;
+                      return nextDivisionIdSet.has(
+                        picDivision?.toString(),
+                      );
+                    })
+                  : [];
+
+                onUpdate({
+                  divisionId: nextPrimary,
+                  divisionIds,
+                  divisionPics,
+                });
+              }}
+              disabled={!!task.eventId || !canManageCoordination}
             >
               <SelectTrigger className="h-8 text-xs w-auto min-w-[160px]">
                 <SelectValue placeholder="Tanpa Divisi" />
@@ -607,7 +706,7 @@ export function TabDetail({
         )}
         {task.eventId && (divisions || []).length > 0 && (
           <p className="-mt-2 text-[11px] text-muted-foreground pl-8">
-            Divisi mengikuti event terkait.
+            Divisi utama mengikuti event terkait.
           </p>
         )}
 
@@ -651,6 +750,14 @@ export function TabDetail({
           </FieldRow>
         )}
       </div>
+
+      <CoordinationSection
+        task={task}
+        divisions={allDivisions.length > 0 ? allDivisions : divisions}
+        onUpdate={onUpdate}
+        canManage={canManageCoordination}
+        readOnly={memberRole === "guest"}
+      />
 
       <Separator />
 
@@ -731,7 +838,16 @@ export function TabDetail({
       <div className="px-1 py-3">
         <SubtaskChecklist
           subtasks={task.subtasks || []}
-          onChange={(subtasks) => onUpdate({ subtasks })}
+          onChange={(subtasks) =>
+            onUpdate({ subtasks: serializeSubtasks(subtasks) })
+          }
+          members={members}
+          divisions={allDivisions.length > 0 ? allDivisions : divisions}
+          taskDivisionIds={taskDivisionIds}
+          currentUserId={currentUserId}
+          taskCreatorId={creatorId}
+          memberRole={memberRole}
+          canEdit={memberRole !== "guest"}
         />
       </div>
 

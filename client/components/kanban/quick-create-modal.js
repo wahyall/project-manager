@@ -62,6 +62,7 @@ export function QuickCreateModal({
   defaultColumnId,
   defaultDueDate,
   defaultDivisionId,
+  defaultEventId,
   workspaceId,
   onCreateTask,
   onCreateAndOpen,
@@ -90,12 +91,19 @@ export function QuickCreateModal({
       setStartDate(null);
       setDueDate(defaultDueDate ? new Date(defaultDueDate) : null);
       setSelectedAssignees([]);
-      setEventId("");
+      setEventId(defaultEventId || "");
       setDivisionId(defaultDivisionId || "");
       setEditorKey((k) => k + 1); // Force fresh editor instance
       setTimeout(() => titleInputRef.current?.focus(), 100);
     }
-  }, [open, defaultColumnId, defaultDueDate, defaultDivisionId, columns]);
+  }, [
+    open,
+    defaultColumnId,
+    defaultDueDate,
+    defaultDivisionId,
+    defaultEventId,
+    columns,
+  ]);
 
   const toggleAssignee = (memberId) => {
     setSelectedAssignees((prev) =>
@@ -118,9 +126,12 @@ export function QuickCreateModal({
         dueDate: dueDate ? dueDate.toISOString() : null,
         assignees: selectedAssignees,
         eventId: eventId && eventId !== "none" ? eventId : null,
-        // divisionId: mengikuti divisi event jika terkait event,
-        // selain itu sesuai pilihan (null = Tanpa Divisi)
-        divisionId: linkedEventDivisionId || divisionId || null,
+        // Divisi mengikuti event jika terkait event; event tanpa divisi
+        // membuat task tanpa divisi. Selain itu sesuai pilihan (null = Tanpa
+        // Divisi).
+        divisionId: linkedEvent
+          ? linkedEventDivisionId || null
+          : divisionId || null,
       };
       const task = await onCreateTask(taskData);
       onOpenChange(false);
@@ -152,7 +163,9 @@ export function QuickCreateModal({
     ? getEventDivisionId(linkedEvent)
     : "";
 
-  const effectiveDivisionId = linkedEventDivisionId || divisionId;
+  const effectiveDivisionId = linkedEvent
+    ? linkedEventDivisionId
+    : divisionId;
   const selectedDivisionLeaders = useMemo(() => {
     if (!effectiveDivisionId) return [];
     const div = (divisions || []).find(
@@ -461,9 +474,11 @@ export function QuickCreateModal({
                   ))}
                 </SelectContent>
               </Select>
-              {linkedEventDivisionId && (
+              {linkedEvent && (
                 <p className="text-[11px] text-muted-foreground">
-                  Otomatis mengikuti divisi event ini.
+                  {linkedEventDivisionId
+                    ? "Otomatis mengikuti divisi event ini."
+                    : "Event ini belum memiliki divisi, task akan Tanpa Divisi."}
                 </p>
               )}
             </div>
@@ -480,11 +495,15 @@ export function QuickCreateModal({
                 </span>
               </Label>
               <Select
-                value={linkedEventDivisionId || divisionId || "none"}
+                value={
+                  linkedEvent
+                    ? linkedEventDivisionId || "none"
+                    : divisionId || "none"
+                }
                 onValueChange={(val) =>
                   setDivisionId(val === "none" ? "" : val)
                 }
-                disabled={!!linkedEventDivisionId}
+                disabled={!!linkedEvent}
               >
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue placeholder="Tanpa Divisi" />

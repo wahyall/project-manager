@@ -79,6 +79,8 @@ export default function TasksPage({ params }) {
   const [quickCreateColumnId, setQuickCreateColumnId] = useState(null);
   const [quickCreateDefaultDueDate, setQuickCreateDefaultDueDate] =
     useState(null);
+  const [quickCreateDefaultEventId, setQuickCreateDefaultEventId] =
+    useState(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -92,6 +94,7 @@ export default function TasksPage({ params }) {
       kanban.setActiveTaskId(deepTaskId);
     } else if (qs.get("newTask") === "true") {
       setViewMode("kanban");
+      setQuickCreateDefaultEventId(qs.get("eventId") || null);
       setQuickCreateOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -716,7 +719,10 @@ export default function TasksPage({ params }) {
       {/* Quick Create Modal (shared) */}
       <QuickCreateModal
         open={quickCreateOpen}
-        onOpenChange={setQuickCreateOpen}
+        onOpenChange={(open) => {
+          setQuickCreateOpen(open);
+          if (!open) setQuickCreateDefaultEventId(null);
+        }}
         columns={columns}
         members={members}
         events={events}
@@ -724,6 +730,7 @@ export default function TasksPage({ params }) {
         divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
         defaultColumnId={quickCreateColumnId || columns[0]?._id}
         defaultDueDate={quickCreateDefaultDueDate}
+        defaultEventId={quickCreateDefaultEventId}
         defaultDivisionId={
           scope.selected !== "all" &&
           scope.selected !== "mine" &&
@@ -749,7 +756,9 @@ export default function TasksPage({ params }) {
         labels={kanban.labels}
         events={events}
         divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
+        allDivisions={scope.divisions}
         currentUserId={user?._id}
+        memberRole={currentWorkspace?.role}
         workspaceId={workspaceId}
         onUpdate={handleUpdateTask}
         onDelete={handleDeleteTask}
@@ -769,7 +778,9 @@ export default function TasksPage({ params }) {
         labels={kanban.labels}
         events={events}
         divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
+        allDivisions={scope.divisions}
         currentUserId={user?._id}
+        memberRole={currentWorkspace?.role}
         workspaceId={workspaceId}
         onUpdate={handleUpdateTask}
         onDelete={handleDeleteTask}

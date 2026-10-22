@@ -18,6 +18,13 @@ const eventSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Masukan/catatan untuk pemateri atau narasumber. Disimpan sebagai
+    // string BlockNote (JSON) agar mendukung rich text dan mention.
+    speakerNotes: {
+      type: String,
+      default: "",
+      maxlength: [50000, "Catatan pemateri maksimal 50000 karakter"],
+    },
     startDate: {
       type: Date,
       required: [true, "Tanggal mulai harus diisi"],

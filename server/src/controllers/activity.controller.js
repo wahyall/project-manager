@@ -1,5 +1,8 @@
 const ActivityLog = require("../models/ActivityLog");
+const Task = require("../models/Task");
 const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/AppError");
+const { assertCanViewTask } = require("../utils/divisionScope");
 
 // ──────────────────────────────────────────────
 // GET /api/workspaces/:id/activity — Activity log workspace
@@ -58,11 +61,29 @@ exports.getWorkspaceActivity = catchAsync(async (req, res) => {
 // ──────────────────────────────────────────────
 // GET /api/workspaces/:id/tasks/:taskId/activity
 // ──────────────────────────────────────────────
-exports.getTaskActivity = catchAsync(async (req, res) => {
+exports.getTaskActivity = catchAsync(async (req, res, next) => {
   const { taskId } = req.params;
   const { page = 1, limit = 20 } = req.query;
 
+  const task = await Task.findOne({
+    _id: taskId,
+    workspaceId: req.workspace._id,
+    isDeleted: { $ne: true },
+  }).select("divisionId divisionIds");
+
+  if (!task) {
+    return next(new AppError("Task tidak ditemukan", 404));
+  }
+
+  await assertCanViewTask({
+    task,
+    workspaceId: req.workspace._id,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+  });
+
   const filter = {
+    workspaceId: req.workspace._id,
     targetType: "task",
     targetId: taskId,
   };

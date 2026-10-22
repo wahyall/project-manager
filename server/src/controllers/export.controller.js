@@ -4,7 +4,7 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
 const ExportJob = require("../models/ExportJob");
 const exportService = require("../services/export.service");
-const { applyDivisionScope } = require("../utils/divisionScope");
+const { buildTaskDivisionScope } = require("../utils/divisionScope");
 
 // ════════════════════════════════════════════════
 // Helper: terapkan scope divisi ke filter export.
@@ -12,17 +12,13 @@ const { applyDivisionScope } = require("../utils/divisionScope");
 // owner/admin default semua. Melempar 403/400 bila param tak diizinkan.
 // ════════════════════════════════════════════════
 async function scopeExportFilters(req, filters) {
-  const scopeFilter = {};
-  await applyDivisionScope({
-    filter: scopeFilter,
+  const divisionScope = await buildTaskDivisionScope({
     workspaceId: req.params.id,
     userId: req.user.id,
     role: req.workspaceMember?.role,
     divisionParam: filters.divisionId,
   });
-  if (scopeFilter.divisionId !== undefined) {
-    filters.divisionId = scopeFilter.divisionId;
-  }
+  filters.divisionScope = divisionScope;
   return filters;
 }
 

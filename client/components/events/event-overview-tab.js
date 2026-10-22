@@ -37,6 +37,7 @@ import {
   Pencil,
   Loader2,
   Sprout,
+  Mic,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -66,56 +67,40 @@ const EVENT_COLORS = [
   "#6366F1",
 ];
 
-const STATUS_CONFIG = {
-  upcoming: {
-    label: "Upcoming",
-    className: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
-    dot: "bg-blue-500",
-  },
-  ongoing: {
-    label: "Ongoing",
-    className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-    dot: "bg-emerald-500",
-  },
-  completed: {
-    label: "Completed",
-    className: "bg-gray-500/10 text-gray-600 dark:text-gray-400",
-    dot: "bg-gray-400",
-  },
-};
-
 export function EventOverviewTab({
   event,
   onUpdate,
   members = [],
   workspaceId,
   divisions = [],
+  readOnly = false,
 }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
+  const [editingSpeaker, setEditingSpeaker] = useState(false);
   const [title, setTitle] = useState(event.title);
-  const [saving, setSaving] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
+  const [speakerEditorKey, setSpeakerEditorKey] = useState(0);
   const descValueRef = useRef(event.description || "");
   const descTimerRef = useRef(null);
+  const speakerValueRef = useRef(event.speakerNotes || "");
+  const speakerTimerRef = useRef(null);
   const titleRef = useRef(null);
 
-  // Sync title/desc with event prop
+  // Sync title/desc/speaker notes with event prop
   useEffect(() => {
     setTitle(event.title);
     descValueRef.current = event.description || "";
-  }, [event.title, event.description]);
+    speakerValueRef.current = event.speakerNotes || "";
+  }, [event.title, event.description, event.speakerNotes]);
 
   const saveField = useCallback(
     async (field, value) => {
-      setSaving(true);
       try {
         await onUpdate({ [field]: value });
         toast.success("Perubahan tersimpan");
       } catch (err) {
         toast.error(err.response?.data?.message || "Gagal menyimpan");
-      } finally {
-        setSaving(false);
       }
     },
     [onUpdate],
@@ -151,7 +136,27 @@ export function EventOverviewTab({
     setEditingDesc(false);
   }, [event.description, saveField]);
 
-  const statusConfig = STATUS_CONFIG[event.status] || STATUS_CONFIG.upcoming;
+  // Catatan pemateri — debounced auto-save
+  const handleSpeakerChange = useCallback(
+    (jsonString) => {
+      speakerValueRef.current = jsonString;
+      if (speakerTimerRef.current) clearTimeout(speakerTimerRef.current);
+      speakerTimerRef.current = setTimeout(() => {
+        if (speakerValueRef.current !== event.speakerNotes) {
+          saveField("speakerNotes", speakerValueRef.current);
+        }
+      }, 800);
+    },
+    [event.speakerNotes, saveField],
+  );
+
+  const saveSpeakerAndClose = useCallback(() => {
+    if (speakerTimerRef.current) clearTimeout(speakerTimerRef.current);
+    if (speakerValueRef.current !== event.speakerNotes) {
+      saveField("speakerNotes", speakerValueRef.current);
+    }
+    setEditingSpeaker(false);
+  }, [event.speakerNotes, saveField]);
 
   return (
     <div className="space-y-6">
@@ -256,6 +261,97 @@ export function EventOverviewTab({
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Masukan Pemateri / Narasumber */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-1.5 text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              <Mic className="h-3.5 w-3.5" />
+              Masukan Pemateri / Narasumber
+            </CardTitle>
+            {!readOnly &&
+              (editingSpeaker ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px]"
+                  onClick={saveSpeakerAndClose}
+                >
+                  Selesai
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 gap-1 px-2 text-[10px] text-muted-foreground"
+                  onClick={() => {
+                    setSpeakerEditorKey((key) => key + 1);
+                    setEditingSpeaker(true);
+                  }}
+                >
+                  <Pencil className="h-3 w-3" />
+                  Edit
+                </Button>
+              ))}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!readOnly && editingSpeaker ? (
+            <div className="rounded-md border border-input px-6 py-2 transition-shadow focus-within:ring-1 focus-within:ring-ring">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-6 text-muted-foreground">
+                    <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  </div>
+                }
+              >
+                <MentionEditor
+                  key={speakerEditorKey}
+                  workspaceId={event.workspaceId}
+                  initialContent={event.speakerNotes || null}
+                  onChange={handleSpeakerChange}
+                  className="blocknote-compact"
+                />
+              </Suspense>
+            </div>
+          ) : (
+            <div
+              className={cn(
+                "min-h-[52px] rounded-md px-2 py-2 -mx-2 transition-colors group",
+                !readOnly && "cursor-pointer hover:bg-accent/50",
+              )}
+              onClick={
+                readOnly
+                  ? undefined
+                  : () => {
+                      setSpeakerEditorKey((key) => key + 1);
+                      setEditingSpeaker(true);
+                    }
+              }
+            >
+              {event.speakerNotes ? (
+                <Suspense
+                  fallback={
+                    <p className="text-sm text-muted-foreground">Loading...</p>
+                  }
+                >
+                  <MentionReadOnly content={event.speakerNotes} />
+                </Suspense>
+              ) : (
+                <p className="text-sm italic text-muted-foreground">
+                  {readOnly
+                    ? "Belum ada masukan pemateri/narasumber."
+                    : "Klik untuk menambahkan usulan pemateri, tema, kontak, dan catatan..."}
+                </p>
+              )}
+              {!readOnly && (
+                <Pencil className="mt-1 h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

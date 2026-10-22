@@ -2,7 +2,7 @@ const Task = require("../models/Task");
 const Event = require("../models/Event");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/AppError");
-const { applyDivisionScope } = require("../utils/divisionScope");
+const { applyDivisionScope, buildTaskDivisionScope } = require("../utils/divisionScope");
 
 // ──────────────────────────────────────────────
 // GET /api/workspaces/:id/calendar — Calendar data
@@ -36,9 +36,16 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
 
   // ── Scope divisi (berlaku untuk task maupun event) ──
   // member/guest dikunci ke divisinya + Tanpa Divisi, owner/admin default semua.
-  const divisionScope = {};
+  const eventDivisionScope = {};
   await applyDivisionScope({
-    filter: divisionScope,
+    filter: eventDivisionScope,
+    workspaceId: workspace._id,
+    userId: req.user.id,
+    role: req.workspaceMember?.role,
+    divisionParam: divisionId,
+  });
+
+  const taskDivisionClause = await buildTaskDivisionScope({
     workspaceId: workspace._id,
     userId: req.user.id,
     role: req.workspaceMember?.role,
@@ -51,24 +58,28 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
   if (type === "all" || type === "tasks") {
     const taskFilter = {
       workspaceId: workspace._id,
-      ...divisionScope,
       isArchived: { $ne: true },
-      // Task visible in calendar if it has dueDate OR startDate in the range
-      $or: [
-        // Task with dueDate in range
-        { dueDate: { $gte: rangeStart, $lte: rangeEnd } },
-        // Task with startDate in range
-        { startDate: { $gte: rangeStart, $lte: rangeEnd } },
-        // Task spanning the range (startDate before range, dueDate after range)
+      $and: [
+        // Task visible in calendar if it has dueDate OR startDate in the range
         {
-          startDate: { $lte: rangeStart },
-          dueDate: { $gte: rangeEnd },
+          $or: [
+            // Task with dueDate in range
+            { dueDate: { $gte: rangeStart, $lte: rangeEnd } },
+            // Task with startDate in range
+            { startDate: { $gte: rangeStart, $lte: rangeEnd } },
+            // Task spanning the range (startDate before range, dueDate after range)
+            {
+              startDate: { $lte: rangeStart },
+              dueDate: { $gte: rangeEnd },
+            },
+            // Task with startDate before range end and dueDate after range start (overlap)
+            {
+              startDate: { $lte: rangeEnd },
+              dueDate: { $gte: rangeStart },
+            },
+          ],
         },
-        // Task with startDate before range end and dueDate after range start (overlap)
-        {
-          startDate: { $lte: rangeEnd },
-          dueDate: { $gte: rangeStart },
-        },
+        ...(taskDivisionClause ? [taskDivisionClause] : []),
       ],
     };
 
@@ -91,6 +102,17 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
       .populate("watchers", "name email avatar")
       .populate("labels", "name color")
       .populate("divisionId", "name color")
+      .populate("divisionIds", "name color")
+      .populate({
+        path: "divisionPics.divisionId",
+        select: "name color",
+      })
+      .populate({
+        path: "divisionPics.userId",
+        select: "name email avatar",
+      })
+      .populate("subtasks.assignee", "name email avatar")
+      .populate("subtasks.divisionId", "name color")
       .populate("createdBy", "name email avatar")
       .populate("blockedBy", "title columnId isArchived")
       .sort({ dueDate: 1 })
@@ -103,7 +125,7 @@ exports.getCalendarData = catchAsync(async (req, res, next) => {
   if (type === "all" || type === "events") {
     const eventFilter = {
       workspaceId: workspace._id,
-      ...divisionScope,
+      ...eventDivisionScope,
       $or: [
         // Event with startDate in range
         { startDate: { $gte: rangeStart, $lte: rangeEnd } },

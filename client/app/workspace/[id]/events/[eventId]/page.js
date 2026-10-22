@@ -306,6 +306,7 @@ export default function EventDetailPage({ params }) {
             divisions={
               scope.isLocked ? scope.myDivisions : scope.divisions
             }
+            readOnly={currentWorkspace?.role === "guest"}
           />
         </TabsContent>
 
@@ -325,6 +326,9 @@ export default function EventDetailPage({ params }) {
             workspaceId={id}
             workspace={currentWorkspace}
             members={members}
+            divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
+            allDivisions={scope.divisions}
+            memberRole={currentWorkspace?.role}
           />
         </TabsContent>
 

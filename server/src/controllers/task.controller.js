@@ -14,11 +14,18 @@ const Event = require("../models/Event");
 const ActivityLogService = require("../services/activityLog.service");
 const NotificationService = require("../services/notification.service");
 const EmbeddingService = require("../services/embedding.service");
+const {
+  toIdString,
+  resolveTaskDivisions,
+  normalizeDivisionPics,
+  canManageTaskDivisions,
+  validateSubtaskAssignees,
+} = require("../services/taskDivision.service");
 const { extractMentions } = require("../utils/extractMentions");
 const {
-  resolveDivisionId,
-  applyDivisionScope,
+  applyTaskDivisionScope,
   assertCanViewDivisionItem,
+  assertCanViewTask,
 } = require("../utils/divisionScope");
 
 const divisionPopulate = {
@@ -29,6 +36,55 @@ const divisionPopulate = {
     select: "name email avatar",
   },
 };
+
+const divisionIdsPopulate = {
+  path: "divisionIds",
+  select: "name color",
+};
+
+const divisionPicDivisionPopulate = {
+  path: "divisionPics.divisionId",
+  select: "name color",
+};
+
+const divisionPicUserPopulate = {
+  path: "divisionPics.userId",
+  select: "name email avatar",
+};
+
+const subtaskPopulates = [
+  { path: "subtasks.assignee", select: "name email avatar" },
+  { path: "subtasks.divisionId", select: "name color" },
+  { path: "subtasks.completedBy", select: "name email avatar" },
+];
+
+const applyTaskPopulates = (query) => {
+  let nextQuery = query
+    .populate("assignees", "name email avatar")
+    .populate("watchers", "name email avatar")
+    .populate("labels", "name color")
+    .populate(divisionPopulate)
+    .populate(divisionIdsPopulate)
+    .populate(divisionPicDivisionPopulate)
+    .populate(divisionPicUserPopulate)
+    .populate("createdBy", "name email avatar")
+    .populate("blockedBy", "title columnId isArchived");
+
+  for (const populate of subtaskPopulates) {
+    nextQuery = nextQuery.populate(populate);
+  }
+
+  return nextQuery;
+};
+
+const normalizeCoordinationText = (value) =>
+  typeof value === "string" ? value.trim().slice(0, 2000) : "";
+
+const normalizeCoordination = (coordination = {}) => ({
+  constraints: normalizeCoordinationText(coordination?.constraints),
+  helpNeeded: normalizeCoordinationText(coordination?.helpNeeded),
+  followUp: normalizeCoordinationText(coordination?.followUp),
+});
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -124,16 +180,14 @@ exports.listTasks = catchAsync(async (req, res) => {
   if (eventId) filter.eventId = eventId;
 
   // Scope divisi: member/guest dikunci ke divisinya + Tanpa Divisi,
-  // owner/admin default semua.
-  await applyDivisionScope({
+  // owner/admin default semua. Task multi-divisi cocok lewat divisionIds.
+  await applyTaskDivisionScope({
     filter,
     workspaceId,
     userId: req.user.id,
     role: req.workspaceMember?.role,
     divisionParam: divisionId,
   });
-
-  // Archive filter (default: non-archived)
 
   // Archive filter (default: non-archived)
   if (isArchived === "true") {
@@ -174,13 +228,7 @@ exports.listTasks = catchAsync(async (req, res) => {
   const skip = (pageNum - 1) * limitNum;
 
   const [tasks, total] = await Promise.all([
-    Task.find(filter)
-      .populate("assignees", "name email avatar")
-      .populate("watchers", "name email avatar")
-      .populate("labels", "name color")
-      .populate(divisionPopulate)
-      .populate("createdBy", "name email avatar")
-      .populate("blockedBy", "title columnId isArchived")
+    applyTaskPopulates(Task.find(filter))
       .sort(sort)
       .skip(skip)
       .limit(limitNum)
@@ -220,6 +268,9 @@ exports.createTask = catchAsync(async (req, res, next) => {
     labels,
     eventId,
     divisionId,
+    divisionIds,
+    divisionPics,
+    coordination,
     subtasks,
     blockedBy,
     phase,
@@ -263,10 +314,8 @@ exports.createTask = catchAsync(async (req, res, next) => {
     }
   }
 
-  // Divisi Workspace: eksplisit dari body, atau mengikuti divisi event
-  // (task dibuat dari konteks event). null = Tanpa Divisi.
-  // Jika task terhubung ke event, divisinya harus sama dengan divisi event.
-  let resolvedDivisionId = null;
+  // Divisi Workspace: divisi utama/peminta + divisi terkait.
+  // Jika task terhubung ke event, divisi event otomatis menjadi divisi utama.
   let parentEventDivision = null;
   if (eventId) {
     const parentEvent = await Event.findOne({
@@ -280,45 +329,110 @@ exports.createTask = catchAsync(async (req, res, next) => {
     }
     parentEventDivision = parentEvent.divisionId || null;
   }
-  if (divisionId !== undefined && divisionId !== null && divisionId !== "") {
-    resolvedDivisionId = await resolveDivisionId(divisionId, workspace._id);
-    if (eventId) {
-      const eventDivision = parentEventDivision
-        ? parentEventDivision.toString()
-        : null;
-      const taskDivision = resolvedDivisionId
-        ? resolvedDivisionId.toString()
-        : null;
-      if (eventDivision !== taskDivision) {
+
+  const requestedPrimary = toIdString(divisionId);
+  const eventDivisionId = toIdString(parentEventDivision);
+  const rawDivisionIds = Array.isArray(divisionIds) ? divisionIds : [];
+  const providedDivisionIds = rawDivisionIds
+    .map((id) => toIdString(id))
+    .filter(Boolean);
+
+  if (eventId) {
+    if (eventDivisionId) {
+      if (divisionId !== undefined && requestedPrimary !== eventDivisionId) {
         return next(
-          new AppError("Divisi task harus sama dengan divisi event", 400),
+          new AppError(
+            "Divisi utama task harus sama dengan divisi event",
+            400,
+          ),
         );
       }
+      if (
+        divisionIds !== undefined &&
+        !providedDivisionIds.includes(eventDivisionId)
+      ) {
+        return next(
+          new AppError(
+            "Divisi event wajib termasuk dalam divisi yang terlibat",
+            400,
+          ),
+        );
+      }
+    } else if (requestedPrimary || providedDivisionIds.length > 0) {
+      return next(
+        new AppError(
+          "Event belum memiliki divisi, task tidak dapat memakai divisi",
+          400,
+        ),
+      );
     }
-  } else if (eventId) {
-    resolvedDivisionId = parentEventDivision;
   }
 
-  // Member/guest hanya boleh membuat task di divisinya (+ Tanpa Divisi)
+  const resolvedDivisions = await resolveTaskDivisions({
+    workspaceId: workspace._id,
+    primaryDivisionId: eventDivisionId || requestedPrimary || undefined,
+    divisionIds: eventDivisionId
+      ? divisionIds === undefined
+        ? [eventDivisionId]
+        : rawDivisionIds
+      : rawDivisionIds,
+  });
+
+  // Member/guest hanya boleh membuat task di divisi utamanya (+ Tanpa Divisi).
   await assertCanViewDivisionItem({
-    divisionId: resolvedDivisionId,
+    divisionId: resolvedDivisions.divisionId,
     workspaceId: workspace._id,
     userId,
     role: req.workspaceMember?.role,
   });
 
+  const normalizedDivisionPics = await normalizeDivisionPics({
+    workspaceId: workspace._id,
+    divisionPics: divisionPics || [],
+    divisions: resolvedDivisions.divisions,
+  });
+
   // Calculate order
   const columnOrder = await getNextColumnOrder(workspace._id, targetColumnId);
 
-  // Process subtasks with order
-  const processedSubtasks = subtasks
-    ? subtasks.map((st, idx) => ({
-        title: st.title,
-        isCompleted: st.isCompleted || false,
+  // Process subtasks with order + metadata
+  const processedSubtasks = [];
+  if (Array.isArray(subtasks)) {
+    for (let idx = 0; idx < subtasks.length; idx += 1) {
+      const st = subtasks[idx];
+      const subtaskTitle =
+        typeof st.title === "string" ? st.title.trim() : "";
+      if (!subtaskTitle) {
+        return next(new AppError("Judul subtask tidak boleh kosong", 400));
+      }
+
+      const subtaskDueDate = st.dueDate ? new Date(st.dueDate) : null;
+      if (subtaskDueDate && Number.isNaN(subtaskDueDate.getTime())) {
+        return next(new AppError("Tanggal subtask tidak valid", 400));
+      }
+
+      const isCompleted = st.isCompleted === true;
+      processedSubtasks.push({
+        title: subtaskTitle,
+        isCompleted,
         assignee: st.assignee || null,
-        order: idx,
-      }))
-    : [];
+        divisionId: st.divisionId || null,
+        dueDate: subtaskDueDate,
+        notes:
+          typeof st.notes === "string" ? st.notes.trim().slice(0, 1000) : "",
+        completedBy: isCompleted ? userId : null,
+        completedAt: isCompleted ? new Date() : null,
+        order: st.order !== undefined ? st.order : idx,
+      });
+    }
+  }
+
+  await validateSubtaskAssignees({
+    workspaceId: workspace._id,
+    subtasks: processedSubtasks,
+    divisionIds: resolvedDivisions.divisionIds,
+    divisions: resolvedDivisions.divisions,
+  });
 
   const resolvedPhase = await resolvePhaseFields({
     phase,
@@ -345,7 +459,10 @@ exports.createTask = catchAsync(async (req, res, next) => {
     priority: priority || "medium",
     labels: labels || [],
     eventId: eventId || null,
-    divisionId: resolvedDivisionId,
+    divisionId: resolvedDivisions.divisionId,
+    divisionIds: resolvedDivisions.divisionIds,
+    divisionPics: normalizedDivisionPics,
+    coordination: normalizeCoordination(coordination),
     subtasks: processedSubtasks,
     blockedBy: blockedBy || [],
     createdBy: userId,
@@ -355,14 +472,9 @@ exports.createTask = catchAsync(async (req, res, next) => {
   });
 
   // Populate for response
-  const populatedTask = await Task.findById(task._id)
-    .populate("assignees", "name email avatar")
-    .populate("watchers", "name email avatar")
-    .populate("labels", "name color")
-    .populate(divisionPopulate)
-    .populate("createdBy", "name email avatar")
-    .populate("blockedBy", "title columnId")
-    .lean();
+  const populatedTask = await applyTaskPopulates(
+    Task.findById(task._id),
+  ).lean();
 
   // Emit Socket.io event
   emitTaskEvent(workspace._id.toString(), "task:created", {
@@ -397,7 +509,49 @@ exports.createTask = catchAsync(async (req, res, next) => {
     });
   }
 
-  // 2. Mention Notification (from description)
+  // 2. PIC divisi notification
+  const newPicIds = [
+    ...new Set(
+      normalizedDivisionPics
+        .map((pic) => pic.userId.toString())
+        .filter((id) => id !== userId.toString()),
+    ),
+  ];
+  if (newPicIds.length > 0) {
+    await NotificationService.createForMany({
+      workspaceId: workspace._id,
+      recipientIds: newPicIds,
+      actorId: userId,
+      type: "assign_task",
+      targetType: "task",
+      targetId: task._id,
+      message: `Kamu menjadi PIC divisi pada task: ${task.title}`,
+      url: taskUrl,
+    });
+  }
+
+  // 3. PIC subtask notification
+  const subtaskAssigneeIds = [
+    ...new Set(
+      processedSubtasks
+        .map((st) => st.assignee?.toString())
+        .filter((id) => id && id !== userId.toString()),
+    ),
+  ];
+  if (subtaskAssigneeIds.length > 0) {
+    await NotificationService.createForMany({
+      workspaceId: workspace._id,
+      recipientIds: subtaskAssigneeIds,
+      actorId: userId,
+      type: "assign_task",
+      targetType: "task",
+      targetId: task._id,
+      message: `Kamu mendapat checklist pada task: ${task.title}`,
+      url: taskUrl,
+    });
+  }
+
+  // 4. Mention Notification (from description)
   // Deskripsi disimpan sebagai array blocks BlockNote polos
   // (MentionEditor mengirim JSON.stringify(blocks)), jadi mention
   // diekstrak langsung dari inline node, bukan dari field .mentions.
@@ -446,17 +600,12 @@ exports.getTask = catchAsync(async (req, res, next) => {
   const { taskId } = req.params;
   const workspace = req.workspace;
 
-  const task = await Task.findOne({
-    _id: taskId,
-    workspaceId: workspace._id,
-  })
-    .populate("assignees", "name email avatar")
-    .populate("watchers", "name email avatar")
-    .populate("labels", "name color")
-    .populate(divisionPopulate)
-    .populate("createdBy", "name email avatar")
-    .populate("blockedBy", "title columnId isArchived")
-    .populate("subtasks.assignee", "name email avatar")
+  const task = await applyTaskPopulates(
+    Task.findOne({
+      _id: taskId,
+      workspaceId: workspace._id,
+    }),
+  )
     .populate("attachments.uploadedBy", "name email avatar")
     .lean();
 
@@ -464,9 +613,9 @@ exports.getTask = catchAsync(async (req, res, next) => {
     return next(new AppError("Task tidak ditemukan", 404));
   }
 
-  // Visibility divisi
-  await assertCanViewDivisionItem({
-    divisionId: task.divisionId?._id || task.divisionId,
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
     workspaceId: workspace._id,
     userId: req.user.id,
     role: req.workspaceMember?.role,
@@ -495,9 +644,9 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     return next(new AppError("Task tidak ditemukan", 404));
   }
 
-  // Visibility divisi: member/guest di luar divisi task tidak boleh mengubah
-  await assertCanViewDivisionItem({
-    divisionId: task.divisionId,
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
     workspaceId: workspace._id,
     userId,
     role: req.workspaceMember?.role,
@@ -507,6 +656,30 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   const oldAssignees = task.assignees.map((a) => a.toString());
   const oldColumnId = task.columnId.toString();
   const oldDescription = task.description;
+  const oldDivisionIds = [
+    ...new Set(
+      [
+        task.divisionId ? task.divisionId.toString() : null,
+        ...(task.divisionIds || []).map((id) => id.toString()),
+      ].filter(Boolean),
+    ),
+  ];
+  const oldDivisionPics = (task.divisionPics || []).map((pic) => ({
+    divisionId: pic.divisionId?.toString(),
+    userId: pic.userId?.toString(),
+  }));
+  const oldSubtasks = (task.subtasks || []).map((st) =>
+    typeof st.toObject === "function" ? st.toObject() : st,
+  );
+  const oldAllSubtasksComplete =
+    oldSubtasks.length > 0 && oldSubtasks.every((st) => st.isCompleted);
+  const oldCoordination = task.coordination
+    ? {
+        constraints: task.coordination.constraints || "",
+        helpNeeded: task.coordination.helpNeeded || "",
+        followUp: task.coordination.followUp || "",
+      }
+    : { constraints: "", helpNeeded: "", followUp: "" };
 
   const {
     title,
@@ -520,6 +693,9 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     labels,
     eventId,
     divisionId,
+    divisionIds,
+    divisionPics,
+    coordination,
     subtasks,
     blockedBy,
     phase,
@@ -607,80 +783,217 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     task.labels = labels;
   }
 
-  // Event (+ divisi mengikuti event).
-  // - eventId diisi: task pindah ke event itu; divisi mengikuti divisi event
-  //   kecuali divisionId eksplisit diberikan (harus sama → jika beda, 400).
-  // - eventId null: lepas dari event, divisi tidak berubah.
-  if (eventId !== undefined) {
-    if (eventId) {
-      const parentEvent = await Event.findOne({
-        _id: eventId,
-        workspaceId: workspace._id,
-      })
-        .select("divisionId")
-        .lean();
-      if (!parentEvent) {
-        return next(new AppError("Event tidak ditemukan", 404));
-      }
-      if (divisionId !== undefined) {
-        const resolved = await resolveDivisionId(divisionId, workspace._id);
-        const eventDivision = parentEvent.divisionId
-          ? parentEvent.divisionId.toString()
-          : null;
-        const taskDivision = resolved ? resolved.toString() : null;
-        if (eventDivision !== taskDivision) {
-          return next(
-            new AppError("Divisi task harus sama dengan divisi event", 400),
-          );
-        }
-        await assertCanViewDivisionItem({
-          divisionId: resolved,
-          workspaceId: workspace._id,
-          userId,
-          role: req.workspaceMember?.role,
-        });
-        task.divisionId = resolved;
-      } else {
-        await assertCanViewDivisionItem({
-          divisionId: parentEvent.divisionId,
-          workspaceId: workspace._id,
-          userId,
-          role: req.workspaceMember?.role,
-        });
-        task.divisionId = parentEvent.divisionId || null;
-      }
-      task.eventId = eventId;
-    } else {
-      task.eventId = null;
+  // Event + divisi multi-divisi.
+  // - Saat attach/pindah event: divisi event menjadi divisi utama, divisi lama
+  //   dipertahankan sebagai divisi terkait agar koordinasi tidak hilang.
+  // - Saat lepas event: divisi tidak berubah kecuali dikirim eksplisit.
+  const nextEventId = eventId !== undefined ? eventId : task.eventId;
+  const eventChanged =
+    eventId !== undefined &&
+    toIdString(eventId) !== toIdString(task.eventId);
+
+  let parentEvent = null;
+  if (nextEventId) {
+    parentEvent = await Event.findOne({
+      _id: nextEventId,
+      workspaceId: workspace._id,
+    })
+      .select("divisionId")
+      .lean();
+    if (!parentEvent) {
+      return next(new AppError("Event tidak ditemukan", 404));
     }
-  } else if (divisionId !== undefined) {
-    // Pindah divisi tanpa ganti event — tidak boleh jika task terhubung
-    // ke event dari divisi lain (divisi harus sama dengan divisi event).
-    const resolved = await resolveDivisionId(divisionId, workspace._id);
-    if (task.eventId) {
-      const parentEvent = await Event.findOne({
-        _id: task.eventId,
-        workspaceId: workspace._id,
-      })
-        .select("divisionId")
-        .lean();
-      const eventDivision = parentEvent?.divisionId
-        ? parentEvent.divisionId.toString()
-        : null;
-      const taskDivision = resolved ? resolved.toString() : null;
-      if (eventDivision !== taskDivision) {
+  }
+
+  const eventDivisionId = toIdString(parentEvent?.divisionId);
+  const rawDivisionIds = Array.isArray(divisionIds) ? divisionIds : [];
+  const providedDivisionIds = rawDivisionIds
+    .map((id) => toIdString(id))
+    .filter(Boolean);
+  const divisionFieldsProvided =
+    divisionId !== undefined ||
+    divisionIds !== undefined ||
+    (eventChanged && !!nextEventId);
+
+  let finalDivisions = null;
+  let divisionPermissionChecked = false;
+
+  if (divisionFieldsProvided) {
+    // Validasi konsistensi dengan divisi event.
+    if (eventDivisionId) {
+      if (divisionId !== undefined && toIdString(divisionId) !== eventDivisionId) {
         return next(
-          new AppError("Divisi task harus sama dengan divisi event", 400),
+          new AppError(
+            "Divisi utama task harus sama dengan divisi event",
+            400,
+          ),
+        );
+      }
+      if (
+        divisionIds !== undefined &&
+        !providedDivisionIds.includes(eventDivisionId)
+      ) {
+        return next(
+          new AppError(
+            "Divisi event wajib termasuk dalam divisi yang terlibat",
+            400,
+          ),
+        );
+      }
+    } else if (eventChanged && nextEventId) {
+      const hasDivisionInput =
+        !!toIdString(divisionId) ||
+        providedDivisionIds.length > 0 ||
+        (Array.isArray(divisionPics) && divisionPics.length > 0);
+      if (hasDivisionInput) {
+        return next(
+          new AppError(
+            "Event belum memiliki divisi, task tidak dapat memakai divisi",
+            400,
+          ),
         );
       }
     }
-    await assertCanViewDivisionItem({
-      divisionId: resolved,
+
+    let primaryInput;
+    let idsInput;
+
+    if (eventDivisionId) {
+      primaryInput = eventDivisionId;
+      idsInput =
+        divisionIds !== undefined
+          ? rawDivisionIds
+          : [
+              eventDivisionId,
+              ...oldDivisionIds.filter((id) => id !== eventDivisionId),
+            ];
+    } else if (divisionIds !== undefined) {
+      idsInput = rawDivisionIds;
+      primaryInput =
+        divisionId !== undefined ? toIdString(divisionId) : undefined;
+    } else {
+      const primary = toIdString(divisionId);
+      primaryInput = primary;
+      idsInput = primary ? [primary] : [];
+    }
+
+    const canManage = await canManageTaskDivisions({
       workspaceId: workspace._id,
+      task,
       userId,
       role: req.workspaceMember?.role,
+      nextDivisionIds: idsInput,
     });
-    task.divisionId = resolved;
+    if (!canManage) {
+      return next(
+        new AppError(
+          "Kamu tidak memiliki izin untuk mengubah divisi task ini",
+          403,
+        ),
+      );
+    }
+    divisionPermissionChecked = true;
+
+    const resolved = await resolveTaskDivisions({
+      workspaceId: workspace._id,
+      primaryDivisionId: primaryInput,
+      divisionIds: idsInput,
+    });
+
+    // Cek akses hanya saat divisi utama berubah. Ketua divisi terkait boleh
+    // mengubah daftar divisi/PIC tanpa harus menjadi anggota divisi utama.
+    if (toIdString(resolved.divisionId) !== toIdString(task.divisionId)) {
+      await assertCanViewDivisionItem({
+        divisionId: resolved.divisionId,
+        workspaceId: workspace._id,
+        userId,
+        role: req.workspaceMember?.role,
+      });
+    }
+
+    task.divisionId = resolved.divisionId;
+    task.divisionIds = resolved.divisionIds;
+    finalDivisions = resolved.divisions;
+
+    // Buang PIC dari divisi yang tidak lagi terlibat. Kalau divisionPics
+    // dikirim eksplisit, array tersebut akan menggantikan seluruh daftar.
+    if (divisionPics === undefined) {
+      const validIds = new Set(resolved.divisionIds.map((id) => id.toString()));
+      task.divisionPics = (task.divisionPics || []).filter((pic) =>
+        validIds.has(pic.divisionId?.toString()),
+      );
+    }
+  } else {
+    finalDivisions = await resolveTaskDivisions({
+      workspaceId: workspace._id,
+      primaryDivisionId: task.divisionId,
+      divisionIds: task.divisionIds?.length ? task.divisionIds : [],
+    });
+  }
+
+  // Checklist tidak boleh menunjuk divisi yang sudah tidak terlibat. PIC tanpa
+  // divisi juga harus tetap berasal dari salah satu divisi yang terlibat.
+  const validTaskDivisionIds = new Set(
+    finalDivisions.divisionIds.map((id) => id.toString()),
+  );
+  const taskHasDivisions = validTaskDivisionIds.size > 0;
+  for (const subtask of task.subtasks || []) {
+    let subtaskDivisionId = toIdString(subtask.divisionId);
+    if (subtaskDivisionId && !validTaskDivisionIds.has(subtaskDivisionId)) {
+      subtask.divisionId = null;
+      subtaskDivisionId = null;
+    }
+
+    const assigneeId = toIdString(subtask.assignee);
+    if (taskHasDivisions && assigneeId) {
+      let isInvolvedMember = false;
+      if (subtaskDivisionId) {
+        const division = finalDivisions.divisions.find(
+          (item) => item._id.toString() === subtaskDivisionId,
+        );
+        isInvolvedMember = (division?.members || []).some(
+          (member) => toIdString(member.userId) === assigneeId,
+        );
+      } else {
+        isInvolvedMember = finalDivisions.divisions.some((division) =>
+          (division.members || []).some(
+            (member) => toIdString(member.userId) === assigneeId,
+          ),
+        );
+      }
+      if (!isInvolvedMember) subtask.assignee = null;
+    }
+  }
+
+  if (eventId !== undefined) {
+    task.eventId = eventId || null;
+  }
+
+  if (divisionPics !== undefined) {
+    if (!divisionPermissionChecked) {
+      const canManage = await canManageTaskDivisions({
+        workspaceId: workspace._id,
+        task,
+        userId,
+        role: req.workspaceMember?.role,
+        nextDivisionIds: finalDivisions.divisionIds,
+      });
+      if (!canManage) {
+        return next(
+          new AppError(
+            "Kamu tidak memiliki izin untuk mengubah PIC divisi task ini",
+            403,
+          ),
+        );
+      }
+    }
+
+    const normalizedPics = await normalizeDivisionPics({
+      workspaceId: workspace._id,
+      divisionPics: divisionPics || [],
+      divisions: finalDivisions.divisions,
+    });
+    task.divisionPics = normalizedPics;
   }
 
   // Phase (pipeline)
@@ -717,14 +1030,146 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   }
 
   // Subtasks
+  let newAllSubtasksComplete = oldAllSubtasksComplete;
+  const completedSubtaskIds = [];
+  const newlyAssignedSubtasks = [];
   if (subtasks !== undefined) {
-    task.subtasks = subtasks.map((st, idx) => ({
-      _id: st._id || new mongoose.Types.ObjectId(),
-      title: st.title,
-      isCompleted: st.isCompleted || false,
-      assignee: st.assignee || null,
-      order: st.order !== undefined ? st.order : idx,
-    }));
+    if (!Array.isArray(subtasks)) {
+      return next(new AppError("Format checklist tidak valid", 400));
+    }
+    const memberRole = req.workspaceMember?.role;
+    const oldById = new Map(
+      oldSubtasks.map((st) => [st._id.toString(), st]),
+    );
+    const processedSubtasks = [];
+
+    for (let idx = 0; idx < subtasks.length; idx += 1) {
+      const st = subtasks[idx];
+      const subtaskTitle =
+        typeof st.title === "string" ? st.title.trim() : "";
+      if (!subtaskTitle) {
+        return next(new AppError("Judul subtask tidak boleh kosong", 400));
+      }
+
+      const subtaskDueDate = st.dueDate ? new Date(st.dueDate) : null;
+      if (subtaskDueDate && Number.isNaN(subtaskDueDate.getTime())) {
+        return next(new AppError("Tanggal subtask tidak valid", 400));
+      }
+
+      const subtaskId = st._id
+        ? st._id.toString()
+        : new mongoose.Types.ObjectId().toString();
+      const oldSubtask = oldById.get(subtaskId);
+      const isCompleted = st.isCompleted === true;
+      const oldCompleted = oldSubtask?.isCompleted === true;
+      const assignee = st.assignee || null;
+      const divisionId = st.divisionId || null;
+
+      let completedBy = oldSubtask?.completedBy || null;
+      let completedAt = oldSubtask?.completedAt || null;
+
+      if (oldSubtask && oldCompleted !== isCompleted) {
+        const oldAssigneeId = toIdString(oldSubtask.assignee);
+        const canToggle =
+          ["owner", "admin"].includes(memberRole) ||
+          toIdString(task.createdBy) === userId.toString() ||
+          !oldAssigneeId ||
+          oldAssigneeId === userId.toString();
+
+        if (!canToggle) {
+          return next(
+            new AppError(
+              "Hanya PIC subtask, pembuat task, atau owner/admin yang dapat mengubah status checklist",
+              403,
+            ),
+          );
+        }
+
+        if (isCompleted) {
+          completedBy = userId;
+          completedAt = new Date();
+          completedSubtaskIds.push(subtaskId);
+        } else {
+          completedBy = null;
+          completedAt = null;
+        }
+      } else if (!oldSubtask && isCompleted) {
+        const canCreateCompleted =
+          ["owner", "admin"].includes(memberRole) ||
+          toIdString(task.createdBy) === userId.toString();
+        if (!canCreateCompleted) {
+          return next(
+            new AppError(
+              "Hanya pembuat task atau owner/admin yang dapat menambah checklist selesai",
+              403,
+            ),
+          );
+        }
+        completedBy = userId;
+        completedAt = new Date();
+        completedSubtaskIds.push(subtaskId);
+      }
+
+      processedSubtasks.push({
+        _id: subtaskId,
+        title: subtaskTitle,
+        isCompleted,
+        assignee,
+        divisionId,
+        dueDate: subtaskDueDate,
+        notes:
+          typeof st.notes === "string" ? st.notes.trim().slice(0, 1000) : "",
+        completedBy,
+        completedAt,
+        order: st.order !== undefined ? st.order : idx,
+      });
+
+      const oldAssigneeId = toIdString(oldSubtask?.assignee);
+      const newAssigneeId = toIdString(assignee);
+      if (newAssigneeId && newAssigneeId !== oldAssigneeId) {
+        newlyAssignedSubtasks.push({
+          title: subtaskTitle,
+          assignee: assignee,
+        });
+      }
+    }
+
+    await validateSubtaskAssignees({
+      workspaceId: workspace._id,
+      subtasks: processedSubtasks,
+      divisionIds: task.divisionIds?.length
+        ? task.divisionIds
+        : task.divisionId
+          ? [task.divisionId]
+          : [],
+      divisions: finalDivisions?.divisions || [],
+    });
+
+    task.subtasks = processedSubtasks;
+    newAllSubtasksComplete =
+      processedSubtasks.length > 0 &&
+      processedSubtasks.every((subtask) => subtask.isCompleted);
+  }
+
+  // Kolom koordinasi (boleh diubah member yang punya akses task)
+  if (coordination !== undefined && coordination !== null) {
+    if (typeof coordination !== "object" || Array.isArray(coordination)) {
+      return next(new AppError("Format data koordinasi tidak valid", 400));
+    }
+    task.coordination = {
+      constraints:
+        coordination.constraints !== undefined
+          ? normalizeCoordinationText(coordination.constraints)
+          : oldCoordination.constraints,
+      helpNeeded:
+        coordination.helpNeeded !== undefined
+          ? normalizeCoordinationText(coordination.helpNeeded)
+          : oldCoordination.helpNeeded,
+      followUp:
+        coordination.followUp !== undefined
+          ? normalizeCoordinationText(coordination.followUp)
+          : oldCoordination.followUp,
+    };
   }
 
   // Dependencies
@@ -759,14 +1204,9 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   await task.save();
 
   // Populate for response
-  const populatedTask = await Task.findById(task._id)
-    .populate("assignees", "name email avatar")
-    .populate("watchers", "name email avatar")
-    .populate("labels", "name color")
-    .populate(divisionPopulate)
-    .populate("createdBy", "name email avatar")
-    .populate("blockedBy", "title columnId")
-    .lean();
+  const populatedTask = await applyTaskPopulates(
+    Task.findById(task._id),
+  ).lean();
 
   // Emit Socket.io event
   const eventName = columnChanged ? "task:moved" : "task:updated";
@@ -803,6 +1243,12 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     if (assignees !== undefined) changes.push("assignees");
     if (datesChanged) changes.push("dates");
     if (priorityChanged) changes.push("priority");
+    if (divisionId !== undefined || divisionIds !== undefined || eventChanged) {
+      changes.push("divisions");
+    }
+    if (divisionPics !== undefined) changes.push("divisionPics");
+    if (coordination !== undefined) changes.push("coordination");
+    if (subtasks !== undefined) changes.push("subtasks");
 
     if (changes.length > 0) {
       ActivityLogService.log({
@@ -840,7 +1286,94 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     }
   }
 
-  // 2. Mention Notification (from new description)
+  // 2. PIC divisi notification (new PIC only)
+  if (divisionPics !== undefined) {
+    const oldPicIds = new Set(
+      oldDivisionPics.map((pic) => pic.userId).filter(Boolean),
+    );
+    const newPicIds = [
+      ...new Set(
+        (task.divisionPics || [])
+          .map((pic) => toIdString(pic.userId))
+          .filter(
+            (id) => id && !oldPicIds.has(id) && id !== userId.toString(),
+          ),
+      ),
+    ];
+
+    if (newPicIds.length > 0) {
+      await NotificationService.createForMany({
+        workspaceId: workspace._id,
+        recipientIds: newPicIds,
+        actorId: userId,
+        type: "assign_task",
+        targetType: "task",
+        targetId: task._id,
+        message: `Kamu menjadi PIC divisi pada task: ${task.title}`,
+        url: taskUrl,
+      });
+    }
+  }
+
+  // 3. Checklist assignment notification
+  if (newlyAssignedSubtasks.length > 0) {
+    const assigneeIds = [
+      ...new Set(
+        newlyAssignedSubtasks
+          .map((subtask) => toIdString(subtask.assignee))
+          .filter((id) => id && id !== userId.toString()),
+      ),
+    ];
+
+    if (assigneeIds.length > 0) {
+      await NotificationService.createForMany({
+        workspaceId: workspace._id,
+        recipientIds: assigneeIds,
+        actorId: userId,
+        type: "assign_task",
+        targetType: "task",
+        targetId: task._id,
+        message: `Kamu mendapat checklist pada task: ${task.title}`,
+        url: taskUrl,
+      });
+    }
+  }
+
+  // 4. Checklist completion notification
+  if (subtasks !== undefined && completedSubtaskIds.length > 0) {
+    const checklistRecipients = new Set(
+      [
+        toIdString(task.createdBy),
+        ...(task.divisionPics || []).map((pic) =>
+          toIdString(pic.userId),
+        ),
+        ...(task.watchers || []).map((id) => toIdString(id)),
+        ...(task.assignees || []).map((id) => toIdString(id)),
+      ].filter(Boolean),
+    );
+    checklistRecipients.delete(userId.toString());
+
+    if (checklistRecipients.size > 0) {
+      const allCompleteNow =
+        !oldAllSubtasksComplete && newAllSubtasksComplete;
+      const message = allCompleteNow
+        ? `Semua checklist selesai: ${task.title}`
+        : `${completedSubtaskIds.length} checklist selesai: ${task.title}`;
+
+      await NotificationService.createForMany({
+        workspaceId: workspace._id,
+        recipientIds: [...checklistRecipients],
+        actorId: userId,
+        type: "task_update",
+        targetType: "task",
+        targetId: task._id,
+        message,
+        url: taskUrl,
+      });
+    }
+  }
+
+  // 5. Mention Notification (from new description)
   // Hanya mention yang benar-benar baru yang dinotifikasi.
   if (description !== undefined && description !== oldDescription) {
     const newMentions = extractMentions(description).map((m) =>
@@ -940,6 +1473,14 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
     return next(new AppError("Task tidak ditemukan", 404));
   }
 
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
+
   // Permission check: creator, admin, or owner
   const isCreator = task.createdBy.toString() === userId;
   const isAdminOrOwner = ["owner", "admin"].includes(memberRole);
@@ -1000,6 +1541,14 @@ exports.archiveTask = catchAsync(async (req, res, next) => {
     return next(new AppError("Task tidak ditemukan", 404));
   }
 
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
+
   if (task.isArchived) {
     return next(new AppError("Task sudah diarsipkan", 400));
   }
@@ -1046,6 +1595,14 @@ exports.unarchiveTask = catchAsync(async (req, res, next) => {
   if (!task) {
     return next(new AppError("Task tidak ditemukan", 404));
   }
+
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
 
   if (!task.isArchived) {
     return next(new AppError("Task tidak sedang diarsipkan", 400));
@@ -1095,12 +1652,17 @@ exports.bulkArchiveDone = catchAsync(async (req, res) => {
   }
 
   const result = await Task.updateMany(
-    {
+    await applyTaskDivisionScope({
+      filter: {
+        workspaceId: workspace._id,
+        columnId: { $in: doneColumnIds },
+        isArchived: { $ne: true },
+        isDeleted: { $ne: true },
+      },
       workspaceId: workspace._id,
-      columnId: { $in: doneColumnIds },
-      isArchived: { $ne: true },
-      isDeleted: { $ne: true },
-    },
+      userId,
+      role: req.workspaceMember?.role,
+    }),
     {
       $set: { isArchived: true, archivedAt: new Date() },
     },
@@ -1135,6 +1697,14 @@ exports.watchTask = catchAsync(async (req, res, next) => {
   if (!task) {
     return next(new AppError("Task tidak ditemukan", 404));
   }
+
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
 
   const alreadyWatching = task.watchers.some((w) => w.toString() === userId);
 
@@ -1171,6 +1741,14 @@ exports.unwatchTask = catchAsync(async (req, res, next) => {
     return next(new AppError("Task tidak ditemukan", 404));
   }
 
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
+
   task.watchers = task.watchers.filter((w) => w.toString() !== userId);
   await task.save();
 
@@ -1200,6 +1778,14 @@ exports.uploadAttachment = catchAsync(async (req, res, next) => {
   if (!task) {
     return next(new AppError("Task tidak ditemukan", 404));
   }
+
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
 
   // TODO: Upload ke Puter.js dan dapatkan URL
   // Untuk sementara, simpan sebagai base64 data URL atau placeholder
@@ -1255,6 +1841,14 @@ exports.deleteAttachment = catchAsync(async (req, res, next) => {
   if (!task) {
     return next(new AppError("Task tidak ditemukan", 404));
   }
+
+  // Visibility divisi multi-divisi
+  await assertCanViewTask({
+    task,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
 
   const attachmentIndex = task.attachments.findIndex(
     (a) => a._id.toString() === attachmentId,

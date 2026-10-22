@@ -59,7 +59,9 @@ export function TaskDetailPanel({
   labels,
   events,
   divisions = [],
+  allDivisions = [],
   currentUserId,
+  memberRole = "member",
   workspaceId,
   onUpdate,
   onDelete,
@@ -244,7 +246,9 @@ export function TaskDetailPanel({
                       labels={labels}
                       events={events}
                       divisions={divisions}
+                      allDivisions={allDivisions}
                       currentUserId={currentUserId}
+                      memberRole={memberRole}
                       onUpdate={handleUpdate}
                       onWatch={() => onWatch?.(task._id)}
                       onUnwatch={() => onUnwatch?.(task._id)}
@@ -309,7 +313,7 @@ export function TaskDetailPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Task</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah kamu yakin ingin menghapus task "{task.title}"? Tindakan
+              Apakah kamu yakin ingin menghapus task “{task.title}”? Tindakan
               ini tidak bisa dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>

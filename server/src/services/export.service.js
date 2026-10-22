@@ -46,18 +46,10 @@ function buildTaskFilter(workspaceId, filters = {}) {
   if (filters.priority) filter.priority = filters.priority;
   if (filters.eventId) filter.eventId = filters.eventId;
   if (filters.label) filter.labels = filters.label;
-  // Scope divisi (sudah divalidasi di controller): "none" | id | { $in }
-  if (filters.divisionId !== undefined) {
-    if (filters.divisionId === "none") {
-      filter.divisionId = null;
-    } else if (
-      typeof filters.divisionId === "object" &&
-      filters.divisionId !== null
-    ) {
-      filter.divisionId = filters.divisionId;
-    } else if (filters.divisionId) {
-      filter.divisionId = filters.divisionId;
-    }
+  // Scope divisi (sudah divalidasi di controller): clause Mongo dari
+  // buildTaskDivisionScope, mencakup divisionId lama dan divisionIds baru.
+  if (filters.divisionScope) {
+    filter.$and = [...(filter.$and || []), filters.divisionScope];
   }
   if (filters.isArchived !== undefined) {
     filter.isArchived =

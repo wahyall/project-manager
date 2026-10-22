@@ -254,13 +254,20 @@ export function useKanban(workspaceId, workspace) {
 
       // Division filter (client-side, untuk data dari socket realtime)
       if (filters.divisionId) {
-        const taskDivId =
-          typeof task.divisionId === "string"
-            ? task.divisionId
-            : task.divisionId?._id?.toString();
+        const taskDivisionIds = [
+          task.divisionId,
+          ...(task.divisionIds || []),
+        ]
+          .map((value) =>
+            value
+              ? (value._id || value)?.toString?.() || value.toString()
+              : null,
+          )
+          .filter(Boolean);
+
         if (filters.divisionId === "none") {
-          if (taskDivId) return false;
-        } else if ((taskDivId || null) !== filters.divisionId) {
+          if (taskDivisionIds.length > 0) return false;
+        } else if (!taskDivisionIds.includes(filters.divisionId)) {
           return false;
         }
       }

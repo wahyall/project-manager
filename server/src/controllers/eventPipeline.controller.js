@@ -29,6 +29,18 @@ const populateTask = (query) =>
     .populate("assignees", "name email avatar")
     .populate("watchers", "name email avatar")
     .populate("labels", "name color")
+    .populate("divisionId", "name color")
+    .populate("divisionIds", "name color")
+    .populate({
+      path: "divisionPics.divisionId",
+      select: "name color",
+    })
+    .populate({
+      path: "divisionPics.userId",
+      select: "name email avatar",
+    })
+    .populate("subtasks.assignee", "name email avatar")
+    .populate("subtasks.divisionId", "name color")
     .populate("createdBy", "name email avatar");
 
 // ──────────────────────────────────────────────
@@ -126,6 +138,8 @@ exports.applyTemplate = catchAsync(async (req, res, next) => {
       columnId: firstColumnId,
       columnOrder,
       eventId,
+      divisionId: event.divisionId || null,
+      divisionIds: event.divisionId ? [event.divisionId] : [],
       phase: item.phase,
       dueDateMode: item.dueDateMode,
       dueOffsetDays: item.dueDateMode === "relative" ? item.dueOffsetDays : null,

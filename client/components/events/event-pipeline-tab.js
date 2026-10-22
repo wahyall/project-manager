@@ -13,7 +13,15 @@ import { PipelineQuickCreateModal } from "./pipeline-quick-create-modal";
 import { PipelineTemplateDialog } from "./pipeline-template-dialog";
 import { TaskDetailPanel } from "@/components/kanban/task-detail-panel";
 
-export function EventPipelineTab({ event, workspaceId, workspace, members }) {
+export function EventPipelineTab({
+  event,
+  workspaceId,
+  workspace,
+  members,
+  divisions = [],
+  allDivisions = [],
+  memberRole = "member",
+}) {
   const { user } = useAuth();
   const {
     phases,
@@ -194,7 +202,10 @@ export function EventPipelineTab({ event, workspaceId, workspace, members }) {
         members={members}
         labels={labels}
         events={[event]}
+        divisions={divisions}
+        allDivisions={allDivisions}
         currentUserId={user?._id}
+        memberRole={memberRole}
         workspaceId={workspaceId}
         onUpdate={handleUpdateTask}
         onDelete={handleDeleteTask}

@@ -32,9 +32,9 @@
 
 - [x] Mencatat rencana dan progres event bulanan.
 - [x] Mencatat kebutuhan internal tim event.
-- [ ] Mencatat kebutuhan koordinasi antar-divisi.
+- [x] Mencatat kebutuhan koordinasi antar-divisi.
 - [x] Mengumpulkan ide konten untuk mendukung event.
-- [ ] Mengumpulkan masukan terkait pemateri atau narasumber.
+- [x] Mengumpulkan masukan terkait pemateri atau narasumber.
 - [x] Membuat checklist persiapan event.
 - [x] Mencatat timeline dan deadline persiapan.
 - [x] Memantau progres setiap kebutuhan sampai selesai.
@@ -42,10 +42,10 @@
 
 5. Fitur Koordinasi Antar-Divisi
 
-- [ ] Task dapat melibatkan lebih dari satu divisi.
-- [ ] Setiap kebutuhan memiliki divisi peminta dan divisi terkait.
-- [ ] Menentukan PIC dari masing-masing divisi yang terlibat.
-- [ ] Menyediakan kolom kendala, bantuan yang dibutuhkan, dan tindak lanjut.
+- [x] Task dapat melibatkan lebih dari satu divisi.
+- [x] Setiap kebutuhan memiliki divisi peminta dan divisi terkait.
+- [x] Menentukan PIC dari masing-masing divisi yang terlibat.
+- [x] Menyediakan kolom kendala, bantuan yang dibutuhkan, dan tindak lanjut.
 - [x] Memberikan notifikasi saat ada task baru atau perubahan status.
 - [x] Menyediakan komentar atau diskusi dalam setiap task.
 
@@ -63,7 +63,7 @@
 - [x] Ketua dapat melihat dan memantau progres divisinya.
 - [x] Anggota dapat melihat dan memperbarui task sesuai hak akses.
 - [x] Ketua umum atau admin dapat memantau seluruh divisi.
-- [ ] Mengatur hak akses untuk data sensitif seperti kas dan infaq.
+- [x] Mengatur hak akses untuk data sensitif seperti kas dan infaq.
 - [x] Menyimpan riwayat perubahan task dan laporan.
 - [x] Menyediakan fitur arsip untuk program atau periode yang selesai.
 

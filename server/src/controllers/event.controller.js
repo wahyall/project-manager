@@ -208,6 +208,7 @@ exports.createEvent = catchAsync(async (req, res, next) => {
   const {
     title,
     description,
+    speakerNotes,
     startDate,
     endDate,
     color,
@@ -273,6 +274,7 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     workspaceId: workspace._id,
     title: title.trim(),
     description: description || "",
+    speakerNotes: speakerNotes || "",
     startDate: new Date(startDate),
     endDate: new Date(endDate),
     color: color || "#8B5CF6",
@@ -354,6 +356,24 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     }
   }
 
+  // Mention Notification (from speaker notes)
+  if (speakerNotes) {
+    const mentions = extractMentions(speakerNotes);
+    if (mentions.length > 0) {
+      const mentionedUserIds = mentions.map((m) => m.userId);
+      await NotificationService.createForMany({
+        workspaceId: workspace._id,
+        recipientIds: mentionedUserIds,
+        actorId: userId,
+        type: "mention",
+        targetType: "event",
+        targetId: event._id,
+        message: `menyebut kamu di catatan pemateri event "${event.title}"`,
+        url: eventUrl,
+      });
+    }
+  }
+
   // Embedding sync (fire-and-forget)
   EmbeddingService.upsert({
     workspaceId: workspace._id,
@@ -430,9 +450,19 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
 
   // Backup original state
   const oldDescription = event.description;
+  const oldSpeakerNotes = event.speakerNotes || "";
 
-  const { title, description, startDate, endDate, color, status, ideas, divisionId } =
-    req.body;
+  const {
+    title,
+    description,
+    speakerNotes,
+    startDate,
+    endDate,
+    color,
+    status,
+    ideas,
+    divisionId,
+  } = req.body;
 
   // Title
   if (title !== undefined) {
@@ -445,6 +475,11 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   // Description
   if (description !== undefined) {
     event.description = description;
+  }
+
+  // Catatan pemateri
+  if (speakerNotes !== undefined) {
+    event.speakerNotes = speakerNotes;
   }
 
   // Dates
@@ -481,7 +516,12 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
 
   // Divisi Workspace (null = Tanpa Divisi).
   // Member/guest hanya boleh memindahkan ke divisinya sendiri.
+  let syncEventTaskDivisions = false;
+  let nextEventDivisionId = null;
   if (divisionId !== undefined) {
+    const previousDivisionId = event.divisionId
+      ? event.divisionId.toString()
+      : null;
     const resolved = await resolveDivisionId(divisionId, workspace._id);
     await assertCanViewDivisionItem({
       divisionId: resolved,
@@ -490,6 +530,8 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
       role: req.workspaceMember?.role,
     });
     event.divisionId = resolved;
+    nextEventDivisionId = resolved ? resolved.toString() : null;
+    syncEventTaskDivisions = previousDivisionId !== nextEventDivisionId;
   }
 
   const previousIdeaIds = (event.ideas || []).map((i) => i.toString());
@@ -503,6 +545,56 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   }
 
   await event.save();
+
+  // Jaga invariant: task yang terhubung ke event memakai divisi event sebagai
+  // divisi utama. Divisi utama lama tetap disimpan sebagai divisi terkait
+  // supaya koordinasi yang sudah berjalan tidak hilang.
+  if (syncEventTaskDivisions) {
+    const eventTasks = await Task.find({
+      eventId: event._id,
+      workspaceId: workspace._id,
+      isDeleted: { $ne: true },
+    }).select("divisionId divisionIds divisionPics subtasks");
+
+    for (const eventTask of eventTasks) {
+      const oldPrimary = eventTask.divisionId
+        ? eventTask.divisionId.toString()
+        : null;
+      // Semua divisi lama (termasuk divisi utama lama) dipertahankan sebagai
+      // divisi terkait saat divisi event berubah.
+      const relatedIds = [
+        oldPrimary,
+        ...(eventTask.divisionIds || []).map((id) => id.toString()),
+      ].filter((id) => id && id !== nextEventDivisionId);
+
+      if (nextEventDivisionId) {
+        eventTask.divisionId = nextEventDivisionId;
+        eventTask.divisionIds = [
+          nextEventDivisionId,
+          ...new Set(relatedIds),
+        ];
+      } else {
+        eventTask.divisionId = null;
+        eventTask.divisionIds = [];
+        eventTask.divisionPics = [];
+      }
+
+      // Checklist tidak boleh menunjuk divisi yang sudah tidak terlibat.
+      const nextDivisionIds = new Set(
+        (eventTask.divisionIds || []).map((id) => id.toString()),
+      );
+      for (const subtask of eventTask.subtasks || []) {
+        const subtaskDivisionId = subtask.divisionId
+          ? subtask.divisionId.toString()
+          : null;
+        if (subtaskDivisionId && !nextDivisionIds.has(subtaskDivisionId)) {
+          subtask.divisionId = null;
+        }
+      }
+
+      await eventTask.save();
+    }
+  }
 
   // Recalculate relative due dates of pipeline tasks when event dates change
   let recalculatedTaskIds = [];
@@ -562,6 +654,7 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
   const changedFields = [];
   if (title !== undefined) changedFields.push("title");
   if (description !== undefined) changedFields.push("description");
+  if (speakerNotes !== undefined) changedFields.push("speakerNotes");
   if (startDate !== undefined) changedFields.push("startDate");
   if (endDate !== undefined) changedFields.push("endDate");
   if (color !== undefined) changedFields.push("color");
@@ -604,6 +697,32 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
         targetType: "event",
         targetId: event._id,
         message: `menyebut kamu di deskripsi event "${event.title}"`,
+        url: `/workspace/${workspace._id}/events/${event._id}`,
+      });
+    }
+  }
+
+  // Mention Notification (from new speaker notes)
+  if (speakerNotes !== undefined && speakerNotes !== oldSpeakerNotes) {
+    const newMentions = extractMentions(speakerNotes).map((m) =>
+      m.userId.toString(),
+    );
+    const oldMentions = extractMentions(oldSpeakerNotes).map((m) =>
+      m.userId.toString(),
+    );
+    const newlyMentionedUserIds = newMentions.filter(
+      (id) => !oldMentions.includes(id),
+    );
+
+    if (newlyMentionedUserIds.length > 0) {
+      await NotificationService.createForMany({
+        workspaceId: workspace._id,
+        recipientIds: newlyMentionedUserIds,
+        actorId: userId,
+        type: "mention",
+        targetType: "event",
+        targetId: event._id,
+        message: `menyebut kamu di catatan pemateri event "${event.title}"`,
         url: `/workspace/${workspace._id}/events/${event._id}`,
       });
     }
@@ -733,6 +852,17 @@ exports.getEventTasks = catchAsync(async (req, res, next) => {
     .populate("assignees", "name email avatar")
     .populate("labels", "name color")
     .populate("divisionId", "name color")
+    .populate("divisionIds", "name color")
+    .populate({
+      path: "divisionPics.divisionId",
+      select: "name color",
+    })
+    .populate({
+      path: "divisionPics.userId",
+      select: "name email avatar",
+    })
+    .populate("subtasks.assignee", "name email avatar")
+    .populate("subtasks.divisionId", "name color")
     .populate("createdBy", "name email avatar")
     .sort({ columnId: 1, columnOrder: 1 })
     .lean();

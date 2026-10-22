@@ -11,7 +11,6 @@ import {
   Eye,
   Calendar,
   CheckCircle2,
-  Crown,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -136,6 +135,52 @@ function AssigneeStack({ assignees, max = 3 }) {
   );
 }
 
+// ── PIC per division avatars stack ──────────────────
+function PicStack({ pics, max = 3 }) {
+  if (!pics || pics.length === 0) return null;
+  const visible = pics.slice(0, max);
+  const remaining = pics.length - max;
+
+  return (
+    <div className="flex -space-x-1.5">
+      {visible.map(({ user, divisionNames = [] }) => (
+        <Tooltip key={user._id}>
+          <TooltipTrigger asChild>
+            <Avatar className="h-6 w-6 border-2 border-background ring-1 ring-amber-400/50">
+              <AvatarFallback className="text-[9px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                {getInitials(user.name)}
+              </AvatarFallback>
+            </Avatar>
+          </TooltipTrigger>
+          <TooltipContent>
+            PIC {divisionNames.length > 0 ? `${divisionNames.join(", ")}: ` : ""}
+            {user.name}
+          </TooltipContent>
+        </Tooltip>
+      ))}
+      {remaining > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-amber-500/10 text-[9px] font-medium text-amber-700 dark:text-amber-400">
+              +{remaining}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            {pics
+              .slice(max)
+              .map(({ user, divisionNames = [] }) =>
+                divisionNames.length > 0
+                  ? `${user.name} (${divisionNames.join(", ")})`
+                  : user.name,
+              )
+              .join(", ")}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+
 // ── Main TaskCard component ────────────────────────
 function TaskCardInner({
   task,
@@ -151,14 +196,54 @@ function TaskCardInner({
   const commentCount = task.commentCount || 0;
   const attachmentCount = (task.attachments || []).length;
 
-  const division = typeof task.divisionId === "object" ? task.divisionId : null;
-  const divisionLeader = useMemo(() => {
-    if (!division?.members) return null;
-    const leaderMember = division.members.find((m) => m.role === "leader");
-    if (!leaderMember) return null;
-    const u = leaderMember.userId;
-    return typeof u === "object" ? u : { name: "Ketua" };
-  }, [division]);
+  const divisionList = useMemo(() => {
+    const source = task.divisionIds?.length
+      ? task.divisionIds
+      : [task.divisionId];
+    const seen = new Set();
+    return (source || [])
+      .filter(Boolean)
+      .map((raw) => {
+        const division =
+          typeof raw === "object"
+            ? raw
+            : { _id: raw, name: "Divisi", color: null };
+        const id = (division._id || division)?.toString?.();
+        if (!id || seen.has(id)) return null;
+        seen.add(id);
+        return division;
+      })
+      .filter(Boolean);
+  }, [task.divisionId, task.divisionIds]);
+
+  const picList = useMemo(() => {
+    const byUser = new Map();
+    for (const pic of task.divisionPics || []) {
+      const user = typeof pic.userId === "object" ? pic.userId : null;
+      if (!user?._id) continue;
+      const divisionId =
+        typeof pic.divisionId === "object"
+          ? pic.divisionId._id
+          : pic.divisionId;
+      const division = divisionList.find(
+        (item) => item._id?.toString() === divisionId?.toString(),
+      );
+      const userId = user._id.toString();
+      const entry = byUser.get(userId) || { user, divisionNames: [] };
+      if (division?.name && !entry.divisionNames.includes(division.name)) {
+        entry.divisionNames.push(division.name);
+      }
+      byUser.set(userId, entry);
+    }
+    return [...byUser.values()];
+  }, [divisionList, task.divisionPics]);
+
+  const hasCoordination =
+    divisionList.length > 1 ||
+    picList.length > 0 ||
+    !!task.coordination?.constraints ||
+    !!task.coordination?.helpNeeded ||
+    !!task.coordination?.followUp;
 
   const renderCard = (provided = {}, snapshot = {}) => (
     <div
@@ -211,26 +296,55 @@ function TaskCardInner({
         {task.title}
       </h4>
 
-      {/* Division badge with leader */}
-      {division && (
-        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-          <Badge
-            variant="outline"
-            className="text-[10px] h-4.5 px-1.5 py-0 font-normal border-primary/20 bg-primary/5 text-primary gap-1"
-          >
-            {division.color && (
-              <span
-                className="h-1.5 w-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: division.color }}
-              />
-            )}
-            <span className="truncate max-w-[120px]">{division.name}</span>
-            {divisionLeader && (
-              <span className="text-muted-foreground text-[9px] flex items-center gap-0.5 ml-0.5 font-normal">
-                • <Crown className="h-2.5 w-2.5 text-amber-500 inline shrink-0" /> {divisionLeader.name}
-              </span>
-            )}
-          </Badge>
+      {/* Divisi terlibat + PIC per divisi */}
+      {(divisionList.length > 0 || picList.length > 0) && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {divisionList.slice(0, 2).map((item) => (
+            <Badge
+              key={item._id}
+              variant="outline"
+              className="h-4.5 gap-1 border-primary/20 bg-primary/5 px-1.5 py-0 text-[10px] font-normal text-primary"
+            >
+              {item.color && (
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: item.color }}
+                />
+              )}
+              <span className="max-w-[110px] truncate">{item.name}</span>
+            </Badge>
+          ))}
+          {divisionList.length > 2 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="secondary"
+                  className="h-4.5 px-1.5 py-0 text-[10px] font-normal"
+                >
+                  +{divisionList.length - 2}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                {divisionList
+                  .slice(2)
+                  .map((item) => item.name)
+                  .join(", ")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {hasCoordination && (
+            <Badge
+              variant="outline"
+              className="h-4.5 border-amber-300/60 bg-amber-500/5 px-1.5 py-0 text-[9px] font-normal text-amber-700 dark:text-amber-400"
+            >
+              Koordinasi
+            </Badge>
+          )}
+          {picList.length > 0 && (
+            <div className="ml-auto">
+              <PicStack pics={picList} />
+            </div>
+          )}
         </div>
       )}
 
