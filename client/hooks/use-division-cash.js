@@ -29,7 +29,7 @@ export function useDivisionCash(workspaceId, divisionId) {
       if (search && search.trim()) params.search = search.trim();
 
       const { data } = await api.get(
-        `/api/workspaces/${workspaceId}/divisions/${divisionId}/cash`,
+        `/workspaces/${workspaceId}/divisions/${divisionId}/cash`,
         { params }
       );
 
@@ -60,7 +60,7 @@ export function useDivisionCash(workspaceId, divisionId) {
     async (txData) => {
       try {
         const { data } = await api.post(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/cash`,
+          `/workspaces/${workspaceId}/divisions/${divisionId}/cash`,
           txData
         );
         await fetchCash();
@@ -76,7 +76,7 @@ export function useDivisionCash(workspaceId, divisionId) {
     async (transactionId, txData) => {
       try {
         const { data } = await api.put(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/cash/${transactionId}`,
+          `/workspaces/${workspaceId}/divisions/${divisionId}/cash/${transactionId}`,
           txData
         );
         await fetchCash();
@@ -92,7 +92,7 @@ export function useDivisionCash(workspaceId, divisionId) {
     async (transactionId) => {
       try {
         await api.delete(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/cash/${transactionId}`
+          `/workspaces/${workspaceId}/divisions/${divisionId}/cash/${transactionId}`
         );
         await fetchCash();
       } catch (err) {

@@ -22,7 +22,7 @@ export function useDivisionCongregants(workspaceId, divisionId) {
       if (category && category !== "all") params.category = category;
 
       const { data } = await api.get(
-        `/api/workspaces/${workspaceId}/divisions/${divisionId}/congregants`,
+        `/workspaces/${workspaceId}/divisions/${divisionId}/congregants`,
         { params }
       );
 
@@ -46,7 +46,7 @@ export function useDivisionCongregants(workspaceId, divisionId) {
     async (congregantData) => {
       try {
         const { data } = await api.post(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/congregants`,
+          `/workspaces/${workspaceId}/divisions/${divisionId}/congregants`,
           congregantData
         );
         await fetchCongregants();
@@ -62,7 +62,7 @@ export function useDivisionCongregants(workspaceId, divisionId) {
     async (congregantId, congregantData) => {
       try {
         const { data } = await api.put(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/congregants/${congregantId}`,
+          `/workspaces/${workspaceId}/divisions/${divisionId}/congregants/${congregantId}`,
           congregantData
         );
         await fetchCongregants();
@@ -78,7 +78,7 @@ export function useDivisionCongregants(workspaceId, divisionId) {
     async (congregantId) => {
       try {
         await api.delete(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/congregants/${congregantId}`
+          `/workspaces/${workspaceId}/divisions/${divisionId}/congregants/${congregantId}`
         );
         await fetchCongregants();
       } catch (err) {

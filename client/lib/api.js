@@ -9,10 +9,13 @@ const api = axios.create({
   },
 });
 
-// Request interceptor — attach token
+// Request interceptor — attach token and sanitize redundant /api prefix
 api.interceptors.request.use(
   (config) => {
     config.baseURL = getApiUrl();
+    if (typeof config.url === "string" && config.url.startsWith("/api/")) {
+      config.url = config.url.replace(/^\/api(?=\/)/, "");
+    }
     const token =
       typeof window !== "undefined"
         ? localStorage.getItem("accessToken")

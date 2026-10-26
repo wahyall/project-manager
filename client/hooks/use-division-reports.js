@@ -14,7 +14,7 @@ export function useDivisionReports(workspaceId, divisionId) {
     setError(null);
     try {
       const { data } = await api.get(
-        `/api/workspaces/${workspaceId}/divisions/${divisionId}/reports`
+        `/workspaces/${workspaceId}/divisions/${divisionId}/reports`
       );
 
       if (data?.data) {
@@ -36,7 +36,7 @@ export function useDivisionReports(workspaceId, divisionId) {
     async (reportData) => {
       try {
         const { data } = await api.post(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/reports`,
+          `/workspaces/${workspaceId}/divisions/${divisionId}/reports`,
           reportData
         );
         await fetchReports();
@@ -52,7 +52,7 @@ export function useDivisionReports(workspaceId, divisionId) {
     async (reportId) => {
       try {
         await api.delete(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/reports/${reportId}`
+          `/workspaces/${workspaceId}/divisions/${divisionId}/reports/${reportId}`
         );
         await fetchReports();
       } catch (err) {

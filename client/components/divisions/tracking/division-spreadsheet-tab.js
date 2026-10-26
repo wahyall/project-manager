@@ -37,7 +37,7 @@ export function DivisionSpreadsheetTab({
     setCreating(true);
     try {
       const res = await api.post(
-        `/api/workspaces/${workspaceId}/divisions/${divisionId}/google-sheet`
+        `/workspaces/${workspaceId}/divisions/${divisionId}/google-sheet`
       );
       const { googleSpreadsheetUrl: newUrl, googleSpreadsheetId: newId } =
         res.data.data;
@@ -65,7 +65,7 @@ export function DivisionSpreadsheetTab({
     setSyncing(true);
     try {
       const res = await api.post(
-        `/api/workspaces/${workspaceId}/divisions/${divisionId}/google-sheet/sync`
+        `/workspaces/${workspaceId}/divisions/${divisionId}/google-sheet/sync`
       );
       toast.success(
         res.data?.message || "Data divisi berhasil disinkronkan ke Google Spreadsheet!"

@@ -21,7 +21,7 @@ export function useDivisionIssues(workspaceId, divisionId) {
       if (statusFilter && statusFilter !== "all") params.status = statusFilter;
 
       const { data } = await api.get(
-        `/api/workspaces/${workspaceId}/divisions/${divisionId}/issues`,
+        `/workspaces/${workspaceId}/divisions/${divisionId}/issues`,
         { params }
       );
 
@@ -44,7 +44,7 @@ export function useDivisionIssues(workspaceId, divisionId) {
     async (issueData) => {
       try {
         const { data } = await api.post(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/issues`,
+          `/workspaces/${workspaceId}/divisions/${divisionId}/issues`,
           issueData
         );
         await fetchIssues();
@@ -60,7 +60,7 @@ export function useDivisionIssues(workspaceId, divisionId) {
     async (issueId, issueData) => {
       try {
         const { data } = await api.put(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/issues/${issueId}`,
+          `/workspaces/${workspaceId}/divisions/${divisionId}/issues/${issueId}`,
           issueData
         );
         await fetchIssues();
@@ -76,7 +76,7 @@ export function useDivisionIssues(workspaceId, divisionId) {
     async (issueId) => {
       try {
         await api.delete(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/issues/${issueId}`
+          `/workspaces/${workspaceId}/divisions/${divisionId}/issues/${issueId}`
         );
         await fetchIssues();
       } catch (err) {

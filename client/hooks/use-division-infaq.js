@@ -23,7 +23,7 @@ export function useDivisionInfaq(workspaceId, divisionId) {
     setError(null);
     try {
       const { data } = await api.get(
-        `/api/workspaces/${workspaceId}/divisions/${divisionId}/infaq`,
+        `/workspaces/${workspaceId}/divisions/${divisionId}/infaq`,
         { params: { month, year } }
       );
 
@@ -59,7 +59,7 @@ export function useDivisionInfaq(workspaceId, divisionId) {
           ...infaqData,
         };
         const { data } = await api.post(
-          `/api/workspaces/${workspaceId}/divisions/${divisionId}/infaq`,
+          `/workspaces/${workspaceId}/divisions/${divisionId}/infaq`,
           payload
         );
         await fetchInfaq();
