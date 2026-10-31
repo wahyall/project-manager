@@ -18,6 +18,10 @@ const {
   applyDivisionScope,
   assertCanViewDivisionItem,
 } = require("../utils/divisionScope");
+const {
+  getUserLeaderDivisionIds,
+  canManageEventSync,
+} = require("../utils/rbacRules");
 
 // Helper: get Socket.io instance (safe)
 const getIO = () => {
@@ -238,6 +242,31 @@ exports.createEvent = catchAsync(async (req, res, next) => {
     );
   }
 
+  // Divisi Workspace pemilik event (null = Tanpa Divisi).
+  const resolvedDivisionId = await resolveDivisionId(
+    divisionId,
+    workspace._id,
+  );
+  await assertCanViewDivisionItem({
+    divisionId: resolvedDivisionId,
+    workspaceId: workspace._id,
+    userId,
+    role: req.workspaceMember?.role,
+  });
+
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh membuat event
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageEventSync({
+    role: req.workspaceMember?.role,
+    leaderDivisions,
+    event: { divisionId: resolvedDivisionId },
+    action: "create",
+    payload: req.body,
+  });
+  if (!rbacCheck.allowed) {
+    return next(new AppError(rbacCheck.message, 403));
+  }
+
   // Auto-create Google Spreadsheet for this event
   let googleSpreadsheetId = null;
   let googleSpreadsheetUrl = null;
@@ -446,6 +475,20 @@ exports.updateEvent = catchAsync(async (req, res, next) => {
 
   if (!event) {
     return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh edit data lengkap event.
+  // Member biasa hanya boleh update status event.
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageEventSync({
+    role: req.workspaceMember?.role,
+    leaderDivisions,
+    event,
+    action: "update",
+    payload: req.body,
+  });
+  if (!rbacCheck.allowed) {
+    return next(new AppError(rbacCheck.message, 403));
   }
 
   // Backup original state
@@ -765,14 +808,16 @@ exports.deleteEvent = catchAsync(async (req, res, next) => {
     return next(new AppError("Event tidak ditemukan", 404));
   }
 
-  // Permission check: creator, admin, or owner
-  const isCreator = event.createdBy.toString() === userId;
-  const isAdminOrOwner = ["owner", "admin"].includes(memberRole);
-
-  if (!isCreator && !isAdminOrOwner) {
-    return next(
-      new AppError("Kamu tidak memiliki izin untuk menghapus event ini", 403),
-    );
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh menghapus event
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageEventSync({
+    role: memberRole,
+    leaderDivisions,
+    event,
+    action: "delete",
+  });
+  if (!rbacCheck.allowed) {
+    return next(new AppError(rbacCheck.message, 403));
   }
 
   // Soft delete event

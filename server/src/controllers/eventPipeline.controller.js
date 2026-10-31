@@ -11,6 +11,10 @@ const {
 } = require("../services/task.service");
 const taskController = require("./task.controller");
 const ActivityLogService = require("../services/activityLog.service");
+const {
+  getUserLeaderDivisionIds,
+  canManageEventSync,
+} = require("../utils/rbacRules");
 
 const getIO = () => {
   try {
@@ -110,6 +114,24 @@ exports.applyTemplate = catchAsync(async (req, res, next) => {
   const event = await Event.findOne({ _id: eventId, workspaceId: workspace._id });
   if (!event) {
     return next(new AppError("Event tidak ditemukan", 404));
+  }
+
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh menerapkan template pipeline
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageEventSync({
+    role: req.workspaceMember?.role,
+    leaderDivisions,
+    event,
+    action: "update",
+    payload: { task: true },
+  });
+  if (!rbacCheck.allowed) {
+    return next(
+      new AppError(
+        "Hanya owner, admin, atau ketua divisi terkait yang dapat menerapkan template pipeline",
+        403,
+      ),
+    );
   }
 
   const template = await PipelineTemplate.findOne({
