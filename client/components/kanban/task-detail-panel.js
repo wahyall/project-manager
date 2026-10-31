@@ -48,6 +48,7 @@ import { TabComment } from "./tab-comment";
 import { TabActivity } from "./tab-activity";
 import { PRIORITY_CONFIG } from "./task-card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { canManageTask } from "@/lib/permissions";
 import api from "@/lib/api";
 
 export function TaskDetailPanel({
@@ -118,6 +119,13 @@ export function TaskDetailPanel({
 
   if (!task) return null;
 
+  const canManage = canManageTask({
+    task,
+    role: memberRole,
+    divisions: allDivisions?.length ? allDivisions : divisions,
+    userId: currentUserId,
+  });
+
   const priority = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
 
   return (
@@ -154,41 +162,43 @@ export function TaskDetailPanel({
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              {/* Actions menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
-                  {task.isArchived ? (
+              {/* Actions menu — Hanya untuk owner, admin, ketua divisi terkait */}
+              {canManage && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {task.isArchived ? (
+                      <DropdownMenuItem
+                        onClick={() => onUnarchive?.(task._id)}
+                        className="gap-2 text-xs"
+                      >
+                        <ArchiveRestore className="h-3.5 w-3.5" />
+                        Unarsipkan
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        onClick={() => onArchive?.(task._id)}
+                        className="gap-2 text-xs"
+                      >
+                        <Archive className="h-3.5 w-3.5" />
+                        Arsipkan
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => onUnarchive?.(task._id)}
-                      className="gap-2 text-xs"
+                      className="gap-2 text-xs text-destructive focus:text-destructive"
+                      onClick={() => setDeleteDialogOpen(true)}
                     >
-                      <ArchiveRestore className="h-3.5 w-3.5" />
-                      Unarsipkan
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Hapus Task
                     </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      onClick={() => onArchive?.(task._id)}
-                      className="gap-2 text-xs"
-                    >
-                      <Archive className="h-3.5 w-3.5" />
-                      Arsipkan
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="gap-2 text-xs text-destructive focus:text-destructive"
-                    onClick={() => setDeleteDialogOpen(true)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Hapus Task
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
               {/* Close button */}
               <Button

@@ -283,13 +283,8 @@ export function SubtaskChecklist({
       .filter((member) => member.id);
   };
 
-  const canToggle = (subtask) => {
-    if (!canEdit || memberRole === "guest") return false;
-    if (["owner", "admin"].includes(memberRole)) return true;
-    if (toId(taskCreatorId) === currentUserId) return true;
-
-    const assigneeId = toId(subtask.assignee);
-    if (assigneeId) return assigneeId === currentUserId;
+  const canToggle = () => {
+    if (memberRole === "guest") return false;
     return true;
   };
 

@@ -18,6 +18,7 @@ import { BulkActionBar } from "@/components/kanban/bulk-action-bar";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { ExportMenu } from "@/components/export-menu";
+import { canCreateTask } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -49,6 +50,13 @@ export default function TasksPage({ params }) {
   // ── Scope divisi: otomatis sesuai divisi user, owner/admin bebas ──
   const scope = useDivisionScope(workspaceId, {
     role: currentWorkspace?.role,
+    userId: user?._id,
+  });
+
+  // ── RBAC: Hanya owner, admin, dan ketua divisi yang bisa buat task ──
+  const userCanCreateTask = canCreateTask({
+    role: currentWorkspace?.role,
+    divisions: scope.divisions,
     userId: user?._id,
   });
 
@@ -536,17 +544,19 @@ export default function TasksPage({ params }) {
             )}
 
             {/* New task button */}
-            <Button
-              className="gap-2 shadow-sm h-9"
-              onClick={() => {
-                setQuickCreateColumnId(columns[0]?._id || null);
-                setQuickCreateDefaultDueDate(null);
-                setQuickCreateOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Tambah Task</span>
-            </Button>
+            {userCanCreateTask && (
+              <Button
+                className="gap-2 shadow-sm h-9"
+                onClick={() => {
+                  setQuickCreateColumnId(columns[0]?._id || null);
+                  setQuickCreateDefaultDueDate(null);
+                  setQuickCreateOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Tambah Task</span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -638,7 +648,7 @@ export default function TasksPage({ params }) {
               selectedTaskIds={kanban.selectedTaskIds}
               onToggleSelect={kanban.toggleTaskSelection}
               onTaskClick={handleTaskClick}
-              onQuickCreate={handleQuickCreate}
+              onQuickCreate={userCanCreateTask ? handleQuickCreate : undefined}
               onLoadMore={kanban.loadMoreForColumn}
               moveTask={kanban.moveTask}
               reorderInColumn={kanban.reorderInColumn}
@@ -800,6 +810,7 @@ export default function TasksPage({ params }) {
         onArchive={handleBulkArchive}
         onDelete={handleBulkDelete}
         onClearSelection={kanban.clearSelection}
+        canManage={userCanCreateTask}
       />
     </div>
   );

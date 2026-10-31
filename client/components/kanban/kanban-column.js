@@ -54,14 +54,16 @@ function KanbanColumnInner({
         <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full min-w-[24px] text-center">
           {totalCount ?? tasks.length}
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
-          onClick={() => onQuickCreate?.(column._id)}
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
+        {onQuickCreate && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            onClick={() => onQuickCreate?.(column._id)}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
 
       {/* Droppable area — scrollable */}

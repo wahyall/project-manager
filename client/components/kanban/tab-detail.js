@@ -47,6 +47,7 @@ import { getInitials, PRIORITY_CONFIG } from "./task-card";
 import { SubtaskChecklist } from "./subtask-checklist";
 import { CoordinationSection } from "./coordination-section";
 import { AttachmentSection } from "./attachment-section";
+import { canManageTask } from "@/lib/permissions";
 
 // Lazy-load MentionEditor to avoid SSR issues
 const MentionEditor = lazy(() =>
@@ -229,6 +230,15 @@ export function TabDetail({
     taskDivisionIds,
   ]);
 
+  const canManage = useMemo(() => {
+    return canManageTask({
+      task,
+      role: memberRole,
+      divisions: allDivisions?.length ? allDivisions : divisions,
+      userId: currentUserId,
+    });
+  }, [task, memberRole, allDivisions, divisions, currentUserId]);
+
   // Current assignee IDs
   const assigneeIds = (task.assignees || []).map((a) =>
     typeof a === "string" ? a : a._id,
@@ -274,8 +284,12 @@ export function TabDetail({
           />
         ) : (
           <h2
-            className="text-lg font-semibold text-foreground cursor-pointer hover:bg-accent/50 rounded px-2 py-1 -mx-1 transition-colors"
+            className={cn(
+              "text-lg font-semibold text-foreground rounded px-2 py-1 -mx-1 transition-colors",
+              canManage && "cursor-pointer hover:bg-accent/50",
+            )}
             onClick={() => {
+              if (!canManage) return;
               setTitleValue(task.title);
               setEditingTitle(true);
             }}
@@ -326,6 +340,7 @@ export function TabDetail({
                 : task.columnId?.toString()
             }
             onValueChange={(val) => onUpdate({ columnId: val })}
+            disabled={memberRole === "guest"}
           >
             <SelectTrigger className="h-8 text-xs w-auto min-w-[140px]">
               <SelectValue />
@@ -351,6 +366,7 @@ export function TabDetail({
           <Select
             value={task.priority}
             onValueChange={(val) => onUpdate({ priority: val })}
+            disabled={!canManage}
           >
             <SelectTrigger className="h-8 text-xs w-auto min-w-[120px]">
               <SelectValue />
@@ -381,6 +397,7 @@ export function TabDetail({
                 variant="ghost"
                 size="sm"
                 className="h-auto min-h-8 px-2 text-xs font-normal flex-wrap gap-1 justify-start"
+                disabled={!canManage}
               >
                 {assigneeIds.length === 0 ? (
                   <span className="text-muted-foreground">
@@ -450,6 +467,7 @@ export function TabDetail({
                 variant="ghost"
                 size="sm"
                 className="h-auto min-h-8 px-2 text-xs font-normal flex-wrap gap-1 justify-start"
+                disabled={!canManage}
               >
                 {labelIds.length === 0 ? (
                   <span className="text-muted-foreground">Tambah label...</span>
@@ -525,6 +543,7 @@ export function TabDetail({
                   "h-8 text-xs font-normal justify-start px-2",
                   !task.startDate && "text-muted-foreground",
                 )}
+                disabled={!canManage}
               >
                 {task.startDate
                   ? format(new Date(task.startDate), "d MMMM yyyy", {
@@ -556,6 +575,7 @@ export function TabDetail({
                   "h-8 text-xs font-normal justify-start px-2",
                   !task.dueDate && "text-muted-foreground",
                 )}
+                disabled={!canManage}
               >
                 {task.dueDate
                   ? format(new Date(task.dueDate), "d MMMM yyyy", {
@@ -803,8 +823,12 @@ export function TabDetail({
           </div>
         ) : (
           <div
-            className="cursor-pointer hover:bg-accent/50 rounded p-2 min-h-[40px] transition-colors"
+            className={cn(
+              "rounded p-2 min-h-[40px] transition-colors",
+              canManage && "cursor-pointer hover:bg-accent/50",
+            )}
             onClick={() => {
+              if (!canManage) return;
               descValueRef.current = task.description || "";
               setDescEditorKey((k) => k + 1);
               setEditingDesc(true);
@@ -847,7 +871,7 @@ export function TabDetail({
           currentUserId={currentUserId}
           taskCreatorId={creatorId}
           memberRole={memberRole}
-          canEdit={memberRole !== "guest"}
+          canEdit={canManage}
         />
       </div>
 

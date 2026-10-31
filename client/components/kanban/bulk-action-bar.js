@@ -40,6 +40,7 @@ export function BulkActionBar({
   onArchive,
   onDelete,
   onClearSelection,
+  canManage = true,
 }) {
   const [acting, setActing] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -97,57 +98,62 @@ export function BulkActionBar({
             </SelectContent>
           </Select>
 
-          {/* Change priority */}
-          <Select
-            onValueChange={(val) =>
-              handleAction(() => onChangePriority(taskIds, val))
-            }
-            disabled={acting}
-          >
-            <SelectTrigger className="h-8 w-auto min-w-[110px] text-xs gap-1.5 border-dashed">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              <SelectValue placeholder="Prioritas" />
-            </SelectTrigger>
-            <SelectContent>
-              {[
-                { value: "low", label: "Low", color: "bg-slate-400" },
-                { value: "medium", label: "Medium", color: "bg-amber-400" },
-                { value: "high", label: "High", color: "bg-orange-500" },
-                { value: "critical", label: "Critical", color: "bg-red-500" },
-              ].map((p) => (
-                <SelectItem key={p.value} value={p.value}>
-                  <div className="flex items-center gap-2">
-                    <span className={cn("h-2 w-2 rounded-full", p.color)} />
-                    {p.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Change priority, Archive, Delete — Hanya untuk owner, admin, ketua divisi */}
+          {canManage && (
+            <>
+              {/* Change priority */}
+              <Select
+                onValueChange={(val) =>
+                  handleAction(() => onChangePriority(taskIds, val))
+                }
+                disabled={acting}
+              >
+                <SelectTrigger className="h-8 w-auto min-w-[110px] text-xs gap-1.5 border-dashed">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <SelectValue placeholder="Prioritas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[
+                    { value: "low", label: "Low", color: "bg-slate-400" },
+                    { value: "medium", label: "Medium", color: "bg-amber-400" },
+                    { value: "high", label: "High", color: "bg-orange-500" },
+                    { value: "critical", label: "Critical", color: "bg-red-500" },
+                  ].map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("h-2 w-2 rounded-full", p.color)} />
+                        {p.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          {/* Archive */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            onClick={() => handleAction(() => onArchive(taskIds))}
-            disabled={acting}
-          >
-            <Archive className="h-3.5 w-3.5" />
-            Arsipkan
-          </Button>
+              {/* Archive */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => handleAction(() => onArchive(taskIds))}
+                disabled={acting}
+              >
+                <Archive className="h-3.5 w-3.5" />
+                Arsipkan
+              </Button>
 
-          {/* Delete */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs text-destructive hover:text-destructive border-destructive/30"
-            onClick={() => setDeleteDialogOpen(true)}
-            disabled={acting}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Hapus
-          </Button>
+              {/* Delete */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs text-destructive hover:text-destructive border-destructive/30"
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={acting}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Hapus
+              </Button>
+            </>
+          )}
 
           {/* Loading spinner */}
           {acting && <Loader2 className="h-4 w-4 animate-spin text-primary ml-1" />}
