@@ -27,6 +27,10 @@ const {
   assertCanViewDivisionItem,
   assertCanViewTask,
 } = require("../utils/divisionScope");
+const {
+  getUserLeaderDivisionIds,
+  canManageTaskSync,
+} = require("../utils/rbacRules");
 
 const divisionPopulate = {
   path: "divisionId",
@@ -280,6 +284,19 @@ exports.createTask = catchAsync(async (req, res, next) => {
 
   if (!title || !title.trim()) {
     return next(new AppError("Judul task harus diisi", 400));
+  }
+
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh membuat task
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageTaskSync({
+    role: req.workspaceMember?.role,
+    leaderDivisions,
+    task: { divisionId, divisionIds },
+    action: "create",
+    payload: req.body,
+  });
+  if (!rbacCheck.allowed) {
+    return next(new AppError(rbacCheck.message, 403));
   }
 
   // Validate columnId
@@ -651,6 +668,43 @@ exports.updateTask = catchAsync(async (req, res, next) => {
     userId,
     role: req.workspaceMember?.role,
   });
+
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh edit penuh task.
+  // Member biasa hanya boleh update status (kolom / toggle isCompleted subtask).
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageTaskSync({
+    role: req.workspaceMember?.role,
+    leaderDivisions,
+    task,
+    action: "update",
+    payload: req.body,
+  });
+  if (!rbacCheck.allowed) {
+    return next(new AppError(rbacCheck.message, 403));
+  }
+
+  // Jika member biasa (status only), cegah modifikasi subtask selain toggle isCompleted
+  if (rbacCheck.isStatusOnly && req.body.subtasks !== undefined) {
+    const existingSubtasks = task.subtasks || [];
+    const newSubtasks = req.body.subtasks || [];
+    if (newSubtasks.length !== existingSubtasks.length) {
+      return next(
+        new AppError(
+          "Member biasa tidak dapat menambah atau menghapus subtask",
+          403,
+        ),
+      );
+    }
+    for (let i = 0; i < existingSubtasks.length; i++) {
+      const orig = existingSubtasks[i];
+      const updated = newSubtasks[i];
+      if (updated && updated.title && updated.title !== orig.title) {
+        return next(
+          new AppError("Member biasa tidak dapat mengedit judul subtask", 403),
+        );
+      }
+    }
+  }
 
   // Backup original state for comparison
   const oldAssignees = task.assignees.map((a) => a.toString());
@@ -1481,14 +1535,16 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
     role: req.workspaceMember?.role,
   });
 
-  // Permission check: creator, admin, or owner
-  const isCreator = task.createdBy.toString() === userId;
-  const isAdminOrOwner = ["owner", "admin"].includes(memberRole);
-
-  if (!isCreator && !isAdminOrOwner) {
-    return next(
-      new AppError("Kamu tidak memiliki izin untuk menghapus task ini", 403),
-    );
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh menghapus task
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageTaskSync({
+    role: memberRole,
+    leaderDivisions,
+    task,
+    action: "delete",
+  });
+  if (!rbacCheck.allowed) {
+    return next(new AppError(rbacCheck.message, 403));
   }
 
   task.isDeleted = true;
@@ -1549,6 +1605,18 @@ exports.archiveTask = catchAsync(async (req, res, next) => {
     role: req.workspaceMember?.role,
   });
 
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh mengarsipkan task
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageTaskSync({
+    role: req.workspaceMember?.role,
+    leaderDivisions,
+    task,
+    action: "archive",
+  });
+  if (!rbacCheck.allowed) {
+    return next(new AppError(rbacCheck.message, 403));
+  }
+
   if (task.isArchived) {
     return next(new AppError("Task sudah diarsipkan", 400));
   }
@@ -1604,6 +1672,18 @@ exports.unarchiveTask = catchAsync(async (req, res, next) => {
     role: req.workspaceMember?.role,
   });
 
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh unarchive task
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  const rbacCheck = canManageTaskSync({
+    role: req.workspaceMember?.role,
+    leaderDivisions,
+    task,
+    action: "archive",
+  });
+  if (!rbacCheck.allowed) {
+    return next(new AppError(rbacCheck.message, 403));
+  }
+
   if (!task.isArchived) {
     return next(new AppError("Task tidak sedang diarsipkan", 400));
   }
@@ -1637,9 +1717,21 @@ exports.unarchiveTask = catchAsync(async (req, res, next) => {
 // ──────────────────────────────────────────────
 // POST /api/workspaces/:id/tasks/archive-done — Bulk
 // ──────────────────────────────────────────────
-exports.bulkArchiveDone = catchAsync(async (req, res) => {
+exports.bulkArchiveDone = catchAsync(async (req, res, next) => {
   const workspace = req.workspace;
   const userId = req.user.id;
+  const role = req.workspaceMember?.role;
+
+  // RBAC: Hanya owner, admin, dan ketua divisi yang boleh melakukan bulk archive
+  const leaderDivisions = await getUserLeaderDivisionIds(workspace._id, userId);
+  if (!["owner", "admin"].includes(role) && leaderDivisions.length === 0) {
+    return next(
+      new AppError(
+        "Hanya owner, admin, atau ketua divisi yang dapat melakukan arsip massal",
+        403,
+      ),
+    );
+  }
 
   const doneColumnIds = getDoneColumnIds(workspace);
 
