@@ -751,3 +751,4 @@ git commit -m "feat(client): enforce RBAC on event list, detail, and overview ta
 ```bash
 git commit -am "chore: complete RBAC task and event implementation and verification"
 ```
+

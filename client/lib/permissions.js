@@ -80,3 +80,4 @@ export const canManageEvent = ({ event, role, divisions = [], userId }) => {
 
   return leaders.includes(eventDivId);
 };
+
