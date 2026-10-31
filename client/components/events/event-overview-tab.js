@@ -74,6 +74,7 @@ export function EventOverviewTab({
   workspaceId,
   divisions = [],
   readOnly = false,
+  canEditStatus = true,
 }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
@@ -186,11 +187,18 @@ export function EventOverviewTab({
               </div>
             ) : (
               <div
-                className="flex items-start gap-2 cursor-pointer group rounded-md px-2 py-1 -mx-2 -my-1 hover:bg-accent/50 transition-colors"
-                onClick={() => setEditingTitle(true)}
+                className={cn(
+                  "flex items-start gap-2 group rounded-md px-2 py-1 -mx-2 -my-1 transition-colors",
+                  !readOnly && "cursor-pointer hover:bg-accent/50",
+                )}
+                onClick={() => {
+                  if (!readOnly) setEditingTitle(true);
+                }}
               >
                 <h2 className="text-xl font-bold flex-1">{event.title}</h2>
-                <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
+                {!readOnly && (
+                  <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
+                )}
               </div>
             )}
           </div>
@@ -236,10 +244,15 @@ export function EventOverviewTab({
               </div>
             ) : (
               <div
-                className="cursor-pointer rounded-md px-2 py-2 -mx-2 hover:bg-accent/50 transition-colors min-h-[60px] group"
+                className={cn(
+                  "rounded-md px-2 py-2 -mx-2 transition-colors min-h-[60px] group",
+                  !readOnly && "cursor-pointer hover:bg-accent/50",
+                )}
                 onClick={() => {
-                  setEditorKey((k) => k + 1);
-                  setEditingDesc(true);
+                  if (!readOnly) {
+                    setEditorKey((k) => k + 1);
+                    setEditingDesc(true);
+                  }
                 }}
               >
                 {event.description ? (
@@ -395,6 +408,7 @@ export function EventOverviewTab({
                   <Button
                     variant="outline"
                     className="w-full justify-start h-9 font-normal"
+                    disabled={readOnly}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                     {format(new Date(event.startDate), "dd MMM yyyy", {
@@ -423,6 +437,7 @@ export function EventOverviewTab({
                   <Button
                     variant="outline"
                     className="w-full justify-start h-9 font-normal"
+                    disabled={readOnly}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                     {format(new Date(event.endDate), "dd MMM yyyy", {
@@ -454,6 +469,7 @@ export function EventOverviewTab({
             <Select
               value={event.status}
               onValueChange={(val) => saveField("status", val)}
+              disabled={!canEditStatus}
             >
               <SelectTrigger className="w-[150px] h-8">
                 <SelectValue />
@@ -501,6 +517,7 @@ export function EventOverviewTab({
                   onValueChange={(val) =>
                     saveField("divisionId", val === "none" ? null : val)
                   }
+                  disabled={readOnly}
                 >
                   <SelectTrigger className="w-[190px] h-8 text-xs">
                     <SelectValue placeholder="Tanpa Divisi" />
@@ -542,9 +559,11 @@ export function EventOverviewTab({
               {EVENT_COLORS.map((c) => (
                 <button
                   key={c}
+                  disabled={readOnly}
                   onClick={() => saveField("color", c)}
                   className={cn(
                     "h-6 w-6 rounded-full transition-all border-2 flex items-center justify-center",
+                    readOnly && "opacity-60 cursor-not-allowed",
                     event.color === c
                       ? "border-foreground scale-110"
                       : "border-transparent hover:scale-105",
@@ -571,6 +590,7 @@ export function EventOverviewTab({
               workspaceId={workspaceId}
               value={(event.ideas || []).map((i) => i._id || i)}
               onChange={(next) => saveField("ideas", next)}
+              disabled={readOnly}
             />
           </div>
         </CardContent>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { useEvents } from "@/hooks/use-events";
 import { useExport } from "@/hooks/use-export";
+import { canManageEvent } from "@/lib/permissions";
 import { useDivisionScope } from "@/hooks/use-division-scope";
 import { useAuth } from "@/contexts/auth-context";
 import { EventOverviewTab } from "@/components/events/event-overview-tab";
@@ -88,6 +89,14 @@ export default function EventDetailPage({ params }) {
   // Divisi workspace (untuk baris Divisi di tab Overview)
   const scope = useDivisionScope(id, {
     role: currentWorkspace?.role,
+    userId: user?._id,
+  });
+
+  // RBAC: Hanya owner, admin, dan ketua divisi terkait yang boleh kelola event
+  const canManage = canManageEvent({
+    event,
+    role: currentWorkspace?.role,
+    divisions: scope.divisions,
     userId: user?._id,
   });
 
@@ -225,14 +234,18 @@ export default function EventDetailPage({ params }) {
                 <Download className="h-4 w-4" />
                 {exporting ? "Mengekspor..." : "Export PDF"}
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Hapus Event
-              </DropdownMenuItem>
+              {canManage && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Hapus Event
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -306,7 +319,8 @@ export default function EventDetailPage({ params }) {
             divisions={
               scope.isLocked ? scope.myDivisions : scope.divisions
             }
-            readOnly={currentWorkspace?.role === "guest"}
+            readOnly={!canManage}
+            canEditStatus={currentWorkspace?.role !== "guest"}
           />
         </TabsContent>
 

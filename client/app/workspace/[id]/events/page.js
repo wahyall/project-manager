@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { canCreateEvent } from "@/lib/permissions";
 
 export default function EventsPage({ params }) {
   const { id } = use(params);
@@ -39,6 +40,13 @@ export default function EventsPage({ params }) {
   // ── Scope divisi: otomatis sesuai divisi user, owner/admin bebas ──
   const scope = useDivisionScope(id, {
     role: currentWorkspace?.role,
+    userId: user?._id,
+  });
+
+  // ── RBAC: Hanya owner, admin, dan ketua divisi yang bisa buat event ──
+  const userCanCreateEvent = canCreateEvent({
+    role: currentWorkspace?.role,
+    divisions: scope.divisions,
     userId: user?._id,
   });
 
@@ -174,13 +182,15 @@ export default function EventsPage({ params }) {
               );
             })}
           </div>
-          <Button
-            className="gap-2 shadow-sm"
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            Buat Event
-          </Button>
+          {userCanCreateEvent && (
+            <Button
+              className="gap-2 shadow-sm"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Buat Event
+            </Button>
+          )}
         </div>
       </div>
 
