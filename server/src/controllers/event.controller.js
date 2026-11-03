@@ -286,19 +286,6 @@ exports.createEvent = catchAsync(async (req, res, next) => {
   const ideaIds =
     ideas === undefined ? [] : await resolveIdeaIds(ideas, workspace._id);
 
-  // Divisi Workspace pemilik event (null = Tanpa Divisi).
-  // Member/guest hanya boleh membuat event di divisinya sendiri.
-  const resolvedDivisionId = await resolveDivisionId(
-    divisionId,
-    workspace._id,
-  );
-  await assertCanViewDivisionItem({
-    divisionId: resolvedDivisionId,
-    workspaceId: workspace._id,
-    userId,
-    role: req.workspaceMember?.role,
-  });
-
   const event = await Event.create({
     workspaceId: workspace._id,
     title: title.trim(),

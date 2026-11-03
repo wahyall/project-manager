@@ -45,13 +45,16 @@ const startServer = async () => {
   // Graceful shutdown
   const gracefulShutdown = (signal) => {
     logger.info(`${signal} diterima. Mematikan server...`);
-    server.close(() => {
+    server.close(async () => {
       logger.info("HTTP server ditutup");
       const mongoose = require("mongoose");
-      mongoose.connection.close(false, () => {
+      try {
+        await mongoose.connection.close(false);
         logger.info("MongoDB connection ditutup");
-        process.exit(0);
-      });
+      } catch (err) {
+        logger.error("Error closing MongoDB connection:", err);
+      }
+      process.exit(0);
     });
 
     // Paksa tutup setelah 10 detik
