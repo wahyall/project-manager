@@ -89,7 +89,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="space-y-3.5 pt-2">
+          {/* <div className="space-y-3.5 pt-2">
             <div className="flex items-center gap-3.5 p-3 rounded-xl bg-card/60 border border-border/60 backdrop-blur-xs">
               <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <HeartHandshake className="h-4.5 w-4.5" />
@@ -109,7 +109,7 @@ export default function LoginPage() {
                 <span className="text-xs text-muted-foreground">Milestone acara, agenda kalender, dan tracking progress</span>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="text-xs text-muted-foreground pt-4 border-t border-border/50">
             Komunitas YukNgaji Surabaya &copy; {new Date().getFullYear()}
