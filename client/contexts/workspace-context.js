@@ -35,15 +35,36 @@ export function WorkspaceProvider({ children }) {
     }
   }, [user]);
 
+  // Fetch single workspace
+  const fetchWorkspace = useCallback(async (workspaceId) => {
+    if (!workspaceId) return null;
+    const { data } = await api.get(`/workspaces/${workspaceId}`);
+    return data.data.workspace;
+  }, []);
+
   // Set current workspace
   const setCurrentWorkspace = useCallback(
-    async (workspaceId) => {
-      if (!workspaceId) {
+    async (workspaceOrId) => {
+      if (!workspaceOrId) {
         setCurrentWorkspaceState(null);
         localStorage.removeItem("currentWorkspaceId");
+        return null;
+      }
+
+      // If updater function (e.g. setCurrentWorkspace(prev => ...))
+      if (typeof workspaceOrId === "function") {
+        setCurrentWorkspaceState(workspaceOrId);
         return;
       }
 
+      // If already a workspace object
+      if (typeof workspaceOrId === "object" && workspaceOrId._id) {
+        setCurrentWorkspaceState(workspaceOrId);
+        localStorage.setItem("currentWorkspaceId", workspaceOrId._id);
+        return workspaceOrId;
+      }
+
+      const workspaceId = workspaceOrId;
       try {
         const { data } = await api.get(`/workspaces/${workspaceId}`);
         setCurrentWorkspaceState(data.data.workspace);
@@ -60,6 +81,7 @@ export function WorkspaceProvider({ children }) {
         } catch (retryError) {
           console.error("Failed to load workspace after retry:", retryError);
           localStorage.removeItem("currentWorkspaceId");
+          throw retryError;
         }
       }
     },
@@ -205,6 +227,7 @@ export function WorkspaceProvider({ children }) {
         loading,
         membersLoading,
         fetchWorkspaces,
+        fetchWorkspace,
         setCurrentWorkspace,
         createWorkspace,
         updateWorkspace,

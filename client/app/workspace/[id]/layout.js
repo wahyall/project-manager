@@ -173,20 +173,67 @@ export default function WorkspaceLayout({ children, params }) {
   const { user } = useAuth();
   const { currentWorkspace, setCurrentWorkspace, fetchWorkspace, loading } =
     useWorkspace();
+  const [pageLoading, setPageLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const isMobile = useIsMobile();
+
+  const [apiBaseUrl, setApiBaseUrl] = useState(() =>
+    getApiUrl().replace(/\/$/, ""),
+  );
+
+  useEffect(() => {
+    return onServerSwitch(({ apiUrl }) =>
+      setApiBaseUrl((apiUrl || "").replace(/\/$/, "")),
+    );
+  }, []);
+
+  const copilotRuntimeUrl = useMemo(() => {
+    return `${apiBaseUrl}/workspaces/${id}/copilotkit`;
+  }, [apiBaseUrl, id]);
+
+  const copilotHeaders = useMemo(() => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }, []);
+
+  const handleCopilotError = useCallback((error) => {
+    const msg =
+      error?.message ||
+      error?.error?.message ||
+      error?.context?.message ||
+      String(error);
+    if (
+      msg.includes("quota") ||
+      msg.includes("Quota exceeded") ||
+      msg.includes("exceeded your current quota")
+    ) {
+      toast.error("Kuota API telah habis. Periksa billing atau coba lagi nanti.");
+    } else if (
+      msg.includes("429") ||
+      msg.includes("rate") ||
+      msg.includes("limit")
+    ) {
+      toast.error("Batas penggunaan tercapai. Coba lagi nanti.");
+    } else {
+      toast.error("Terjadi kesalahan pada AI Chat. Silakan coba lagi.");
+    }
+  }, []);
 
   // Load workspace data
   useEffect(() => {
     let isMounted = true;
     async function load() {
       try {
+        setPageLoading(true);
         const ws = await fetchWorkspace(id);
         if (isMounted) {
           if (!ws) {
             setNotFound(true);
           } else {
-            setCurrentWorkspace(ws);
+            await setCurrentWorkspace(ws);
           }
         }
       } catch (err) {
@@ -197,6 +244,10 @@ export default function WorkspaceLayout({ children, params }) {
             toast.error("Gagal memuat workspace");
           }
         }
+      } finally {
+        if (isMounted) {
+          setPageLoading(false);
+        }
       }
     }
     load();
@@ -205,10 +256,20 @@ export default function WorkspaceLayout({ children, params }) {
     };
   }, [id, fetchWorkspace, setCurrentWorkspace]);
 
-  // Connect socket with workspaceId
+  // Connect socket and handle workspace events
   useEffect(() => {
-    if (!id) return;
-    const socket = connectSocket(id);
+    if (!currentWorkspace || currentWorkspace._id !== id) return;
+
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
+    if (!token) return;
+
+    const socket = connectSocket(token);
+    if (socket) {
+      socket.emit("workspace:join", id);
+    }
 
     const handleWorkspaceUpdated = (updatedWs) => {
       if (updatedWs._id === id) {
@@ -236,20 +297,24 @@ export default function WorkspaceLayout({ children, params }) {
 
     const unsubscribe = onServerSwitch(() => {
       disconnectSocket();
-      connectSocket(id);
+      const s = connectSocket(token);
+      if (s) s.emit("workspace:join", id);
     });
 
     return () => {
-      socket.off("workspace:updated", handleWorkspaceUpdated);
-      socket.off("workspace:deleted", handleWorkspaceDeleted);
-      socket.off("workspace:member:removed", handleMemberRemoved);
+      if (socket) {
+        socket.emit("workspace:leave", id);
+        socket.off("workspace:updated", handleWorkspaceUpdated);
+        socket.off("workspace:deleted", handleWorkspaceDeleted);
+        socket.off("workspace:member:removed", handleMemberRemoved);
+      }
       unsubscribe();
       disconnectSocket();
     };
-  }, [id, user?._id, router, setCurrentWorkspace]);
+  }, [id, currentWorkspace, user?._id, router, setCurrentWorkspace]);
 
   // Loading state
-  if (loading || (!currentWorkspace && !notFound)) {
+  if (pageLoading || (!currentWorkspace && !notFound) || (currentWorkspace?._id !== id && !notFound)) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
@@ -287,7 +352,11 @@ export default function WorkspaceLayout({ children, params }) {
 
   return (
     <ProtectedRoute>
-      <CopilotKit runtimeUrl="/api/copilotkit">
+      <CopilotKit
+        runtimeUrl={copilotRuntimeUrl}
+        headers={copilotHeaders}
+        onError={handleCopilotError}
+      >
         <SidebarProvider>
           <AppSidebar workspaceId={id} workspace={currentWorkspace} />
           <SidebarInset className="bg-background">
