@@ -11,6 +11,7 @@ import {
   Eye,
   Calendar,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -81,16 +82,16 @@ function SubtaskProgress({ subtasks }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <CheckCircle2 className="h-3 w-3" />
-          <span className="font-medium">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+          <span className="font-semibold text-foreground/80">
             {completed}/{total}
           </span>
-          <Progress value={percent} className="h-1 w-10" />
+          <Progress value={percent} className="h-1 w-10 bg-muted" />
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        {completed} dari {total} subtask selesai
+        {completed} dari {total} subtask selesai ({percent}%)
       </TooltipContent>
     </Tooltip>
   );
@@ -107,8 +108,8 @@ function AssigneeStack({ assignees, max = 3 }) {
       {visible.map((user) => (
         <Tooltip key={user._id}>
           <TooltipTrigger asChild>
-            <Avatar className="h-6 w-6 border-2 border-background ring-0">
-              <AvatarFallback className="text-[10px] font-medium bg-primary/10 text-primary">
+            <Avatar className="h-6 w-6 border-2 border-card ring-0 shadow-2xs">
+              <AvatarFallback className="text-[10px] font-bold bg-primary/15 text-primary">
                 {getInitials(user.name)}
               </AvatarFallback>
             </Avatar>
@@ -119,7 +120,7 @@ function AssigneeStack({ assignees, max = 3 }) {
       {remaining > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-[10px] font-medium text-muted-foreground">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-muted text-[10px] font-bold text-muted-foreground shadow-2xs">
               +{remaining}
             </div>
           </TooltipTrigger>
@@ -146,8 +147,8 @@ function PicStack({ pics, max = 3 }) {
       {visible.map(({ user, divisionNames = [] }) => (
         <Tooltip key={user._id}>
           <TooltipTrigger asChild>
-            <Avatar className="h-6 w-6 border-2 border-background ring-1 ring-amber-400/50">
-              <AvatarFallback className="text-[9px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400">
+            <Avatar className="h-6 w-6 border-2 border-card ring-1 ring-amber-400/50 shadow-2xs">
+              <AvatarFallback className="text-[9px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400">
                 {getInitials(user.name)}
               </AvatarFallback>
             </Avatar>
@@ -161,7 +162,7 @@ function PicStack({ pics, max = 3 }) {
       {remaining > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-amber-500/10 text-[9px] font-medium text-amber-700 dark:text-amber-400">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-amber-500/10 text-[9px] font-bold text-amber-700 dark:text-amber-400 shadow-2xs">
               +{remaining}
             </div>
           </TooltipTrigger>
@@ -251,12 +252,12 @@ function TaskCardInner({
       {...(provided.draggableProps || {})}
       {...(provided.dragHandleProps || {})}
       className={cn(
-        "group relative rounded-lg border bg-card p-3 shadow-sm transition-all duration-200",
-        "border-l-[3px]",
+        "group relative rounded-xl border border-border/80 bg-card/95 p-3.5 shadow-2xs transition-all duration-200 cursor-pointer",
+        "border-l-[3.5px]",
         priority.border,
-        "hover:shadow-md hover:border-border/80",
+        "hover:shadow-md hover:border-border hover:-translate-y-0.5",
         snapshot.isDragging &&
-          "shadow-xl rotate-[2deg] scale-[1.02] ring-2 ring-primary/20",
+          "shadow-xl rotate-[1.5deg] scale-[1.02] ring-2 ring-primary/30 z-50",
         isSelected && "ring-2 ring-primary bg-primary/5",
         task.isArchived && "opacity-60",
       )}
@@ -277,7 +278,7 @@ function TaskCardInner({
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => onToggleSelect?.(task._id)}
-          className="h-4 w-4 bg-background shadow-sm"
+          className="h-4 w-4 bg-background shadow-sm rounded-md"
         />
       </div>
 
@@ -285,25 +286,25 @@ function TaskCardInner({
       {task.isArchived && (
         <Badge
           variant="outline"
-          className="text-[10px] px-1.5 py-0 mb-1.5 border-amber-300 text-amber-600"
+          className="text-[10px] px-1.5 py-0 mb-1.5 border-amber-300 text-amber-600 rounded-md"
         >
           Diarsipkan
         </Badge>
       )}
 
       {/* Title */}
-      <h4 className="text-sm font-medium text-foreground leading-snug line-clamp-2 pr-1">
+      <h4 className="text-sm font-semibold text-foreground leading-snug line-clamp-2 pr-1 group-hover:text-primary transition-colors">
         {task.title}
       </h4>
 
       {/* Divisi terlibat + PIC per divisi */}
       {(divisionList.length > 0 || picList.length > 0) && (
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+        <div className="mt-2 flex flex-wrap items-center gap-1">
           {divisionList.slice(0, 2).map((item) => (
             <Badge
               key={item._id}
               variant="outline"
-              className="h-4.5 gap-1 border-primary/20 bg-primary/5 px-1.5 py-0 text-[10px] font-normal text-primary"
+              className="h-4.5 gap-1 border-primary/20 bg-primary/5 px-1.5 py-0 text-[10px] font-normal text-primary rounded-md"
             >
               {item.color && (
                 <span
@@ -319,7 +320,7 @@ function TaskCardInner({
               <TooltipTrigger asChild>
                 <Badge
                   variant="secondary"
-                  className="h-4.5 px-1.5 py-0 text-[10px] font-normal"
+                  className="h-4.5 px-1.5 py-0 text-[10px] font-normal rounded-md"
                 >
                   +{divisionList.length - 2}
                 </Badge>
@@ -335,7 +336,7 @@ function TaskCardInner({
           {hasCoordination && (
             <Badge
               variant="outline"
-              className="h-4.5 border-amber-300/60 bg-amber-500/5 px-1.5 py-0 text-[9px] font-normal text-amber-700 dark:text-amber-400"
+              className="h-4.5 border-amber-300/60 bg-amber-500/5 px-1.5 py-0 text-[9px] font-normal text-amber-700 dark:text-amber-400 rounded-md"
             >
               Koordinasi
             </Badge>
@@ -354,7 +355,7 @@ function TaskCardInner({
           {task.labels.map((label) => (
             <span
               key={label._id}
-              className="inline-block h-1.5 w-8 rounded-full"
+              className="inline-block h-1.5 w-7 rounded-full"
               style={{ backgroundColor: label.color || "#6B7280" }}
               title={label.name}
             />
@@ -370,12 +371,12 @@ function TaskCardInner({
             className={cn(
               "inline-flex items-center gap-1 text-[11px] font-medium rounded-md px-1.5 py-0.5",
               dueInfo.overdue &&
-                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                "bg-red-500/10 text-red-600 dark:text-red-400 font-semibold border border-red-500/20",
               dueInfo.today &&
-                "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                "bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/20",
               !dueInfo.overdue &&
                 !dueInfo.today &&
-                "bg-muted text-muted-foreground",
+                "bg-muted/70 text-muted-foreground",
             )}
           >
             <Calendar className="h-3 w-3" />
@@ -444,9 +445,8 @@ function TaskCardInner({
 // Check if task is blocked by unfinished dependencies
 function isBlocked(task, allColumnsDoneIds) {
   if (!task.blockedBy || task.blockedBy.length === 0) return false;
-  // If any blocking task is not in a "done" column or is not archived
   return task.blockedBy.some((dep) => {
-    if (typeof dep === "string") return true; // can't determine, show blocked
+    if (typeof dep === "string") return true;
     const depColumnId =
       typeof dep.columnId === "string"
         ? dep.columnId

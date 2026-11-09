@@ -13,10 +13,10 @@ export default function DivisionDetailRedirectPage({ params }) {
   }, [id, router]);
 
   return (
-    <div className="flex min-h-[400px] items-center justify-center">
+    <div className="flex min-h-[460px] items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <span className="text-sm">Mengarahkan ke menu Baitul Maal...</span>
+        <Loader2 className="h-7 w-7 animate-spin text-primary" />
+        <span className="text-xs font-medium">Mengarahkan ke modul Baitul Maal...</span>
       </div>
     </div>
   );

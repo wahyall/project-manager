@@ -12,7 +12,6 @@ import { EventCalendarView } from "@/components/events/event-calendar-view";
 import { EventFilterToolbar } from "@/components/events/event-filter-toolbar";
 import { CreateEventDialog } from "@/components/events/create-event-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CalendarRange,
@@ -143,23 +142,23 @@ export default function EventsPage({ params }) {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 md:pb-8">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-border/60">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-              <Sparkles className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+              <Sparkles className="w-3.5 h-3.5" />
               Manajemen Program & Acara
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 shadow-2xs">
               <CalendarRange className="h-5 w-5" />
             </div>
             Event & Milestone
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {scope.isLocked
-              ? "Event divisi kamu — dikelompokkan secara terstruktur"
+              ? "Agenda kepanitiaan dan milestone kegiatan khusus divisi kamu"
               : "Kelola agenda, kepanitiaan, tenggat waktu, dan koordinasi acara"}
           </p>
         </div>
@@ -177,9 +176,9 @@ export default function EventsPage({ params }) {
                 <button
                   key={opt.value}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
                     isActive
-                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      ? "bg-background text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                   )}
                   onClick={() => setViewMode(opt.value)}
@@ -193,54 +192,54 @@ export default function EventsPage({ params }) {
 
           {userCanCreateEvent && (
             <Button
-              className="gap-2 rounded-xl h-9 text-xs shadow-xs"
+              className="gap-2 rounded-xl h-10 px-4 text-xs font-semibold shadow-md active:scale-95 transition-all"
               onClick={() => setCreateDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
-              Buat Event
+              <span>Buat Event</span>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Quick stats */}
+      {/* Quick stats strip */}
       {!loading && events.length > 0 && (
         <div className="grid grid-cols-3 gap-3.5">
-          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/60 border border-border/80 shadow-xs backdrop-blur-xs">
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/85 border border-border/80 shadow-2xs backdrop-blur-xs">
             <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
               <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xl font-bold tracking-tight text-foreground">
+              <p className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
                 {upcomingCount}
               </p>
-              <p className="text-xs font-medium text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Upcoming
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/60 border border-border/80 shadow-xs backdrop-blur-xs">
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/85 border border-border/80 shadow-2xs backdrop-blur-xs">
             <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
               <CalendarDays className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xl font-bold tracking-tight text-foreground">
+              <p className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
                 {ongoingCount}
               </p>
-              <p className="text-xs font-medium text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Ongoing
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/60 border border-border/80 shadow-xs backdrop-blur-xs">
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/85 border border-border/80 shadow-2xs backdrop-blur-xs">
             <div className="h-10 w-10 rounded-xl bg-muted text-muted-foreground border border-border/60 flex items-center justify-center shrink-0">
               <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xl font-bold tracking-tight text-foreground">
+              <p className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
                 {completedCount}
               </p>
-              <p className="text-xs font-medium text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Completed
               </p>
             </div>
@@ -264,7 +263,7 @@ export default function EventsPage({ params }) {
         </div>
       </div>
 
-      {/* Error */}
+      {/* Error display */}
       {error && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl text-xs font-medium">
           {error}
@@ -275,23 +274,21 @@ export default function EventsPage({ params }) {
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <Card key={i} className="rounded-2xl border-border/80 shadow-xs">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-5 w-20 rounded-md" />
-                  <Skeleton className="h-4 w-16 rounded-md" />
+            <div key={i} className="rounded-2xl border border-border/80 bg-card/60 p-4 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-20 rounded-md" />
+                <Skeleton className="h-4 w-16 rounded-md" />
+              </div>
+              <Skeleton className="h-5 w-3/4 rounded-md" />
+              <Skeleton className="h-4 w-full rounded-md" />
+              <div className="flex items-center justify-between pt-1">
+                <Skeleton className="h-4 w-16 rounded-md" />
+                <div className="flex -space-x-1.5">
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                  <Skeleton className="h-6 w-6 rounded-full" />
                 </div>
-                <Skeleton className="h-5 w-3/4 rounded-md" />
-                <Skeleton className="h-4 w-full rounded-md" />
-                <div className="flex items-center justify-between pt-1">
-                  <Skeleton className="h-4 w-16 rounded-md" />
-                  <div className="flex -space-x-1.5">
-                    <Skeleton className="h-6 w-6 rounded-full" />
-                    <Skeleton className="h-6 w-6 rounded-full" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -320,39 +317,37 @@ export default function EventsPage({ params }) {
 
       {/* Empty state (kanban) */}
       {!loading && viewMode === "kanban" && events.length === 0 && !error && (
-        <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 mb-4 shadow-2xs">
-              <Inbox className="h-8 w-8" />
-            </div>
-            <h3 className="text-base font-bold text-foreground mb-1">
-              {filters.keyword ||
-              filters.status.length > 0 ||
-              filters.participant
-                ? "Tidak ada event yang cocok dengan filter"
-                : "Belum ada agenda event"}
-            </h3>
-            <p className="text-xs text-muted-foreground max-w-sm mb-6 leading-relaxed">
-              {filters.keyword ||
-              filters.status.length > 0 ||
-              filters.participant
-                ? "Coba sesuaikan kata kunci atau bersihkan kriteria filter pencarian."
-                : "Rencanakan kegiatan organisasi, milestone kepanitiaan, atau proyek baru bersama tim."}
-            </p>
-            {!filters.keyword &&
-              filters.status.length === 0 &&
-              !filters.participant &&
-              userCanCreateEvent && (
-                <Button
-                  onClick={() => setCreateDialogOpen(true)}
-                  className="gap-2 rounded-xl text-xs shadow-xs"
-                >
-                  <Plus className="h-4 w-4" />
-                  Buat Event Pertama
-                </Button>
-              )}
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border/80 bg-card/70 shadow-xs backdrop-blur-xs flex flex-col items-center justify-center py-20 px-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 mb-4 shadow-2xs">
+            <Inbox className="h-8 w-8" />
+          </div>
+          <h3 className="text-base font-bold text-foreground mb-1">
+            {filters.keyword ||
+            filters.status.length > 0 ||
+            filters.participant
+              ? "Tidak ada event yang cocok dengan filter"
+              : "Belum ada agenda event"}
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-sm mb-6 leading-relaxed">
+            {filters.keyword ||
+            filters.status.length > 0 ||
+            filters.participant
+              ? "Coba sesuaikan kata kunci atau bersihkan kriteria filter pencarian."
+              : "Rencanakan kegiatan organisasi, milestone kepanitiaan, atau agenda kajian bersama tim."}
+          </p>
+          {!filters.keyword &&
+            filters.status.length === 0 &&
+            !filters.participant &&
+            userCanCreateEvent && (
+              <Button
+                onClick={() => setCreateDialogOpen(true)}
+                className="gap-2 rounded-xl text-xs font-semibold shadow-xs"
+              >
+                <Plus className="h-4 w-4" />
+                Buat Event Pertama
+              </Button>
+            )}
+        </div>
       )}
 
       {/* Create dialog */}

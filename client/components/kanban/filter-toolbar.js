@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import {
   Search,
   Filter,
@@ -10,7 +10,6 @@ import {
   User,
   Tag,
   AlertTriangle,
-  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { getInitials, PRIORITY_CONFIG } from "./task-card";
+import { getInitials } from "./task-card";
 
 // ── Multi-select filter popover ──────────────────────
 function FilterPopover({
@@ -39,12 +38,12 @@ function FilterPopover({
   return (
     <Popover>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-56 p-2" align="start">
-        <p className="text-xs font-medium text-muted-foreground px-2 py-1.5 uppercase tracking-wider">
+      <PopoverContent className="w-56 p-2 rounded-2xl shadow-xl border-border/80 bg-card/95 backdrop-blur-md" align="start">
+        <p className="text-[10px] font-bold text-muted-foreground/80 px-2.5 py-1.5 uppercase tracking-wider">
           {title}
         </p>
-        <Separator className="my-1" />
-        <div className="max-h-60 overflow-y-auto space-y-0.5">
+        <Separator className="my-1 opacity-60" />
+        <div className="max-h-60 overflow-y-auto space-y-0.5 soft-scrollbar">
           {options.length === 0 ? (
             <p className="text-xs text-muted-foreground px-2 py-3 text-center">
               Tidak ada opsi
@@ -54,19 +53,19 @@ function FilterPopover({
               <button
                 key={option.id}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors text-left",
-                  selected.includes(option.id) && "bg-accent",
+                  "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-medium hover:bg-muted/80 transition-colors text-left",
+                  selected.includes(option.id) && "bg-muted font-semibold",
                 )}
                 onClick={() => onToggle(option.id)}
               >
                 <Checkbox
                   checked={selected.includes(option.id)}
-                  className="h-3.5 w-3.5 pointer-events-none"
+                  className="h-3.5 w-3.5 rounded pointer-events-none"
                 />
                 {renderOption ? (
                   renderOption(option)
                 ) : (
-                  <span>{option.label}</span>
+                  <span className="truncate">{option.label}</span>
                 )}
               </button>
             ))
@@ -84,22 +83,22 @@ function FilterButton({ icon: Icon, label, count, active, ...props }) {
       variant={active ? "secondary" : "outline"}
       size="sm"
       className={cn(
-        "gap-1.5 h-8 text-xs font-medium",
-        active && "border-primary/30",
+        "gap-1.5 h-8.5 rounded-xl text-xs font-medium border-border/80 shadow-2xs transition-all",
+        active && "bg-primary/10 text-primary border-primary/30 hover:bg-primary/15 font-semibold",
       )}
       {...props}
     >
-      <Icon className="h-3.5 w-3.5" />
-      {label}
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span>{label}</span>
       {count > 0 && (
         <Badge
           variant="secondary"
-          className="h-4 min-w-4 px-1 text-[10px] rounded-full"
+          className="h-4.5 min-w-4.5 px-1.5 text-[10px] font-bold rounded-full bg-primary/20 text-primary border-none"
         >
           {count}
         </Badge>
       )}
-      <ChevronDown className="h-3 w-3 ml-0.5 opacity-50" />
+      <ChevronDown className="h-3 w-3 ml-0.5 opacity-50 shrink-0" />
     </Button>
   );
 }
@@ -113,8 +112,6 @@ export function FilterToolbar({
   labels,
   searchInputRef,
 }) {
-  const [searchOpen, setSearchOpen] = useState(false);
-
   // Priority options
   const priorityOptions = [
     { id: "critical", label: "Critical", color: "bg-red-500" },
@@ -167,8 +164,8 @@ export function FilterToolbar({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {/* Search input */}
-      <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+      <div className="relative flex-1 sm:flex-initial">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
         <Input
           ref={searchInputRef}
           placeholder="Cari task..."
@@ -176,19 +173,19 @@ export function FilterToolbar({
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, keyword: e.target.value }))
           }
-          className="h-8 w-48 pl-8 text-xs"
+          className="h-8.5 w-full sm:w-48 pl-8.5 pr-7 text-xs rounded-xl bg-background/50 border-border/80 shadow-2xs focus:ring-2 focus:ring-primary/20"
         />
         {filters.keyword && (
           <button
             onClick={() => setFilters((prev) => ({ ...prev, keyword: "" }))}
-            className="absolute right-2 top-1/2 -translate-y-1/2"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
           >
-            <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+            <X className="h-3 w-3" />
           </button>
         )}
       </div>
 
-      <Separator orientation="vertical" className="h-5" />
+      <Separator orientation="vertical" className="h-4 opacity-50 hidden sm:block" />
 
       {/* Assignee filter */}
       <FilterPopover
@@ -205,9 +202,9 @@ export function FilterToolbar({
         selected={filters.assignee}
         onToggle={(id) => toggleFilter("assignee", id)}
         renderOption={(option) => (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-5 w-5">
-              <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+          <div className="flex items-center gap-2 min-w-0">
+            <Avatar className="h-5 w-5 rounded-full shrink-0">
+              <AvatarFallback className="text-[9px] font-bold bg-primary/10 text-primary">
                 {getInitials(option.name)}
               </AvatarFallback>
             </Avatar>
@@ -232,7 +229,7 @@ export function FilterToolbar({
         onToggle={(id) => toggleFilter("priority", id)}
         renderOption={(option) => (
           <div className="flex items-center gap-2">
-            <span className={cn("h-2.5 w-2.5 rounded-full", option.color)} />
+            <span className={cn("h-2.5 w-2.5 rounded-full shadow-2xs shrink-0", option.color)} />
             <span>{option.label}</span>
           </div>
         )}
@@ -253,9 +250,9 @@ export function FilterToolbar({
         selected={filters.label}
         onToggle={(id) => toggleFilter("label", id)}
         renderOption={(option) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <span
-              className="h-2.5 w-2.5 rounded-full"
+              className="h-2.5 w-2.5 rounded-full shadow-2xs shrink-0"
               style={{ backgroundColor: option.color }}
             />
             <span className="truncate">{option.label}</span>
@@ -264,7 +261,7 @@ export function FilterToolbar({
       />
 
       {/* Archive toggle */}
-      <div className="flex items-center gap-1.5 ml-1">
+      <div className="flex items-center gap-1.5 ml-1 px-2.5 py-1 rounded-xl bg-muted/40 border border-border/60">
         <Switch
           id="show-archived"
           checked={filters.showArchived}
@@ -275,7 +272,7 @@ export function FilterToolbar({
         />
         <label
           htmlFor="show-archived"
-          className="text-xs text-muted-foreground cursor-pointer select-none"
+          className="text-xs font-medium text-muted-foreground cursor-pointer select-none"
         >
           Arsip
         </label>
@@ -284,15 +281,15 @@ export function FilterToolbar({
       {/* Active filters count & clear */}
       {activeFilterCount > 0 && (
         <>
-          <Separator orientation="vertical" className="h-5" />
+          <Separator orientation="vertical" className="h-4 opacity-50 hidden sm:block" />
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-xs text-muted-foreground hover:text-destructive"
+            className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-destructive rounded-xl transition-colors"
             onClick={clearAllFilters}
           >
             <X className="h-3 w-3" />
-            Hapus {activeFilterCount} filter
+            <span>Hapus ({activeFilterCount})</span>
           </Button>
         </>
       )}

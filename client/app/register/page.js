@@ -15,12 +15,13 @@ import {
   Sparkles,
   Loader2,
   ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 export default function RegisterPage() {
   const { register, resendVerification } = useAuth();
@@ -104,7 +105,7 @@ export default function RegisterPage() {
     setResendLoading(true);
     try {
       const data = await resendVerification(form.email);
-      setResendMessage(data?.message || "Tautan verifikasi telah dikirim.");
+      setResendMessage(data?.message || "Tautan verifikasi telah dikirim ke email kamu.");
     } catch (err) {
       setError(err.response?.data?.message || "Terjadi kesalahan. Coba lagi.");
     } finally {
@@ -114,52 +115,54 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-background bg-dot-pattern p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-      {/* Ambient glows */}
+      {/* Ambient background glows */}
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-lg mx-auto relative z-10 py-6">
-        <Card className="glass-panel rounded-2xl shadow-xl border-border/80 overflow-hidden">
+        <Card className="rounded-2xl border border-border/80 bg-card/85 backdrop-blur-xl shadow-xl overflow-hidden">
           <div className="p-6 sm:p-8 space-y-6">
             {/* Header */}
             <div className="text-center space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide border border-primary/20 mb-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide border border-primary/20 mb-1">
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>YukNgaji Surabaya</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                {success ? "Cek Kotak Masuk Email" : "Buat Akun Baru"}
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                {success ? "Verifikasi Email Kamu" : "Daftar Akun Baru"}
               </h1>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                 {success
-                  ? "Tautan verifikasi telah dikirim untuk mengaktifkan akunmu"
-                  : "Bergabung bersama tim untuk mengelola proyek dan dakwah"}
+                  ? "Tautan aktivasi telah dikirimkan untuk memastikan keamanan akunmu"
+                  : "Bergabung bersama tim pengurus dan relawan untuk berkolaborasi"}
               </p>
             </div>
 
             {success ? (
               <div className="space-y-6">
                 <div className="flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
-                  <div className="h-12 w-12 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-foreground">Verifikasi Dikirimkan</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="font-bold text-foreground">Email Terkirim</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       Kami telah mengirim email ke{" "}
-                      <span className="font-semibold text-foreground">{form.email}</span>. Silakan periksa inbox atau folder spam kamu.
+                      <span className="font-bold text-foreground">{form.email}</span>. Silakan periksa inbox utama atau folder spam kamu.
                     </p>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-xl border border-destructive/20 font-medium">
-                    {error}
+                  <div className="flex items-start gap-2 bg-destructive/10 text-destructive text-xs px-3.5 py-3 rounded-xl border border-destructive/20 font-medium">
+                    <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{error}</span>
                   </div>
                 )}
                 {resendMessage && (
-                  <div className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm px-4 py-3 rounded-xl border border-emerald-500/20 font-medium">
-                    {resendMessage}
+                  <div className="flex items-start gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs px-3.5 py-3 rounded-xl border border-emerald-500/20 font-medium">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{resendMessage}</span>
                   </div>
                 )}
 
@@ -167,7 +170,7 @@ export default function RegisterPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-11 rounded-xl text-sm font-medium"
+                    className="w-full h-11 rounded-xl text-xs font-semibold"
                     onClick={handleResend}
                     disabled={resendLoading}
                   >
@@ -183,7 +186,7 @@ export default function RegisterPage() {
 
                   <Button
                     type="button"
-                    className="w-full h-11 rounded-xl font-semibold shadow-md gap-2"
+                    className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 active:scale-[0.98] transition-all"
                     onClick={() => router.push("/login")}
                   >
                     <span>Lanjut ke Halaman Masuk</span>
@@ -194,8 +197,9 @@ export default function RegisterPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-xl border border-destructive/20 font-medium">
-                    {error}
+                  <div className="flex items-start gap-2 bg-destructive/10 text-destructive text-xs px-3.5 py-3 rounded-xl border border-destructive/20 font-medium">
+                    <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{error}</span>
                   </div>
                 )}
 
@@ -214,7 +218,7 @@ export default function RegisterPage() {
                       onChange={handleChange}
                       required
                       autoComplete="name"
-                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30"
+                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
                     />
                   </div>
                 </div>
@@ -234,7 +238,7 @@ export default function RegisterPage() {
                       onChange={handleChange}
                       required
                       autoComplete="email"
-                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30"
+                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
                     />
                   </div>
                 </div>
@@ -254,11 +258,11 @@ export default function RegisterPage() {
                       onChange={handleChange}
                       required
                       autoComplete="tel"
-                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30"
+                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
                     />
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Digunakan untuk pengingat tugas dan notifikasi workspace penting.
+                  <p className="text-[11px] text-muted-foreground leading-normal">
+                    Diperlukan untuk notifikasi pengingat tugas dan broadcast workspace penting.
                   </p>
                 </div>
 
@@ -277,7 +281,7 @@ export default function RegisterPage() {
                       onChange={handleChange}
                       required
                       autoComplete="new-password"
-                      className="pl-10 pr-10 h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30"
+                      className="pl-10 pr-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
                     />
                     <button
                       type="button"
@@ -305,12 +309,12 @@ export default function RegisterPage() {
                       id="confirmPassword"
                       name="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Ulangi password"
+                      placeholder="Ulangi password di atas"
                       value={form.confirmPassword}
                       onChange={handleChange}
                       required
                       autoComplete="new-password"
-                      className="pl-10 pr-10 h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30"
+                      className="pl-10 pr-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
                     />
                     <button
                       type="button"
@@ -332,7 +336,7 @@ export default function RegisterPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 mt-4 transition-all duration-200 active:scale-[0.99]"
+                  className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 mt-4 transition-all duration-200 active:scale-[0.98]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -350,7 +354,7 @@ export default function RegisterPage() {
 
                 <p className="text-xs text-muted-foreground text-center pt-2">
                   Sudah punya akun?{" "}
-                  <Link href="/login" className="font-semibold text-primary hover:underline">
+                  <Link href="/login" className="font-semibold text-primary hover:underline underline-offset-2">
                     Masuk di sini
                   </Link>
                 </p>

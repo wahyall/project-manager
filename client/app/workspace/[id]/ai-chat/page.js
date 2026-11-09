@@ -110,21 +110,21 @@ export default function AiChatPage({ params }) {
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem)] pb-16 md:pb-0">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/70 px-4 py-3 sm:px-6 bg-card/40 backdrop-blur-md">
+      <div className="flex items-center justify-between border-b border-border/70 px-4 py-3 sm:px-6 bg-card/60 backdrop-blur-md">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 shadow-2xs">
-            <Sparkles className="h-5 w-5" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 shadow-2xs">
+            <Bot className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold tracking-tight text-foreground truncate">
+              <h1 className="text-sm sm:text-base font-bold tracking-tight text-foreground truncate">
                 AI Copilot Assistant
               </h1>
-              <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-2xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+              <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
                 Workspace Context Aware
               </span>
             </div>
-            <p className="text-2xs text-muted-foreground truncate">
+            <p className="text-[11px] text-muted-foreground truncate">
               Terkoneksi ke workspace:{" "}
               <span className="font-semibold text-foreground">
                 {currentWorkspace.name}

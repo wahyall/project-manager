@@ -1129,3 +1129,63 @@
   display: inline-block;
 }
 
+/* Ambient glows & mesh patterns */
+.ambient-glow {
+  position: absolute;
+  pointer-events: none;
+  filter: blur(80px);
+  opacity: 0.15;
+  border-radius: 9999px;
+  z-index: 0;
+}
+
+.dark .ambient-glow {
+  opacity: 0.22;
+}
+
+/* Modern Card Single-Surface */
+.modern-card {
+  background: color-mix(in oklch, var(--card) 90%, transparent);
+  border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+  border-radius: 1.25rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modern-card:hover {
+  border-color: color-mix(in oklch, var(--primary) 30%, var(--border));
+}
+
+/* Modern Interactive Button */
+.btn-magnetic {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-magnetic:active {
+  transform: scale(0.98);
+}
+
+/* Custom soft scrollbar */
+.soft-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.soft-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.soft-scrollbar::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklch, var(--border) 80%, transparent);
+  border-radius: 9999px;
+}
+.soft-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}
+
+/* Focus ring accent helper */
+.focus-ring-accent {
+  outline: none;
+}
+.focus-ring-accent:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 35%, transparent);
+  border-color: var(--primary);
+}
+
+

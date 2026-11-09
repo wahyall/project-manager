@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -215,7 +214,7 @@ export default function EventDetailPage({ params }) {
         <div className="flex items-center gap-2 shrink-0">
           <Badge
             variant="outline"
-            className={cn("text-2xs font-semibold rounded-full px-2.5 py-0.5 border", statusConfig.className)}
+            className={cn("text-[10px] font-semibold rounded-full px-2.5 py-0.5 border", statusConfig.className)}
           >
             <span
               className={cn(
@@ -232,11 +231,11 @@ export default function EventDetailPage({ params }) {
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl w-44 shadow-lg">
+            <DropdownMenuContent align="end" className="rounded-xl w-48 shadow-lg">
               <DropdownMenuItem
                 onClick={() => exportEventPDF(id, eventId)}
                 disabled={exporting}
-                className="gap-2 text-xs rounded-lg"
+                className="gap-2 text-xs rounded-lg cursor-pointer"
               >
                 <Download className="h-4 w-4" />
                 {exporting ? "Mengekspor..." : "Export Dokumen PDF"}
@@ -245,7 +244,7 @@ export default function EventDetailPage({ params }) {
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="text-destructive focus:text-destructive text-xs rounded-lg gap-2"
+                    className="text-destructive focus:text-destructive text-xs rounded-lg gap-2 cursor-pointer"
                     onClick={() => setDeleteDialogOpen(true)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -260,7 +259,7 @@ export default function EventDetailPage({ params }) {
 
       {/* Event Header Banner */}
       <div className="space-y-1.5">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
           {event.title}
         </h1>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -292,47 +291,47 @@ export default function EventDetailPage({ params }) {
           <TabsList className="bg-muted/40 p-1 rounded-xl border border-border/60 h-auto inline-flex flex-wrap gap-1">
             <TabsTrigger
               value="overview"
-              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <FileText className="h-3.5 w-3.5" />
               <span>Overview</span>
             </TabsTrigger>
             <TabsTrigger
               value="tasks"
-              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <ListTodo className="h-3.5 w-3.5" />
               <span>Task</span>
               {event.taskCount > 0 && (
-                <span className="ml-1 h-4 min-w-[16px] rounded-full bg-primary/10 text-primary text-2xs flex items-center justify-center font-bold px-1">
+                <span className="ml-1 h-4 min-w-[16px] rounded-full bg-primary/10 text-primary text-[10px] flex items-center justify-center font-bold px-1">
                   {event.taskCount}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger
               value="pipeline"
-              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <GitBranch className="h-3.5 w-3.5" />
               <span>Pipeline</span>
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <StickyNote className="h-3.5 w-3.5" />
               <span>Notes</span>
             </TabsTrigger>
             <TabsTrigger
               value="spreadsheet"
-              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <Table2 className="h-3.5 w-3.5" />
               <span>Spreadsheet</span>
             </TabsTrigger>
             <TabsTrigger
               value="activity"
-              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <History className="h-3.5 w-3.5" />
               <span>Activity</span>
@@ -394,11 +393,9 @@ export default function EventDetailPage({ params }) {
 
         {/* Tab: Activity */}
         <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
-          <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-            <CardContent className="pt-6 sm:p-6">
-              <EventActivityTab workspaceId={id} eventId={eventId} />
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-border/80 bg-card/90 p-5 sm:p-7 shadow-xs backdrop-blur-xs">
+            <EventActivityTab workspaceId={id} eventId={eventId} />
+          </div>
         </TabsContent>
       </Tabs>
 

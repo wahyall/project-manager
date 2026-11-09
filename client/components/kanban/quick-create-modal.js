@@ -44,8 +44,6 @@ import { cn } from "@/lib/utils";
 import { getInitials } from "./task-card";
 
 // Lazy-load MentionEditor to avoid SSR issues and reduce initial bundle.
-// Dipakai (bukan BlockNoteEditor polos) supaya @mention bisa disisipkan
-// sejak task dibuat.
 const MentionEditor = lazy(() =>
   import("@/components/mention-editor").then((m) => ({
     default: m.MentionEditor,
@@ -126,9 +124,6 @@ export function QuickCreateModal({
         dueDate: dueDate ? dueDate.toISOString() : null,
         assignees: selectedAssignees,
         eventId: eventId && eventId !== "none" ? eventId : null,
-        // Divisi mengikuti event jika terkait event; event tanpa divisi
-        // membuat task tanpa divisi. Selain itu sesuai pilihan (null = Tanpa
-        // Divisi).
         divisionId: linkedEvent
           ? linkedEventDivisionId || null
           : divisionId || null,
@@ -151,7 +146,7 @@ export function QuickCreateModal({
     name: m.userId?.name || m.name || "Member",
   }));
 
-  // Divisi event yang dipilih (task otomatis mengikuti divisinya)
+  // Divisi event yang dipilih
   const getEventDivisionId = (evt) => {
     if (!evt?.divisionId) return "";
     return typeof evt.divisionId === "string"
@@ -182,27 +177,33 @@ export function QuickCreateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[780px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[760px] max-h-[90vh] overflow-y-auto rounded-2xl p-6 border-border/80 shadow-2xl bg-card/95 backdrop-blur-xl soft-scrollbar">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Buat Task Baru
-          </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
-            Isi minimal judul task. Field lainnya bisa dilengkapi nanti.
-          </DialogDescription>
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div>
+              <DialogTitle className="text-base font-bold text-foreground">
+                Buat Task Baru
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Isi judul dan rincian alur kerja task untuk penugasan tim
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           {/* Title */}
           <div className="space-y-1.5">
-            <Label htmlFor="task-title" className="text-xs font-medium">
-              Judul Task <span className="text-red-500">*</span>
+            <Label htmlFor="task-title" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Judul Task <span className="text-destructive">*</span>
             </Label>
             <Input
               id="task-title"
               ref={titleInputRef}
-              placeholder="Contoh: Desain halaman login"
+              placeholder="Contoh: Rancang konsep materi kajian akbar"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => {
@@ -211,23 +212,23 @@ export function QuickCreateModal({
                   handleCreate(false);
                 }
               }}
-              className="h-10"
+              className="h-10 rounded-xl bg-background/50 border-border/80 text-sm focus:ring-2 focus:ring-primary/20"
               autoFocus
             />
           </div>
 
           {/* Description — BlockNote WYSIWYG */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium flex items-center gap-1.5">
-              <AlignLeft className="h-3 w-3" />
-              Deskripsi
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <AlignLeft className="h-3.5 w-3.5" />
+              Deskripsi & Catatan
             </Label>
-            <div className="py-2 px-6 rounded-md border border-input">
+            <div className="py-2 px-4 rounded-xl border border-border/80 bg-background/50">
               {open && (
                 <Suspense
                   fallback={
                     <div className="flex items-center justify-center py-6 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
                     </div>
                   }
                 >
@@ -236,7 +237,7 @@ export function QuickCreateModal({
                     workspaceId={workspaceId}
                     initialContent={null}
                     onChange={setDescription}
-                    placeholder="Deskripsi task (opsional)... ketik @ untuk mention"
+                    placeholder="Deskripsi task (opsional)... ketik @ untuk mention rekan tim"
                     className="blocknote-compact"
                   />
                 </Suspense>
@@ -247,20 +248,20 @@ export function QuickCreateModal({
           <div className="grid grid-cols-2 gap-3">
             {/* Column */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Kolom</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Kolom / Status</Label>
               <Select value={columnId} onValueChange={setColumnId}>
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger className="h-10 rounded-xl text-xs bg-background/50 border-border/80">
                   <SelectValue placeholder="Pilih kolom" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {(columns || []).map((col) => (
                     <SelectItem key={col._id} value={col._id}>
                       <div className="flex items-center gap-2">
                         <span
-                          className="h-2 w-2 rounded-full"
+                          className="h-2 w-2 rounded-full shrink-0"
                           style={{ backgroundColor: col.color }}
                         />
-                        {col.name}
+                        <span>{col.name}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -270,26 +271,26 @@ export function QuickCreateModal({
 
             {/* Priority */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Prioritas</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prioritas</Label>
               <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger className="h-10 rounded-xl text-xs bg-background/50 border-border/80">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {[
-                    { value: "low", label: "Low", color: "bg-slate-400" },
-                    { value: "medium", label: "Medium", color: "bg-amber-400" },
-                    { value: "high", label: "High", color: "bg-orange-500" },
+                    { value: "low", label: "Rendah", color: "bg-slate-400" },
+                    { value: "medium", label: "Sedang", color: "bg-amber-400" },
+                    { value: "high", label: "Tinggi", color: "bg-orange-500" },
                     {
                       value: "critical",
-                      label: "Critical",
+                      label: "Kritis",
                       color: "bg-red-500",
                     },
                   ].map((p) => (
                     <SelectItem key={p.value} value={p.value}>
                       <div className="flex items-center gap-2">
                         <span className={cn("h-2 w-2 rounded-full", p.color)} />
-                        {p.label}
+                        <span>{p.label}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -302,23 +303,23 @@ export function QuickCreateModal({
           <div className="grid grid-cols-2 gap-3">
             {/* Start Date */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Start Date</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tanggal Mulai</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full h-9 justify-start text-left text-xs font-normal",
+                      "w-full h-10 rounded-xl justify-start text-left text-xs font-normal bg-background/50 border-border/80",
                       !startDate && "text-muted-foreground",
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
                     {startDate
                       ? format(startDate, "d MMM yyyy", { locale: localeId })
                       : "Pilih tanggal"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 rounded-2xl shadow-xl" align="start">
                   <Calendar
                     mode="single"
                     selected={startDate}
@@ -331,23 +332,23 @@ export function QuickCreateModal({
 
             {/* Due Date */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Due Date</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tenggat Waktu (Deadline)</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full h-9 justify-start text-left text-xs font-normal",
+                      "w-full h-10 rounded-xl justify-start text-left text-xs font-normal bg-background/50 border-border/80",
                       !dueDate && "text-muted-foreground",
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
                     {dueDate
                       ? format(dueDate, "d MMM yyyy", { locale: localeId })
                       : "Pilih tanggal"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 rounded-2xl shadow-xl" align="start">
                   <Calendar
                     mode="single"
                     selected={dueDate}
@@ -361,19 +362,19 @@ export function QuickCreateModal({
 
           {/* Assignees */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Assignee</Label>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Penugasan (Assignee)</Label>
             <Popover open={assigneeOpen} onOpenChange={setAssigneeOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full h-auto min-h-9 justify-start text-left text-xs font-normal flex-wrap gap-1 py-1.5",
+                    "w-full h-auto min-h-10 rounded-xl justify-start text-left text-xs font-normal flex-wrap gap-1.5 py-2 bg-background/50 border-border/80",
                     selectedAssignees.length === 0 && "text-muted-foreground",
                   )}
                 >
-                  <User className="mr-1 h-3.5 w-3.5 shrink-0" />
+                  <User className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   {selectedAssignees.length === 0 ? (
-                    "Pilih assignee"
+                    "Pilih anggota tim"
                   ) : (
                     <div className="flex flex-wrap gap-1">
                       {selectedAssignees.map((id) => {
@@ -382,7 +383,7 @@ export function QuickCreateModal({
                           <Badge
                             key={id}
                             variant="secondary"
-                            className="text-[10px] h-5 px-1.5"
+                            className="text-[10px] h-5 px-1.5 rounded-md font-medium"
                           >
                             {member?.name || "Member"}
                           </Badge>
@@ -392,27 +393,27 @@ export function QuickCreateModal({
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-56 p-2" align="start">
-                <div className="max-h-48 overflow-y-auto space-y-0.5">
+              <PopoverContent className="w-56 p-2 rounded-2xl shadow-xl" align="start">
+                <div className="max-h-48 overflow-y-auto space-y-0.5 soft-scrollbar">
                   {memberList.map((member) => (
                     <button
                       key={member.id}
                       className={cn(
-                        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                        selectedAssignees.includes(member.id) && "bg-accent",
+                        "flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs hover:bg-muted transition-colors text-left",
+                        selectedAssignees.includes(member.id) && "bg-muted font-medium",
                       )}
                       onClick={() => toggleAssignee(member.id)}
                     >
                       <Checkbox
                         checked={selectedAssignees.includes(member.id)}
-                        className="h-3.5 w-3.5 pointer-events-none"
+                        className="h-3.5 w-3.5 rounded pointer-events-none"
                       />
-                      <Avatar className="h-5 w-5">
-                        <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                      <Avatar className="h-5 w-5 rounded-full shrink-0">
+                        <AvatarFallback className="text-[9px] font-bold bg-primary/10 text-primary">
                           {getInitials(member.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="truncate text-xs">{member.name}</span>
+                      <span className="truncate">{member.name}</span>
                     </button>
                   ))}
                   {memberList.length === 0 && (
@@ -428,18 +429,18 @@ export function QuickCreateModal({
           {/* Event (optional) */}
           {(events || []).length > 0 && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium flex items-center gap-1.5">
-                <CalendarDays className="h-3 w-3" />
-                Event
-                <span className="text-muted-foreground font-normal">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-violet-500" />
+                Hubungkan ke Event
+                <span className="text-muted-foreground/60 font-normal lowercase">
                   (opsional)
                 </span>
               </Label>
               <Select value={eventId} onValueChange={setEventId}>
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger className="h-10 rounded-xl text-xs bg-background/50 border-border/80">
                   <SelectValue placeholder="Tidak terkait event" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   <SelectItem value="none">
                     <span className="text-muted-foreground">
                       Tidak terkait event
@@ -453,44 +454,21 @@ export function QuickCreateModal({
                           style={{ backgroundColor: evt.color || "#8B5CF6" }}
                         />
                         <span className="truncate">{evt.title}</span>
-                        {evt.status && (
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-[9px] h-4 px-1 ml-auto shrink-0",
-                              evt.status === "ongoing" &&
-                                "border-green-300 text-green-600",
-                              evt.status === "upcoming" &&
-                                "border-blue-300 text-blue-600",
-                              evt.status === "completed" &&
-                                "border-gray-300 text-gray-500",
-                            )}
-                          >
-                            {evt.status}
-                          </Badge>
-                        )}
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {linkedEvent && (
-                <p className="text-[11px] text-muted-foreground">
-                  {linkedEventDivisionId
-                    ? "Otomatis mengikuti divisi event ini."
-                    : "Event ini belum memiliki divisi, task akan Tanpa Divisi."}
-                </p>
-              )}
             </div>
           )}
 
           {/* Divisi Workspace */}
           {(divisions || []).length > 0 && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium flex items-center gap-1.5">
-                <CalendarDays className="h-3 w-3" />
-                Divisi
-                <span className="text-muted-foreground font-normal">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                Divisi Penanggung Jawab
+                <span className="text-muted-foreground/60 font-normal lowercase">
                   (opsional)
                 </span>
               </Label>
@@ -505,10 +483,10 @@ export function QuickCreateModal({
                 }
                 disabled={!!linkedEvent}
               >
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger className="h-10 rounded-xl text-xs bg-background/50 border-border/80">
                   <SelectValue placeholder="Tanpa Divisi" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   <SelectItem value="none">
                     <span className="text-muted-foreground">Tanpa Divisi</span>
                   </SelectItem>
@@ -521,7 +499,7 @@ export function QuickCreateModal({
                             style={{ backgroundColor: div.color }}
                           />
                         )}
-                        {div.name}
+                        <span>{div.name}</span>
                       </span>
                     </SelectItem>
                   ))}
@@ -529,9 +507,9 @@ export function QuickCreateModal({
               </Select>
               {selectedDivisionLeaders.length > 0 && (
                 <div className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
-                  <Crown className="h-3 w-3 text-amber-500 shrink-0" />
+                  <Crown className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                   <span>
-                    Ketua:{" "}
+                    Ketua Divisi:{" "}
                     <strong className="text-foreground font-medium">
                       {selectedDivisionLeaders.map((l) => l.name).join(", ")}
                     </strong>
@@ -542,30 +520,30 @@ export function QuickCreateModal({
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-0 pt-2">
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={creating}
-            size="sm"
+            className="rounded-xl text-xs h-9"
           >
             Batal
           </Button>
           <Button
-            variant="secondary"
+            variant="outline"
             onClick={() => handleCreate(true)}
             disabled={!title.trim() || creating}
-            size="sm"
+            className="rounded-xl text-xs h-9"
           >
-            {creating && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+            {creating && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
             Buat & Buka Detail
           </Button>
           <Button
             onClick={() => handleCreate(false)}
             disabled={!title.trim() || creating}
-            size="sm"
+            className="rounded-xl text-xs h-9 shadow-xs"
           >
-            {creating && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+            {creating && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
             Buat Task
           </Button>
         </DialogFooter>

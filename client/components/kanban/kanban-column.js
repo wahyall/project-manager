@@ -41,24 +41,24 @@ function KanbanColumnInner({
   }, [hasMore, columnLoading, column._id, onLoadMore]);
 
   return (
-    <div className="flex flex-col min-w-[300px] max-w-[340px] w-[300px] shrink-0 h-full border shadow-sm rounded-md">
+    <div className="flex flex-col min-w-[310px] max-w-[340px] w-[310px] shrink-0 h-full rounded-2xl border border-border/70 bg-muted/20 backdrop-blur-xs shadow-2xs overflow-hidden">
       {/* Column header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 mb-2 border-b border-dashed">
+      <div className="flex items-center gap-2.5 px-3.5 py-3 border-b border-border/60 bg-card/60 backdrop-blur-xs">
         <span
-          className="h-3 w-3 rounded-full shrink-0 shadow-sm"
+          className="h-2.5 w-2.5 rounded-full shrink-0 shadow-xs ring-2 ring-background"
           style={{ backgroundColor: column.color }}
         />
-        <h3 className="text-sm font-semibold text-foreground flex-1 truncate">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex-1 truncate">
           {column.name}
         </h3>
-        <span className="text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full min-w-[24px] text-center">
+        <span className="text-2xs font-bold text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-full min-w-[22px] text-center border border-border/40">
           {totalCount ?? tasks.length}
         </span>
         {onQuickCreate && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
             onClick={() => onQuickCreate?.(column._id)}
           >
             <Plus className="h-3.5 w-3.5" />
@@ -73,11 +73,11 @@ function KanbanColumnInner({
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              "flex-1 rounded-xl border border-dashed border-transparent p-1.5 transition-colors min-h-[120px] overflow-y-auto max-h-[calc(100vh-260px)] scrollbar-thin",
-              snapshot.isDraggingOver && "border-primary/30 bg-primary/5",
+              "flex-1 p-2.5 transition-colors min-h-[140px] overflow-y-auto max-h-[calc(100vh-270px)] soft-scrollbar",
+              snapshot.isDraggingOver && "bg-primary/5 ring-1 ring-inset ring-primary/20",
             )}
           >
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {tasks.map((task, index) => (
                 <TaskCard
                   key={task._id}
@@ -104,7 +104,7 @@ function KanbanColumnInner({
             {/* Loading indicator for initial load */}
             {columnLoading && tasks.length === 0 && (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
             )}
 
@@ -112,14 +112,14 @@ function KanbanColumnInner({
             {tasks.length === 0 &&
               !snapshot.isDraggingOver &&
               !columnLoading && (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <p className="text-xs text-muted-foreground/60 mb-2">
-                    Tidak ada task
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <p className="text-xs text-muted-foreground/60 mb-2 font-medium">
+                    Belum ada task di tahap ini
                   </p>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs gap-1 text-muted-foreground hover:text-foreground h-7"
+                    className="text-xs gap-1.5 text-muted-foreground hover:text-foreground h-7 rounded-lg"
                     onClick={() => onQuickCreate?.(column._id)}
                   >
                     <Plus className="h-3 w-3" />

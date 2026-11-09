@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, ArrowLeft, ArrowRight, CheckCircle2, Loader2, KeyRound } from "lucide-react";
+import { Mail, ArrowLeft, ArrowRight, CheckCircle2, Loader2, KeyRound, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,40 +33,40 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-background bg-dot-pattern p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-      {/* Ambient glow */}
+      {/* Ambient background glows */}
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md mx-auto relative z-10">
-        <Card className="glass-panel rounded-2xl shadow-xl border-border/80 overflow-hidden">
+        <Card className="rounded-2xl border border-border/80 bg-card/85 backdrop-blur-xl shadow-xl overflow-hidden">
           <div className="p-6 sm:p-8 space-y-6">
             <div className="text-center space-y-2">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-2 shadow-xs">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-2 shadow-xs ring-1 ring-primary/20">
                 <KeyRound className="h-6 w-6" />
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
                 Lupa Password
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Masukkan email akunmu untuk menerima tautan pemulihan kata sandi
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                Masukkan email yang terdaftar untuk menerima tautan pemulihan kata sandi akunmu
               </p>
             </div>
 
             {success ? (
               <div className="space-y-6">
                 <div className="flex flex-col items-center justify-center text-center p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
-                  <div className="h-12 w-12 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-foreground">Email Terkirim!</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Jika email terdaftar, tautan reset password telah dikirimkan. Silakan cek inbox atau folder spam kamu.
+                    <h3 className="font-bold text-foreground">Tautan Terkirim!</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Jika email terdaftar di sistem, tautan reset password telah dikirimkan ke kotak masuk atau folder spam kamu.
                     </p>
                   </div>
                 </div>
 
-                <Button asChild className="w-full h-11 rounded-xl font-semibold shadow-md gap-2">
+                <Button asChild className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 active:scale-[0.98] transition-all">
                   <Link href="/login">
                     <ArrowLeft className="h-4 w-4" />
                     <span>Kembali ke Halaman Masuk</span>
@@ -76,8 +76,9 @@ export default function ForgotPasswordPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-xl border border-destructive/20 font-medium">
-                    {error}
+                  <div className="flex items-start gap-2 bg-destructive/10 text-destructive text-xs px-3.5 py-3 rounded-xl border border-destructive/20 font-medium">
+                    <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{error}</span>
                   </div>
                 )}
 
@@ -95,14 +96,14 @@ export default function ForgotPasswordPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
-                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30"
+                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
                     />
                   </div>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 mt-2 transition-all duration-200 active:scale-[0.99]"
+                  className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 mt-2 transition-all duration-200 active:scale-[0.98]"
                   disabled={loading}
                 >
                   {loading ? (

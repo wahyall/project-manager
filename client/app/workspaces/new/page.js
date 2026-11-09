@@ -5,12 +5,21 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import ProtectedRoute from "@/components/protected-route";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Sparkles, CheckCircle2, ShieldCheck, Columns3, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Sparkles,
+  ShieldCheck,
+  Building2,
+  CheckCircle2,
+  CheckSquare,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export default function NewWorkspacePage() {
@@ -37,9 +46,8 @@ export default function NewWorkspacePage() {
     "from-rose-500 to-pink-600",
     "from-cyan-500 to-blue-600",
   ];
-  const colorIndex = name
-    .split("")
-    .reduce((acc, c) => acc + c.charCodeAt(0), 0) % colors.length;
+  const colorIndex =
+    name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % colors.length;
   const gradientColor = name.trim() ? colors[colorIndex] : "from-slate-400 to-slate-500";
 
   const handleSubmit = async (e) => {
@@ -66,19 +74,25 @@ export default function NewWorkspacePage() {
   return (
     <ProtectedRoute>
       <div className="min-h-[100dvh] bg-background bg-dot-pattern flex flex-col relative overflow-hidden">
-        {/* Ambient glows */}
+        {/* Subtle ambient blur */}
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Topbar */}
         <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
-          <div className="mx-auto max-w-3xl flex items-center px-4 sm:px-6 h-16">
+          <div className="mx-auto max-w-4xl flex items-center justify-between px-4 sm:px-6 h-16">
             <Link href="/workspaces">
-              <Button variant="ghost" size="sm" className="gap-2 rounded-xl text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 rounded-xl text-muted-foreground hover:text-foreground"
+              >
                 <ArrowLeft className="h-4 w-4" />
                 <span>Kembali ke Workspace</span>
               </Button>
             </Link>
+
+            <ThemeToggle />
           </div>
         </header>
 
@@ -91,124 +105,134 @@ export default function NewWorkspacePage() {
               Buat Workspace Baru
             </h1>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Ruang kerja kolaboratif untuk tim. Semua event, task divisi, bank ide, dan kas Baitul Maal akan terkelola di sini.
+              Ruang kerja kolaboratif untuk tim kepanitiaan, komunitas, atau divisi.
             </p>
           </div>
 
-          <Card className="glass-panel rounded-2xl shadow-xl border-border/80 overflow-hidden">
-            <CardContent className="p-6 sm:p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Live Preview Avatar */}
-                <div className="flex justify-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div
-                      className={`flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${gradientColor} text-white font-black text-2xl shadow-lg ring-4 ring-background transition-all duration-300`}
-                    >
-                      {initials || "?"}
-                    </div>
-                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      Pratinjau Logo
-                    </span>
-                  </div>
-                </div>
-
-                {/* Workspace Name */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Nama Workspace <span className="text-destructive">*</span>
-                    </Label>
-                    <span className="text-[11px] text-muted-foreground">
-                      {name.length}/50
-                    </span>
-                  </div>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder='contoh: "Panitia Ramadhan 1448H" atau "Tim Media & Dakwah"'
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    maxLength={50}
-                    required
-                    autoFocus
-                    className="h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30 text-base"
-                  />
-                </div>
-
-                {/* Description */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Deskripsi Singkat <span className="text-muted-foreground/60 font-normal lowercase">(opsional)</span>
-                    </Label>
-                    <span className="text-[11px] text-muted-foreground">
-                      {description.length}/500
-                    </span>
-                  </div>
-                  <Textarea
-                    id="description"
-                    placeholder="Jelaskan tujuan atau cakupan tugas workspace ini..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    maxLength={500}
-                    rows={3}
-                    className="rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30 resize-none text-sm"
-                  />
-                </div>
-
-                {/* Info feature box */}
-                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                    <ShieldCheck className="h-4 w-4" />
-                    <span>Fitur otomatis yang akan disiapkan:</span>
-                  </p>
-                  <ul className="text-xs text-muted-foreground space-y-1.5 pl-1">
-                    <li className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                      <span>Anda otomatis menjadi <strong>Owner</strong> utama workspace</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                      <span>4 kolom kanban bawaan: <em>To Do, In Progress, Review, Selesai</em></span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                      <span>Tautan undangan instan untuk mengundang anggota tim</span>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <Link href="/workspaces">
-                    <Button type="button" variant="outline" className="rounded-xl h-11 px-5 font-medium">
-                      Batal
-                    </Button>
-                  </Link>
-                  <Button
-                    type="submit"
-                    disabled={loading || !name.trim()}
-                    className="rounded-xl h-11 px-6 font-semibold shadow-md gap-2 active:scale-[0.98] transition-all"
+          <div className="rounded-2xl border border-border/80 bg-card/95 shadow-xl p-6 sm:p-8 backdrop-blur-sm">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Live Preview Avatar */}
+              <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-2">
+                  <div
+                    className={`flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${gradientColor} text-white font-black text-2xl shadow-lg ring-4 ring-background transition-all duration-300`}
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Membuat...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Buat Workspace</span>
-                        <Sparkles className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
+                    {initials || <Building2 className="h-8 w-8 text-white/80" />}
+                  </div>
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    Pratinjau Avatar
+                  </span>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+              </div>
+
+              {/* Workspace Name */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="name"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Nama Workspace <span className="text-destructive">*</span>
+                  </Label>
+                  <span className="text-[11px] text-muted-foreground">
+                    {name.length}/50
+                  </span>
+                </div>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder='contoh: "Panitia Ramadhan 1448H" atau "Tim Media & Dakwah"'
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={50}
+                  required
+                  autoFocus
+                  className="h-11 rounded-xl bg-background/60 border-border/70 focus-visible:ring-primary/30 text-base"
+                />
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label
+                    htmlFor="description"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Deskripsi Singkat{" "}
+                    <span className="text-muted-foreground/60 font-normal lowercase">
+                      (opsional)
+                    </span>
+                  </Label>
+                  <span className="text-[11px] text-muted-foreground">
+                    {description.length}/500
+                  </span>
+                </div>
+                <Textarea
+                  id="description"
+                  placeholder="Jelaskan tujuan atau cakupan tugas workspace ini..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  className="rounded-xl bg-background/60 border-border/70 focus-visible:ring-primary/30 resize-none text-sm"
+                />
+              </div>
+
+              {/* Feature Checklist Box */}
+              <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Fitur otomatis yang akan disiapkan:</span>
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-1.5 pl-1">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span>Anda otomatis menjadi <strong>Owner</strong> utama</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckSquare className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span>4 kolom kanban bawaan: <em>To Do, In Progress, Review, Selesai</em></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span>Tautan undangan instan untuk mengundang relawan/panitia</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Link href="/workspaces">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-xl h-11 px-5 font-medium"
+                  >
+                    Batal
+                  </Button>
+                </Link>
+                <Button
+                  type="submit"
+                  disabled={loading || !name.trim()}
+                  className="rounded-xl h-11 px-6 font-semibold shadow-md gap-2 active:scale-[0.98] transition-all"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Membuat...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Buat Workspace</span>
+                      <Sparkles className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
         </main>
       </div>
     </ProtectedRoute>
   );
 }
-

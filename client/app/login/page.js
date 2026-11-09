@@ -14,12 +14,14 @@ import {
   CalendarRange,
   Columns3,
   Loader2,
+  CheckCircle2,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 
 export default function LoginPage() {
   const { login, resendVerification } = useAuth();
@@ -57,7 +59,7 @@ export default function LoginPage() {
     setResendLoading(true);
     try {
       const data = await resendVerification(email);
-      setInfo(data?.message || "Tautan verifikasi telah dikirim.");
+      setInfo(data?.message || "Tautan verifikasi telah dikirim ke inbox emailmu.");
     } catch (err) {
       setError(err.response?.data?.message || "Terjadi kesalahan. Coba lagi.");
     } finally {
@@ -66,85 +68,89 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background bg-dot-pattern p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background bg-dot-pattern p-4 sm:p-6 lg:p-10 relative overflow-hidden">
       {/* Ambient background glows */}
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
         {/* Left Side: Brand Story & Value Proposition (Desktop) */}
-        <div className="hidden lg:flex lg:col-span-6 flex-col justify-between pr-4 space-y-8">
-          <div className="space-y-4">
+        <div className="hidden lg:flex lg:col-span-6 flex-col justify-between space-y-8 pr-2">
+          <div className="space-y-5">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wide border border-primary/20">
               <Sparkles className="h-3.5 w-3.5" />
               <span>YukNgaji Surabaya Workspace</span>
             </div>
 
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-              Platform Kolaborasi & Manajemen Proyek
+            <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-[1.12]">
+              Satu Ruang Kerja untuk Seluruh Tim & Dakwah
             </h1>
 
             <p className="text-base text-muted-foreground leading-relaxed">
-              Ruang kerja terpadu untuk pengurus dan relawan. Atur event dakwah, koordinasi tugas divisi, hingga transparansi kas Baitul Maal secara rapi dan real-time.
+              Platform terpadu untuk pengurus, panitia event, dan relawan. Kelola program acara, koordinasi tugas divisi, hingga transparansi dana Baitul Maal secara rapi dan real-time.
             </p>
           </div>
 
-          {/* <div className="space-y-3.5 pt-2">
-            <div className="flex items-center gap-3.5 p-3 rounded-xl bg-card/60 border border-border/60 backdrop-blur-xs">
-              <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <HeartHandshake className="h-4.5 w-4.5" />
+          {/* Value props list */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-card/75 border border-border/70 backdrop-blur-md shadow-xs">
+              <div className="h-10 w-10 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 flex items-center justify-center shrink-0">
+                <CalendarRange className="h-5 w-5" />
               </div>
               <div className="text-sm">
-                <span className="font-semibold block text-foreground">Baitul Maal (BM) Terpadu</span>
-                <span className="text-xs text-muted-foreground">Pencatatan kas transparan, infaq, dan data binaan</span>
+                <span className="font-bold text-foreground block">Event & Task Kanban Terintegrasi</span>
+                <span className="text-xs text-muted-foreground">Rundown acara, tenggat waktu, dan tracking progres antar divisi</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3.5 p-3 rounded-xl bg-card/60 border border-border/60 backdrop-blur-xs">
-              <div className="h-9 w-9 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
-                <CalendarRange className="h-4.5 w-4.5" />
+            <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-card/75 border border-border/70 backdrop-blur-md shadow-xs">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                <HeartHandshake className="h-5 w-5" />
               </div>
               <div className="text-sm">
-                <span className="font-semibold block text-foreground">Event & Task Kanban</span>
-                <span className="text-xs text-muted-foreground">Milestone acara, agenda kalender, dan tracking progress</span>
+                <span className="font-bold text-foreground block">Baitul Maal (BM) Amanah</span>
+                <span className="text-xs text-muted-foreground">Pencatatan kas transparan, infaq rutin, dan database binaan jamaah</span>
               </div>
             </div>
-          </div> */}
+          </div>
 
-          <div className="text-xs text-muted-foreground pt-4 border-t border-border/50">
-            Komunitas YukNgaji Surabaya &copy; {new Date().getFullYear()}
+          <div className="text-xs text-muted-foreground pt-4 border-t border-border/50 flex items-center justify-between">
+            <span>Komunitas YukNgaji Surabaya</span>
+            <span>&copy; {new Date().getFullYear()}</span>
           </div>
         </div>
 
         {/* Right Side: Login Card */}
         <div className="lg:col-span-6 w-full max-w-md mx-auto">
-          <Card className="glass-panel rounded-2xl shadow-xl border-border/80 overflow-hidden">
+          <Card className="rounded-2xl border border-border/80 bg-card/85 backdrop-blur-xl shadow-xl overflow-hidden">
             <div className="p-6 sm:p-8 space-y-6">
               {/* Header */}
               <div className="space-y-2 text-center lg:text-left">
                 <div className="lg:hidden inline-flex items-center justify-center mb-2">
-                  <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center text-sm shadow-sm">
+                  <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black flex items-center justify-center text-sm shadow-md ring-1 ring-primary/25">
                     YN
                   </div>
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
                   Selamat Datang
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Masuk ke akunmu untuk mengakses workspace
+                  Masuk ke akunmu untuk mengakses ruang kerja komunitas
                 </p>
               </div>
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-xl border border-destructive/20 font-medium">
-                    {error}
+                  <div className="flex items-start gap-2.5 bg-destructive/10 text-destructive text-xs px-3.5 py-3 rounded-xl border border-destructive/20 font-medium">
+                    <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span className="flex-1">{error}</span>
                   </div>
                 )}
                 {info && (
-                  <div className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm px-4 py-3 rounded-xl border border-emerald-500/20 font-medium">
-                    {info}
+                  <div className="flex items-start gap-2.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs px-3.5 py-3 rounded-xl border border-emerald-500/20 font-medium">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span className="flex-1">{info}</span>
                   </div>
                 )}
 
@@ -162,7 +168,7 @@ export default function LoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
-                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30"
+                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
                     />
                   </div>
                 </div>
@@ -174,7 +180,7 @@ export default function LoginPage() {
                     </Label>
                     <Link
                       href="/forgot-password"
-                      className="text-xs font-medium text-primary hover:underline"
+                      className="text-xs font-medium text-primary hover:underline underline-offset-2"
                     >
                       Lupa password?
                     </Link>
@@ -189,7 +195,7 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="current-password"
-                      className="pl-10 pr-10 h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30"
+                      className="pl-10 pr-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
                     />
                     <button
                       type="button"
@@ -218,13 +224,13 @@ export default function LoginPage() {
                     {resendLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : null}
-                    {resendLoading ? "Mengirim..." : "Kirim ulang email verifikasi"}
+                    {resendLoading ? "Mengirim ulang..." : "Kirim ulang email verifikasi"}
                   </Button>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 mt-2 transition-all duration-200 active:scale-[0.99]"
+                  className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 mt-2 transition-all duration-200 active:scale-[0.98]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -242,7 +248,7 @@ export default function LoginPage() {
 
                 <p className="text-xs text-muted-foreground text-center pt-2">
                   Belum punya akun?{" "}
-                  <Link href="/register" className="font-semibold text-primary hover:underline">
+                  <Link href="/register" className="font-semibold text-primary hover:underline underline-offset-2">
                     Daftar di sini
                   </Link>
                 </p>

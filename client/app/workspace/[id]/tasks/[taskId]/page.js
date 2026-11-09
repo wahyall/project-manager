@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -162,137 +161,119 @@ export default function TaskDetailPage({ params }) {
     };
   }, [taskId, workspaceId, router]);
 
-  // ── Handler: update task ───────────────────────
-  const handleUpdate = useCallback(
-    async (updates) => {
-      if (!task) return;
-      // Optimistic update
-      setTask((prev) => ({ ...prev, ...updates }));
-      try {
-        const { data } = await api.put(
-          `/workspaces/${workspaceId}/tasks/${taskId}`,
-          updates,
-        );
-        setTask(data.data.task);
-      } catch (err) {
-        toast.error("Gagal mengupdate task");
-        // Revert
-        fetchTask();
-      }
-    },
-    [task, workspaceId, taskId, fetchTask],
-  );
+  // ── Handlers ───────────────────────────────────
+  const handleUpdate = async (updates) => {
+    try {
+      const { data } = await api.put(
+        `/workspaces/${workspaceId}/tasks/${taskId}`,
+        updates,
+      );
+      setTask(data.data.task);
+      toast.success("Task diperbarui");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Gagal mengupdate task");
+      throw err;
+    }
+  };
 
-  // ── Handler: delete task ───────────────────────
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     try {
       await api.delete(`/workspaces/${workspaceId}/tasks/${taskId}`);
-      toast.success("Task berhasil dihapus");
+      toast.success("Task dihapus");
       router.push(`/workspace/${workspaceId}/tasks`);
     } catch (err) {
       toast.error(err.response?.data?.message || "Gagal menghapus task");
     }
-  }, [workspaceId, taskId, router]);
+  };
 
-  // ── Handler: archive / unarchive ───────────────
-  const handleArchive = useCallback(async () => {
+  const handleArchive = async () => {
     try {
       await api.post(`/workspaces/${workspaceId}/tasks/${taskId}/archive`);
-      setTask((prev) => (prev ? { ...prev, isArchived: true } : prev));
-      toast.success("Task berhasil diarsipkan");
+      setTask((prev) => ({ ...prev, isArchived: true }));
+      toast.success("Task diarsipkan");
     } catch (err) {
-      toast.error("Gagal mengarsipkan task");
+      toast.error(err.response?.data?.message || "Gagal mengarsipkan task");
     }
-  }, [workspaceId, taskId]);
+  };
 
-  const handleUnarchive = useCallback(async () => {
+  const handleUnarchive = async () => {
     try {
       await api.post(`/workspaces/${workspaceId}/tasks/${taskId}/unarchive`);
-      setTask((prev) => (prev ? { ...prev, isArchived: false } : prev));
-      toast.success("Task berhasil diunarsipkan");
+      setTask((prev) => ({ ...prev, isArchived: false }));
+      toast.success("Task diunarsipkan");
     } catch (err) {
-      toast.error("Gagal membatalkan arsip");
+      toast.error(err.response?.data?.message || "Gagal membatalkan arsip");
     }
-  }, [workspaceId, taskId]);
+  };
 
-  // ── Handler: watch / unwatch ───────────────────
-  const handleWatch = useCallback(async () => {
+  const handleWatch = async () => {
     try {
       await api.post(`/workspaces/${workspaceId}/tasks/${taskId}/watch`);
-      const { data } = await api.get(
-        `/workspaces/${workspaceId}/tasks/${taskId}`,
-      );
-      setTask(data.data.task);
-      toast.success("Kamu sekarang menjadi watcher");
+      setTask((prev) => ({
+        ...prev,
+        watchers: [...(prev.watchers || []), user._id],
+      }));
+      toast.success("Kamu sekarang memantau task ini");
     } catch (err) {
-      toast.error("Gagal menjadi watcher");
+      toast.error("Gagal mengikuti task");
     }
-  }, [workspaceId, taskId]);
+  };
 
-  const handleUnwatch = useCallback(async () => {
+  const handleUnwatch = async () => {
     try {
       await api.delete(`/workspaces/${workspaceId}/tasks/${taskId}/watch`);
-      const { data } = await api.get(
-        `/workspaces/${workspaceId}/tasks/${taskId}`,
-      );
-      setTask(data.data.task);
-      toast.success("Berhenti menjadi watcher");
+      setTask((prev) => ({
+        ...prev,
+        watchers: (prev.watchers || []).filter(
+          (w) => (w._id || w) !== user._id,
+        ),
+      }));
+      toast.success("Berhenti memantau task");
     } catch (err) {
-      toast.error("Gagal berhenti menjadi watcher");
+      toast.error("Gagal berhenti mengikuti task");
     }
-  }, [workspaceId, taskId]);
+  };
 
-  // ── Handler: upload attachment ─────────────────
-  const handleUploadAttachment = useCallback(
-    async (file) => {
-      if (!task) return;
-      const formData = new FormData();
-      formData.append("file", file);
-      await api.post(
-        `/workspaces/${workspaceId}/tasks/${taskId}/attachments`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } },
-      );
-      // Refresh task data
-      const { data } = await api.get(
-        `/workspaces/${workspaceId}/tasks/${taskId}`,
-      );
-      setTask(data.data.task);
-    },
-    [task, workspaceId, taskId],
-  );
+  const handleUploadAttachment = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post(
+      `/workspaces/${workspaceId}/tasks/${taskId}/attachments`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    setTask((prev) => ({
+      ...prev,
+      attachments: [...(prev.attachments || []), data.data.attachment],
+    }));
+    toast.success("Lampiran berhasil diunggah");
+  };
 
-  // ── Handler: delete attachment ─────────────────
-  const handleDeleteAttachment = useCallback(
-    async (attachmentId) => {
-      if (!task) return;
-      await api.delete(
-        `/workspaces/${workspaceId}/tasks/${taskId}/attachments/${attachmentId}`,
-      );
-      // Refresh task data
-      const { data } = await api.get(
-        `/workspaces/${workspaceId}/tasks/${taskId}`,
-      );
-      setTask(data.data.task);
-    },
-    [task, workspaceId, taskId],
-  );
-
-  if (!currentWorkspace) return null;
+  const handleDeleteAttachment = async (attachmentId) => {
+    await api.delete(
+      `/workspaces/${workspaceId}/tasks/${taskId}/attachments/${attachmentId}`,
+    );
+    setTask((prev) => ({
+      ...prev,
+      attachments: (prev.attachments || []).filter(
+        (a) => a._id !== attachmentId,
+      ),
+    }));
+    toast.success("Lampiran dihapus");
+  };
 
   // ── Loading state ──────────────────────────────
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <Skeleton className="h-9 w-9 rounded-xl" />
-          <Skeleton className="h-6 w-48 rounded-lg" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
         </div>
-        <Skeleton className="h-10 w-full rounded-xl" />
-        <div className="space-y-4">
-          <Skeleton className="h-40 rounded-2xl" />
-          <Skeleton className="h-60 rounded-2xl" />
-        </div>
+        <Skeleton className="h-[400px] w-full rounded-2xl" />
       </div>
     );
   }
@@ -357,7 +338,7 @@ export default function TaskDetailPage({ params }) {
           <Badge
             variant="outline"
             className={cn(
-              "text-2xs font-semibold rounded-full px-2.5 py-0.5 border gap-1.5",
+              "text-[10px] font-semibold rounded-full px-2.5 py-0.5 border gap-1.5",
               task.priority === "critical" &&
                 "border-rose-500/30 text-rose-600 bg-rose-500/10 dark:text-rose-400",
               task.priority === "high" &&
@@ -374,7 +355,7 @@ export default function TaskDetailPage({ params }) {
 
           {/* Column/Status badge */}
           {currentColumn && (
-            <Badge variant="outline" className="text-2xs font-semibold rounded-full px-2.5 py-0.5 border gap-1.5">
+            <Badge variant="outline" className="text-[10px] font-semibold rounded-full px-2.5 py-0.5 border gap-1.5">
               <span
                 className="h-1.5 w-1.5 rounded-full"
                 style={{ backgroundColor: currentColumn.color }}
@@ -387,7 +368,7 @@ export default function TaskDetailPage({ params }) {
           {task.isArchived && (
             <Badge
               variant="outline"
-              className="text-2xs font-semibold rounded-full px-2.5 py-0.5 border-amber-500/30 text-amber-600 bg-amber-500/10"
+              className="text-[10px] font-semibold rounded-full px-2.5 py-0.5 border-amber-500/30 text-amber-600 bg-amber-500/10"
             >
               Diarsipkan
             </Badge>
@@ -427,7 +408,7 @@ export default function TaskDetailPage({ params }) {
 
       {/* Task Header */}
       <div className="space-y-1.5">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
           {task.title}
         </h1>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -462,21 +443,21 @@ export default function TaskDetailPage({ params }) {
           <TabsList className="bg-muted/40 p-1 rounded-xl border border-border/60 h-auto inline-flex flex-wrap gap-1">
             <TabsTrigger
               value="detail"
-              className="gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <FileText className="h-3.5 w-3.5" />
               <span>Detail Task</span>
             </TabsTrigger>
             <TabsTrigger
               value="comment"
-              className="gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <MessageSquare className="h-3.5 w-3.5" />
               <span>Komentar & Diskusi</span>
             </TabsTrigger>
             <TabsTrigger
               value="activity"
-              className="gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <History className="h-3.5 w-3.5" />
               <span>Jejak Riwayat</span>
@@ -486,48 +467,42 @@ export default function TaskDetailPage({ params }) {
 
         {/* Tab: Detail */}
         <TabsContent value="detail" className="mt-0 focus-visible:outline-none">
-          <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-            <CardContent className="p-4 sm:p-6">
-              <TabDetail
-                task={task}
-                columns={columns}
-                members={members}
-                labels={labels}
-                events={events}
-                divisions={divisions}
-                currentUserId={user?._id}
-                onUpdate={handleUpdate}
-                onWatch={handleWatch}
-                onUnwatch={handleUnwatch}
-                onUploadAttachment={handleUploadAttachment}
-                onDeleteAttachment={handleDeleteAttachment}
-                workspaceId={workspaceId}
-              />
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-border/80 bg-card/90 p-5 sm:p-7 shadow-xs backdrop-blur-xs">
+            <TabDetail
+              task={task}
+              columns={columns}
+              members={members}
+              labels={labels}
+              events={events}
+              divisions={divisions}
+              currentUserId={user?._id}
+              onUpdate={handleUpdate}
+              onWatch={handleWatch}
+              onUnwatch={handleUnwatch}
+              onUploadAttachment={handleUploadAttachment}
+              onDeleteAttachment={handleDeleteAttachment}
+              workspaceId={workspaceId}
+            />
+          </div>
         </TabsContent>
 
         {/* Tab: Comment */}
         <TabsContent value="comment" className="mt-0 focus-visible:outline-none">
-          <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-            <CardContent className="p-4 sm:p-6 h-[600px] overflow-hidden">
-              <TabComment
-                workspaceId={workspaceId}
-                taskId={taskId}
-                currentUserId={user?._id}
-                members={members}
-              />
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-border/80 bg-card/90 p-5 sm:p-7 shadow-xs backdrop-blur-xs h-[600px] overflow-hidden">
+            <TabComment
+              workspaceId={workspaceId}
+              taskId={taskId}
+              currentUserId={user?._id}
+              members={members}
+            />
+          </div>
         </TabsContent>
 
         {/* Tab: Activity */}
         <TabsContent value="activity" className="mt-0 focus-visible:outline-none">
-          <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-            <CardContent className="p-4 sm:p-6">
-              <TabActivity workspaceId={workspaceId} taskId={taskId} />
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-border/80 bg-card/90 p-5 sm:p-7 shadow-xs backdrop-blur-xs">
+            <TabActivity workspaceId={workspaceId} taskId={taskId} />
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -545,7 +520,7 @@ export default function TaskDetailPage({ params }) {
           <AlertDialogFooter className="gap-2 sm:gap-0 mt-4">
             <AlertDialogCancel className="rounded-xl text-xs">Batal</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 rounded-xl text-xs"
+              className="bg-destructive hover:bg-destructive/90 rounded-xl text-xs font-semibold"
               onClick={() => {
                 handleDelete();
                 setDeleteDialogOpen(false);

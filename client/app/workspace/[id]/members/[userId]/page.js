@@ -10,13 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -73,15 +66,15 @@ const ROLE_CONFIG = {
 // ─── Stat Card Component ─────────────────────────────
 function StatCard({ icon: Icon, label, value, color }) {
   return (
-    <div className="flex items-center gap-3.5 rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:shadow-sm">
+    <div className="flex items-center gap-3.5 rounded-2xl border border-border/80 bg-card/85 backdrop-blur-xs p-4 shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-sm">
       <div
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${color} shadow-2xs`}
       >
         <Icon className="h-5 w-5" />
       </div>
       <div>
-        <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
-        <p className="text-xs font-medium text-muted-foreground mt-0.5">{label}</p>
+        <p className="text-2xl font-extrabold tracking-tight text-foreground">{value}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-0.5">{label}</p>
       </div>
     </div>
   );
@@ -94,25 +87,23 @@ function ProfileSkeleton() {
       <div className="flex items-center gap-4">
         <Skeleton className="h-10 w-24 rounded-xl" />
       </div>
-      <Card className="rounded-2xl border-border/80">
-        <CardContent className="pt-6 space-y-6">
-          <div className="flex items-center gap-6">
-            <Skeleton className="h-24 w-24 rounded-full" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-7 w-48 rounded-lg" />
-              <Skeleton className="h-4 w-32 rounded-md" />
-              <Skeleton className="h-5 w-20 rounded-full" />
-            </div>
+      <div className="rounded-2xl border border-border/80 p-6 space-y-6 bg-card/60">
+        <div className="flex items-center gap-6">
+          <Skeleton className="h-24 w-24 rounded-full" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-7 w-48 rounded-lg" />
+            <Skeleton className="h-4 w-32 rounded-md" />
+            <Skeleton className="h-5 w-20 rounded-full" />
           </div>
-          <Separator />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Skeleton className="h-20 rounded-2xl" />
-            <Skeleton className="h-20 rounded-2xl" />
-            <Skeleton className="h-20 rounded-2xl" />
-            <Skeleton className="h-20 rounded-2xl" />
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+        <Separator />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
+          <Skeleton className="h-20 rounded-2xl" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -178,7 +169,7 @@ export default function MemberProfilePage({ params }) {
           <h2 className="text-lg font-bold text-foreground mb-1">
             {error || "Profil tidak ditemukan"}
           </h2>
-          <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          <p className="text-xs text-muted-foreground mb-6 max-w-sm">
             Pengguna mungkin bukan anggota workspace ini atau akun telah dinonaktifkan.
           </p>
           <Button variant="outline" onClick={() => router.back()} className="rounded-xl">
@@ -211,29 +202,29 @@ export default function MemberProfilePage({ params }) {
           className="gap-2 text-muted-foreground hover:text-foreground rounded-xl h-9"
         >
           <ArrowLeft className="h-4 w-4" />
-          Kembali
+          <span>Kembali</span>
         </Button>
 
         {isOwnProfile && (
           <Link href="/settings/account">
-            <Button variant="outline" size="sm" className="gap-2 rounded-xl h-9 text-xs shadow-2xs">
+            <Button variant="outline" size="sm" className="gap-2 rounded-xl h-9 text-xs font-semibold shadow-2xs">
               <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-              Edit Akun Saya
+              <span>Edit Profil Saya</span>
             </Button>
           </Link>
         )}
       </div>
 
       {/* Profile hero card */}
-      <Card className="overflow-hidden rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
+      <div className="overflow-hidden rounded-2xl border border-border/80 shadow-xs bg-card/90 backdrop-blur-xs">
         {/* Ambient banner */}
         <div
-          className={`h-28 sm:h-36 bg-linear-to-br ${roleConfig.bgGradient} relative border-b border-border/40`}
+          className={`h-28 sm:h-36 bg-gradient-to-br ${roleConfig.bgGradient} relative border-b border-border/40`}
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.12),transparent)]" />
         </div>
 
-        <CardContent className="relative pt-0 pb-6 px-6">
+        <div className="relative pt-0 pb-6 px-6">
           {/* Avatar (overlapping banner) */}
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 -mt-14 sm:-mt-12">
             <div className="relative">
@@ -252,18 +243,18 @@ export default function MemberProfilePage({ params }) {
 
             <div className="flex-1 text-center sm:text-left pb-1 space-y-1">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
                   {profile.name}
                 </h1>
                 <Badge
                   variant="outline"
-                  className={`text-2xs font-semibold gap-1 rounded-full px-2.5 py-0.5 border ${roleConfig.color}`}
+                  className={`text-[10px] font-semibold gap-1 rounded-full px-2.5 py-0.5 border ${roleConfig.color}`}
                 >
                   <RoleIcon className="h-3 w-3" />
                   {roleConfig.label}
                 </Badge>
                 {isOwnProfile && (
-                  <span className="text-2xs font-medium text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
                     Kamu
                   </span>
                 )}
@@ -276,20 +267,20 @@ export default function MemberProfilePage({ params }) {
 
           {/* Info grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/60">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border border-border/60">
               <Mail className="h-4 w-4 text-primary shrink-0" />
               <div className="min-w-0">
-                <p className="text-2xs text-muted-foreground font-medium">Email Kontak</p>
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Email Kontak</p>
                 <p className="text-xs font-semibold text-foreground truncate">{profile.email}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/60">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border border-border/60">
               {profile.whatsappRegistered ? (
                 <>
                   <Phone className="h-4 w-4 text-emerald-500 shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-2xs text-muted-foreground font-medium">WhatsApp</p>
+                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">WhatsApp</p>
                     <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                       Terhubung
                     </p>
@@ -299,7 +290,7 @@ export default function MemberProfilePage({ params }) {
                 <>
                   <PhoneOff className="h-4 w-4 text-muted-foreground shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-2xs text-muted-foreground font-medium">WhatsApp</p>
+                    <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">WhatsApp</p>
                     <p className="text-xs font-semibold text-muted-foreground">
                       Belum terdaftar
                     </p>
@@ -308,16 +299,16 @@ export default function MemberProfilePage({ params }) {
               )}
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/60">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border border-border/60">
               <CalendarDays className="h-4 w-4 text-primary shrink-0" />
               <div className="min-w-0">
-                <p className="text-2xs text-muted-foreground font-medium">Waktu Bergabung</p>
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Waktu Bergabung</p>
                 <p className="text-xs font-semibold text-foreground">{joinedDate}</p>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Stats */}
       <div className="space-y-3">
@@ -354,78 +345,76 @@ export default function MemberProfilePage({ params }) {
 
       {/* Shared workspaces */}
       {profile.sharedWorkspaces && profile.sharedWorkspaces.length > 0 && (
-        <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-          <CardHeader className="pb-3">
+        <div className="rounded-2xl border border-border/80 shadow-xs bg-card/90 backdrop-blur-xs p-5 sm:p-6 space-y-4">
+          <div>
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 text-primary" />
-              <CardTitle className="text-base font-semibold">
+              <h3 className="text-base font-bold text-foreground">
                 Workspace Bersama
-              </CardTitle>
+              </h3>
             </div>
-            <CardDescription className="text-xs">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Ruang kerja kolaboratif yang kamu ikuti bersama{" "}
-              {isOwnProfile ? "" : profile.name}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2.5">
-              {profile.sharedWorkspaces.map((ws) => (
-                <Tooltip key={ws._id}>
-                  <TooltipTrigger asChild>
-                    <Link href={`/workspace/${ws._id}`}>
-                      <button className="inline-flex items-center gap-2.5 rounded-xl border border-border/80 bg-background/50 px-3.5 py-2 text-xs font-medium hover:border-primary/40 hover:bg-muted/40 transition-all group shadow-2xs">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary text-2xs font-bold border border-primary/20">
-                          {ws.name
-                            ?.split(" ")
-                            .map((w) => w[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </div>
-                        <span className="truncate max-w-[160px] text-foreground">
-                          {ws.name}
-                        </span>
-                        <ExternalLink className="h-3 w-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>Buka workspace {ws.name}</TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              {isOwnProfile ? "anggota lain" : profile.name}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2.5">
+            {profile.sharedWorkspaces.map((ws) => (
+              <Tooltip key={ws._id}>
+                <TooltipTrigger asChild>
+                  <Link href={`/workspace/${ws._id}`}>
+                    <button className="inline-flex items-center gap-2.5 rounded-xl border border-border/80 bg-background/60 px-3.5 py-2 text-xs font-semibold hover:border-primary/40 hover:bg-muted/40 transition-all group shadow-2xs">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">
+                        {ws.name
+                          ?.split(" ")
+                          .map((w) => w[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2)}
+                      </div>
+                      <span className="truncate max-w-[160px] text-foreground">
+                        {ws.name}
+                      </span>
+                      <ExternalLink className="h-3 w-3 text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Buka workspace {ws.name}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Activity Log Info */}
-      <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-        <CardHeader className="pb-3">
+      <div className="rounded-2xl border border-border/80 shadow-xs bg-card/90 backdrop-blur-xs p-5 sm:p-6 space-y-4">
+        <div>
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
-            <CardTitle className="text-base font-semibold">
+            <h3 className="text-base font-bold text-foreground">
               Aktivitas Member
-            </CardTitle>
+            </h3>
           </div>
-          <CardDescription className="text-xs">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Jejak kontribusi member di workspace ini
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-border/70 rounded-xl">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground mb-2">
-              <Activity className="h-5 w-5" />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Aktivitas pengguna terintegrasi otomatis di Activity Log workspace.
-            </p>
-            <Link href={`/workspace/${workspaceId}/activity`} className="mt-3">
-              <Button variant="outline" size="sm" className="rounded-xl text-xs h-8">
-                Buka Seluruh Activity Log
-              </Button>
-            </Link>
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-border/70 rounded-xl bg-muted/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground mb-2">
+            <Activity className="h-5 w-5" />
           </div>
-        </CardContent>
-      </Card>
+          <p className="text-xs text-muted-foreground">
+            Aktivitas pengguna terintegrasi otomatis di Activity Log workspace.
+          </p>
+          <Link href={`/workspace/${workspaceId}/activity`} className="mt-3">
+            <Button variant="outline" size="sm" className="rounded-xl text-xs h-8 font-semibold">
+              Buka Seluruh Activity Log
+            </Button>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

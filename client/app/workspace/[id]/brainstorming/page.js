@@ -19,7 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Card, CardContent } from "@/components/ui/card";
 import { Lightbulb, Plus, Loader2, Search, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -138,32 +137,32 @@ export default function BrainstormingPage({ params }) {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 md:pb-8">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-border/60">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-              <Sparkles className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+              <Sparkles className="w-3.5 h-3.5" />
               Kolaborasi Visual
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-2xs">
               <Lightbulb className="h-5 w-5" />
             </div>
             Brainstorming Boards
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Papan kanvas interaktif untuk eksplorasi konsep, mind-map, diagram alir, dan mading tim
           </p>
         </div>
 
         {!isReadOnly && (
           <Button
-            className="gap-2 rounded-xl h-9 text-xs shadow-xs self-start sm:self-auto"
+            className="gap-2 rounded-xl h-10 px-4 text-xs font-semibold shadow-md self-start sm:self-auto active:scale-95 transition-all"
             onClick={() => setCreateDialogOpen(true)}
           >
             <Plus className="h-4 w-4" />
-            Buat Board Baru
+            <span>Buat Board Baru</span>
           </Button>
         )}
       </div>
@@ -171,12 +170,12 @@ export default function BrainstormingPage({ params }) {
       {/* Search */}
       {boards.length > 0 && (
         <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
           <Input
             placeholder="Cari nama board..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-10 rounded-xl bg-background/50 border-border/80 text-xs focus:ring-2 focus:ring-primary/20"
+            className="pl-9 h-10 rounded-xl bg-card/80 border-border/80 text-xs focus:ring-2 focus:ring-primary/20"
           />
         </div>
       )}
@@ -185,34 +184,32 @@ export default function BrainstormingPage({ params }) {
       {loading && (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-xs">Memuat daftar papan brainstorming...</p>
+          <p className="text-xs font-semibold">Memuat daftar papan brainstorming...</p>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && boards.length === 0 && (
-        <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-4 shadow-2xs">
-              <Lightbulb className="h-8 w-8" />
-            </div>
-            <h3 className="text-base font-bold text-foreground mb-1">
-              Belum Ada Board Brainstorming
-            </h3>
-            <p className="text-xs text-muted-foreground max-w-sm mb-6 leading-relaxed">
-              Mulai buat board pertama untuk mendesain arsitektur ide, membuat sticky notes, atau menyematkan mading informasi.
-            </p>
-            {!isReadOnly && (
-              <Button
-                className="gap-2 rounded-xl text-xs shadow-xs"
-                onClick={() => setCreateDialogOpen(true)}
-              >
-                <Plus className="h-4 w-4" />
-                Buat Board Pertama
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border/80 bg-card/70 shadow-xs backdrop-blur-xs flex flex-col items-center justify-center py-20 px-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-4 shadow-2xs">
+            <Lightbulb className="h-8 w-8" />
+          </div>
+          <h3 className="text-base font-bold text-foreground mb-1">
+            Belum Ada Board Brainstorming
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-sm mb-6 leading-relaxed">
+            Mulai buat board pertama untuk mendesain arsitektur ide, membuat sticky notes, atau menyematkan mading informasi.
+          </p>
+          {!isReadOnly && (
+            <Button
+              className="gap-2 rounded-xl text-xs font-semibold shadow-xs"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Buat Board Pertama
+            </Button>
+          )}
+        </div>
       )}
 
       {/* Board grid */}
@@ -237,7 +234,7 @@ export default function BrainstormingPage({ params }) {
       {/* No search results */}
       {!loading && boards.length > 0 && filteredBoards.length === 0 && (
         <div className="text-center py-16 text-muted-foreground text-xs border border-dashed border-border/80 rounded-2xl">
-          <p className="font-medium text-foreground">
+          <p className="font-semibold text-foreground">
             Tidak ada board yang cocok dengan pencarian &quot;{searchQuery}&quot;
           </p>
           <p className="text-muted-foreground mt-1">Coba gunakan kata kunci pencarian yang lain.</p>
@@ -277,7 +274,7 @@ export default function BrainstormingPage({ params }) {
             <AlertDialogCancel className="rounded-xl text-xs">Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl text-xs"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl text-xs font-semibold"
               disabled={deleteLoading}
             >
               {deleteLoading && (
