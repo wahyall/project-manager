@@ -184,15 +184,15 @@ function ProfileSection() {
     (whatsappNumber.trim() || "") !== (user?.whatsappNumber || "");
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-2xl border-border/80 shadow-xs overflow-hidden">
+      <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/30">
-            <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <User className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle>Informasi Profil</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg font-bold">Informasi Profil</CardTitle>
+            <CardDescription className="text-xs">
               Kelola informasi profil yang terlihat oleh anggota tim
             </CardDescription>
           </div>
@@ -202,19 +202,19 @@ function ProfileSection() {
         {/* Avatar */}
         <div className="flex items-center gap-5">
           <div className="relative group">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-primary/5 text-primary font-bold text-2xl ring-2 ring-border overflow-hidden">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-primary/5 text-primary font-bold text-2xl ring-2 ring-border overflow-hidden shadow-xs">
               {user?.avatar ? (
                 <img
                   src={user.avatar}
                   alt={user.name}
-                  className="h-20 w-20 rounded-full object-cover"
+                  className="h-20 w-20 rounded-2xl object-cover"
                 />
               ) : (
                 user?.name?.charAt(0).toUpperCase() || "U"
               )}
             </div>
             {avatarUploading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl">
                 <Loader2 className="h-6 w-6 animate-spin text-white" />
               </div>
             )}
@@ -224,7 +224,7 @@ function ProfileSection() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2"
+                className="gap-2 rounded-xl text-xs font-medium"
                 disabled={avatarUploading}
                 onClick={() => document.getElementById("avatar-upload").click()}
               >
@@ -235,7 +235,7 @@ function ProfileSection() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-2 text-muted-foreground hover:text-destructive"
+                  className="gap-2 rounded-xl text-xs text-muted-foreground hover:text-destructive"
                   disabled={avatarUploading}
                   onClick={handleRemoveAvatar}
                 >
@@ -261,7 +261,7 @@ function ProfileSection() {
 
         {/* Name */}
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-sm font-medium">
+          <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Nama Lengkap <span className="text-destructive">*</span>
           </Label>
           <Input
@@ -270,26 +270,26 @@ function ProfileSection() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Masukkan nama lengkap"
             maxLength={100}
-            className="max-w-md"
+            className="max-w-md h-10 rounded-xl"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             {name.length}/100 karakter
           </p>
         </div>
 
         {/* Email (read-only) */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-muted-foreground">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Email
           </Label>
           <Input
             value={user?.email || ""}
             readOnly
             disabled
-            className="max-w-md bg-muted"
+            className="max-w-md h-10 rounded-xl bg-muted/50 cursor-not-allowed"
           />
-          <p className="text-xs text-muted-foreground">
-            Email tidak dapat diubah
+          <p className="text-[11px] text-muted-foreground">
+            Email terikat dengan akun dan tidak dapat diubah
           </p>
         </div>
 
@@ -297,7 +297,7 @@ function ProfileSection() {
         <div className="space-y-2">
           <Label
             htmlFor="whatsapp"
-            className="text-sm font-medium flex items-center gap-2"
+            className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"
           >
             <Phone className="h-3.5 w-3.5" />
             Nomor WhatsApp
@@ -307,11 +307,11 @@ function ProfileSection() {
             value={whatsappNumber}
             onChange={(e) => setWhatsappNumber(e.target.value)}
             placeholder="+6281234567890"
-            className="max-w-md"
+            className="max-w-md h-10 rounded-xl"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             Format internasional (contoh: +6281234567890). Digunakan untuk
-            notifikasi WhatsApp.
+            notifikasi tugas penting.
           </p>
         </div>
 
@@ -320,7 +320,7 @@ function ProfileSection() {
           <Button
             onClick={handleSaveProfile}
             disabled={saving || !hasChanges}
-            className="gap-2"
+            className="gap-2 rounded-xl h-10 px-5 font-semibold shadow-xs"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -330,8 +330,8 @@ function ProfileSection() {
             Simpan Perubahan
           </Button>
           {hasChanges && (
-            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-medium">
+              <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
               Ada perubahan belum disimpan
             </span>
           )}
@@ -382,15 +382,15 @@ function PasswordSection() {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-2xl border-border/80 shadow-xs overflow-hidden">
+      <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
-            <KeyRound className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <KeyRound className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle>Ubah Password</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg font-bold">Ubah Password</CardTitle>
+            <CardDescription className="text-xs">
               Pastikan password baru kuat dan mudah diingat
             </CardDescription>
           </div>
@@ -399,7 +399,7 @@ function PasswordSection() {
       <CardContent className="space-y-4">
         {/* Current password */}
         <div className="space-y-2">
-          <Label htmlFor="current-pw" className="text-sm font-medium">
+          <Label htmlFor="current-pw" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Password Saat Ini
           </Label>
           <div className="relative max-w-md">
@@ -409,12 +409,12 @@ function PasswordSection() {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               placeholder="Masukkan password saat ini"
-              className="pr-10"
+              className="pr-10 h-10 rounded-xl"
             />
             <button
               type="button"
               onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
             >
               {showCurrent ? (
                 <EyeOff className="h-4 w-4" />
@@ -429,7 +429,7 @@ function PasswordSection() {
 
         {/* New password */}
         <div className="space-y-2">
-          <Label htmlFor="new-pw" className="text-sm font-medium">
+          <Label htmlFor="new-pw" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Password Baru
           </Label>
           <div className="relative max-w-md">
@@ -439,12 +439,12 @@ function PasswordSection() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Minimal 8 karakter"
-              className="pr-10"
+              className="pr-10 h-10 rounded-xl"
             />
             <button
               type="button"
               onClick={() => setShowNew(!showNew)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
             >
               {showNew ? (
                 <EyeOff className="h-4 w-4" />
@@ -454,13 +454,13 @@ function PasswordSection() {
             </button>
           </div>
           {newPassword && !passwordLongEnough && (
-            <p className="text-xs text-destructive flex items-center gap-1">
+            <p className="text-xs text-destructive flex items-center gap-1 font-medium">
               <X className="h-3 w-3" />
               Password minimal 8 karakter
             </p>
           )}
           {newPassword && passwordLongEnough && (
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
               <Check className="h-3 w-3" />
               Panjang password cukup
             </p>
@@ -469,7 +469,7 @@ function PasswordSection() {
 
         {/* Confirm password */}
         <div className="space-y-2">
-          <Label htmlFor="confirm-pw" className="text-sm font-medium">
+          <Label htmlFor="confirm-pw" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Konfirmasi Password Baru
           </Label>
           <div className="relative max-w-md">
@@ -479,12 +479,12 @@ function PasswordSection() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Ulangi password baru"
-              className="pr-10"
+              className="pr-10 h-10 rounded-xl"
             />
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
             >
               {showConfirm ? (
                 <EyeOff className="h-4 w-4" />
@@ -494,13 +494,13 @@ function PasswordSection() {
             </button>
           </div>
           {confirmPassword && !passwordsMatch && (
-            <p className="text-xs text-destructive flex items-center gap-1">
+            <p className="text-xs text-destructive flex items-center gap-1 font-medium">
               <X className="h-3 w-3" />
               Password tidak cocok
             </p>
           )}
           {confirmPassword && passwordsMatch && (
-            <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
               <Check className="h-3 w-3" />
               Password cocok
             </p>
@@ -512,7 +512,7 @@ function PasswordSection() {
             onClick={handleChangePassword}
             disabled={saving || !canSubmit}
             variant="outline"
-            className="gap-2"
+            className="gap-2 rounded-xl h-10 px-5 font-semibold"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -583,25 +583,25 @@ function NotificationSection() {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-2xl border-border/80 shadow-xs overflow-hidden">
+      <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
-            <Bell className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+            <Bell className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle>Preferensi Notifikasi</CardTitle>
-            <CardDescription>
-              Atur jenis notifikasi yang ingin kamu terima
+            <CardTitle className="text-lg font-bold">Preferensi Notifikasi</CardTitle>
+            <CardDescription className="text-xs">
+              Atur kanal notifikasi in-app dan WhatsApp untuk setiap aktivitas
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Notification toggle table */}
-        <div className="rounded-lg border overflow-hidden">
+        <div className="rounded-xl border border-border/70 overflow-hidden shadow-xs">
           {/* Header */}
-          <div className="grid grid-cols-[1fr_80px_80px] sm:grid-cols-[1fr_100px_100px] bg-muted/50 px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="grid grid-cols-[1fr_80px_80px] sm:grid-cols-[1fr_100px_100px] bg-muted/60 px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
             <span>Tipe Notifikasi</span>
             <span className="text-center">In-App</span>
             <span className="text-center">WhatsApp</span>
@@ -618,7 +618,7 @@ function NotificationSection() {
               } hover:bg-muted/30 transition-colors`}
             >
               <div>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   {type.label}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
@@ -646,40 +646,38 @@ function NotificationSection() {
         {/* Due date reminders */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <Label className="text-sm font-medium">Pengingat Due Date</Label>
+            <Clock className="h-4 w-4 text-primary" />
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pengingat Due Date</Label>
           </div>
           <p className="text-xs text-muted-foreground">
             Pilih kapan kamu ingin diingatkan tentang deadline task
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2.5">
             {DUE_DATE_OPTIONS.map((option) => {
               const isSelected = reminders.includes(option.value);
               return (
                 <button
                   key={option.value}
                   onClick={() => toggleReminder(option.value)}
-                  className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
+                  className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-all ${
                     isSelected
-                      ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
-                      : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                      ? "border-primary bg-primary/10 text-primary shadow-xs ring-1 ring-primary/20"
+                      : "border-border/70 bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
                   }`}
                 >
                   <div
                     className={`flex h-4 w-4 items-center justify-center rounded border transition-all ${
                       isSelected
                         ? "border-primary bg-primary text-primary-foreground"
-                        : "border-muted-foreground/30"
+                        : "border-muted-foreground/40"
                     }`}
                   >
-                    {isSelected && <Check className="h-3 w-3" />}
+                    {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
                   </div>
-                  <div className="text-left">
-                    <span>{option.label}</span>
-                    <span className="hidden sm:inline text-xs opacity-70 ml-1.5">
-                      — {option.description}
-                    </span>
-                  </div>
+                  <span>{option.label}</span>
+                  <span className="opacity-70 font-normal">
+                    ({option.description})
+                  </span>
                 </button>
               );
             })}
@@ -691,7 +689,7 @@ function NotificationSection() {
           <Button
             onClick={handleSave}
             disabled={saving || !hasChanges}
-            className="gap-2"
+            className="gap-2 rounded-xl h-10 px-5 font-semibold shadow-xs"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -701,8 +699,8 @@ function NotificationSection() {
             Simpan Preferensi
           </Button>
           {hasChanges && (
-            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-medium">
+              <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
               Ada perubahan belum disimpan
             </span>
           )}
@@ -740,51 +738,51 @@ function ThemeSection() {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-2xl border-border/80 shadow-xs overflow-hidden">
+      <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-400">
             {theme === "dark" ? (
-              <Moon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              <Moon className="h-5 w-5" />
             ) : theme === "light" ? (
-              <Sun className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              <Sun className="h-5 w-5" />
             ) : (
-              <Monitor className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              <Monitor className="h-5 w-5" />
             )}
           </div>
           <div>
-            <CardTitle>Tema Aplikasi</CardTitle>
-            <CardDescription>
-              Pilih tema visual untuk pengalaman yang lebih nyaman
+            <CardTitle className="text-lg font-bold">Tema Aplikasi</CardTitle>
+            <CardDescription className="text-xs">
+              Pilih tampilan visual yang sesuai kenyamanan matamu
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-wrap gap-4">
+        <div className="grid grid-cols-3 gap-3 max-w-md">
           <Button
             variant={theme === "light" ? "default" : "outline"}
-            className="gap-2"
+            className="gap-2 rounded-xl h-11 font-semibold"
             onClick={() => handleThemeChange("light")}
           >
             <Sun className="h-4 w-4" />
-            Terang
+            <span>Terang</span>
           </Button>
           <Button
             variant={theme === "dark" ? "default" : "outline"}
-            className="gap-2"
+            className="gap-2 rounded-xl h-11 font-semibold"
             onClick={() => handleThemeChange("dark")}
           >
             <Moon className="h-4 w-4" />
-            Gelap
+            <span>Gelap</span>
           </Button>
           <Button
             variant={theme === "system" ? "default" : "outline"}
-            className="gap-2"
+            className="gap-2 rounded-xl h-11 font-semibold"
             onClick={() => handleThemeChange("system")}
           >
             <Monitor className="h-4 w-4" />
-            Sistem
+            <span>Sistem</span>
           </Button>
         </div>
       </CardContent>
@@ -807,9 +805,9 @@ export default function AccountSettingsPage() {
     <div className="space-y-8">
       {/* Page title */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Pengaturan Akun</h1>
-        <p className="text-muted-foreground mt-1">
-          Kelola profil, keamanan, dan preferensi notifikasi akunmu
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Pengaturan Akun</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Kelola profil, keamanan kata sandi, dan preferensi notifikasi akunmu
         </p>
       </div>
 
@@ -817,44 +815,43 @@ export default function AccountSettingsPage() {
       {missingWa && (
         <Alert
           variant="destructive"
-          className="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900"
+          className="rounded-2xl bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/20 shadow-xs"
         >
           <Phone className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          <AlertTitle>Perhatian</AlertTitle>
-          <AlertDescription>
+          <AlertTitle className="font-bold">Perhatian: WhatsApp Belum Terdaftar</AlertTitle>
+          <AlertDescription className="text-xs">
             Kamu mengaktifkan notifikasi WhatsApp, tetapi belum melengkapi{" "}
-            <strong>Nomor WhatsApp</strong>. Silakan lengkapi nomor WhatsApp di
-            bagian Profil agar notifikasi dapat dikirimkan.
+            <strong>Nomor WhatsApp</strong>. Silakan isi nomor WhatsApp di bagian Profil di bawah agar notifikasi dapat dikirimkan.
           </AlertDescription>
         </Alert>
       )}
 
       {/* Quick nav pills */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
         <a
           href="#profil"
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors shrink-0 shadow-xs"
         >
           <User className="h-3 w-3" />
           Profil
         </a>
         <a
           href="#password"
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors shrink-0 shadow-xs"
         >
           <KeyRound className="h-3 w-3" />
           Password
         </a>
         <a
           href="#notifikasi"
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors shrink-0 shadow-xs"
         >
           <Bell className="h-3 w-3" />
           Notifikasi
         </a>
         <a
           href="#tema"
-          className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors shrink-0 shadow-xs"
         >
           <Monitor className="h-3 w-3" />
           Tema

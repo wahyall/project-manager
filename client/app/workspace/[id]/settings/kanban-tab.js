@@ -84,9 +84,9 @@ function ColumnItem({
   };
 
   return (
-    <div className="flex items-center gap-2 py-2.5 px-3 rounded-lg border bg-card group hover:shadow-sm transition-shadow">
-      {/* Drag handle (visual only — we use up/down buttons for reorder) */}
-      <GripVertical className="h-4 w-4 text-muted-foreground/50 shrink-0 cursor-grab" />
+    <div className="flex items-center gap-3 py-2.5 px-3.5 rounded-xl border border-border/70 bg-background/50 group hover:border-primary/40 hover:bg-muted/30 transition-all shadow-2xs">
+      {/* Drag handle */}
+      <GripVertical className="h-4 w-4 text-muted-foreground/40 shrink-0 cursor-grab" />
 
       {/* Color picker */}
       <Tooltip>
@@ -101,22 +101,22 @@ function ColumnItem({
               className="sr-only"
             />
             <div
-              className="h-6 w-6 rounded-md border border-border/50 shadow-sm transition-transform hover:scale-110"
+              className="h-5 w-5 rounded-lg border border-border/50 shadow-2xs transition-transform hover:scale-110"
               style={{ backgroundColor: column.color }}
             />
           </label>
         </TooltipTrigger>
-        <TooltipContent>Ubah warna</TooltipContent>
+        <TooltipContent>Ubah warna kolom</TooltipContent>
       </Tooltip>
 
       {/* Name */}
       {editing ? (
-        <div className="flex-1 flex items-center gap-1">
+        <div className="flex-1 flex items-center gap-1.5">
           <Input
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="h-8 text-sm"
+            className="h-8 text-xs rounded-lg bg-background"
             maxLength={50}
             autoFocus
           />
@@ -124,7 +124,7 @@ function ColumnItem({
             variant="ghost"
             size="icon-xs"
             onClick={handleSaveName}
-            className="text-green-600"
+            className="h-7 w-7 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
           >
             <Check className="h-3.5 w-3.5" />
           </Button>
@@ -135,15 +135,16 @@ function ColumnItem({
               setEditName(column.name);
               setEditing(false);
             }}
-            className="text-muted-foreground"
+            className="h-7 w-7 text-muted-foreground rounded-lg"
           >
             <X className="h-3.5 w-3.5" />
           </Button>
         </div>
       ) : (
         <span
-          className="flex-1 text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
+          className="flex-1 text-xs font-medium text-foreground cursor-pointer hover:text-primary transition-colors select-none"
           onDoubleClick={() => setEditing(true)}
+          title="Klik ganda untuk rename"
         >
           {column.name}
         </span>
@@ -155,7 +156,7 @@ function ColumnItem({
           <button
             key={color}
             onClick={() => onUpdate(index, { ...column, color })}
-            className="h-4 w-4 rounded-full border border-border/30 transition-transform hover:scale-125"
+            className="h-3.5 w-3.5 rounded-full border border-border/40 transition-transform hover:scale-125"
             style={{ backgroundColor: color }}
           />
         ))}
@@ -170,12 +171,12 @@ function ColumnItem({
                 variant="ghost"
                 size="icon-xs"
                 onClick={() => setEditing(true)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-7 w-7 rounded-lg opacity-70 group-hover:opacity-100 transition-opacity"
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Rename</TooltipContent>
+            <TooltipContent>Ubah nama</TooltipContent>
           </Tooltip>
         )}
 
@@ -186,9 +187,9 @@ function ColumnItem({
               size="icon-xs"
               onClick={() => onMoveUp(index)}
               disabled={index === 0}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-7 w-7 rounded-lg opacity-70 group-hover:opacity-100 transition-opacity"
             >
-              <ChevronUp className="h-3.5 w-3.5" />
+              <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Pindah ke atas</TooltipContent>
@@ -201,9 +202,9 @@ function ColumnItem({
               size="icon-xs"
               onClick={() => onMoveDown(index)}
               disabled={index === totalColumns - 1}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-7 w-7 rounded-lg opacity-70 group-hover:opacity-100 transition-opacity"
             >
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Pindah ke bawah</TooltipContent>
@@ -216,7 +217,7 @@ function ColumnItem({
                 variant="ghost"
                 size="icon-xs"
                 onClick={() => onDelete(index)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                className="h-7 w-7 rounded-lg opacity-70 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -254,7 +255,7 @@ export default function KanbanTab({ workspace }) {
       ...prev,
       {
         _id: `new-${Date.now()}`,
-        name: `Kolom ${prev.length + 1}`,
+        name: `Tahap ${prev.length + 1}`,
         color: DEFAULT_COLORS[prev.length % DEFAULT_COLORS.length],
         order: prev.length,
       },
@@ -315,23 +316,25 @@ export default function KanbanTab({ workspace }) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Columns3 className="h-5 w-5" />
-                Kolom Kanban
-              </CardTitle>
-              <CardDescription>
-                Kelola tahapan pengerjaan task. Kolom ini berlaku untuk semua task
-                di workspace. Double-klik nama untuk mengedit.
-              </CardDescription>
+      <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <Columns3 className="w-4 h-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold">
+                  Kolom & Tahapan Kanban
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Atur alur siklus kerja task. Urutan kolom di sini akan mencerminkan papan kanban.
+                </CardDescription>
+              </div>
             </div>
             <Button
-              variant="outline"
               size="sm"
-              className="gap-2 shrink-0"
+              className="gap-2 shrink-0 rounded-xl h-9 text-xs shadow-xs"
               onClick={handleAdd}
             >
               <Plus className="h-4 w-4" />
@@ -355,19 +358,19 @@ export default function KanbanTab({ workspace }) {
             ))}
           </div>
 
-          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-4 border-t border-border/60">
             <p className="text-xs text-muted-foreground">
-              {columns.length} kolom &bull; Minimal 1 kolom diperlukan
+              {columns.length} kolom aktif &bull; Double-klik judul untuk ganti nama langsung
             </p>
             <Button
               onClick={handleSave}
               disabled={saving || !hasChanges}
-              className="gap-2"
+              className="gap-2 rounded-xl h-10 px-5 text-xs shadow-xs"
             >
               {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save className="h-3.5 w-3.5" />
               )}
               Simpan Perubahan
             </Button>
@@ -380,18 +383,23 @@ export default function KanbanTab({ workspace }) {
         open={deleteConfirm !== null}
         onOpenChange={(open) => !open && setDeleteConfirm(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Kolom</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base font-semibold">
+              Hapus Kolom Kanban
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground pt-1">
               Yakin ingin menghapus kolom "
-              {deleteConfirm !== null && columns[deleteConfirm]?.name}"? Task
-              yang ada di kolom ini perlu dipindahkan terlebih dahulu.
+              {deleteConfirm !== null && columns[deleteConfirm]?.name}"? Pastikan task pada kolom ini sudah dipindahkan ke kolom lain sebelum dihapus.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <Button variant="destructive" onClick={confirmDelete}>
+          <AlertDialogFooter className="gap-2 sm:gap-0 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs">Batal</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              className="rounded-xl text-xs"
+            >
               Hapus Kolom
             </Button>
           </AlertDialogFooter>
@@ -400,4 +408,3 @@ export default function KanbanTab({ workspace }) {
     </div>
   );
 }
-

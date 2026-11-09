@@ -9,14 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ArrowLeft, Loader2, ImagePlus, Sparkles } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Loader2, Sparkles, CheckCircle2, ShieldCheck, Columns3, Users } from "lucide-react";
 import { toast } from "sonner";
 
 export default function NewWorkspacePage() {
@@ -36,19 +30,17 @@ export default function NewWorkspacePage() {
     .slice(0, 2);
 
   const colors = [
-    "from-violet-500 to-purple-600",
-    "from-blue-500 to-cyan-600",
     "from-emerald-500 to-teal-600",
-    "from-orange-500 to-red-600",
-    "from-pink-500 to-rose-600",
-    "from-indigo-500 to-blue-600",
+    "from-blue-500 to-indigo-600",
+    "from-violet-500 to-purple-600",
     "from-amber-500 to-orange-600",
+    "from-rose-500 to-pink-600",
     "from-cyan-500 to-blue-600",
   ];
   const colorIndex = name
     .split("")
     .reduce((acc, c) => acc + c.charCodeAt(0), 0) % colors.length;
-  const gradientColor = name.trim() ? colors[colorIndex] : "from-gray-300 to-gray-400";
+  const gradientColor = name.trim() ? colors[colorIndex] : "from-slate-400 to-slate-500";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,128 +65,141 @@ export default function NewWorkspacePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+      <div className="min-h-[100dvh] bg-background bg-dot-pattern flex flex-col relative overflow-hidden">
+        {/* Ambient glows */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
         {/* Topbar */}
-        <header className="sticky top-0 z-50 border-b bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm">
-          <div className="mx-auto max-w-2xl flex items-center px-4 sm:px-6 h-16">
+        <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
+          <div className="mx-auto max-w-3xl flex items-center px-4 sm:px-6 h-16">
             <Link href="/workspaces">
-              <Button variant="ghost" size="sm" className="gap-2">
+              <Button variant="ghost" size="sm" className="gap-2 rounded-xl text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="h-4 w-4" />
-                Kembali
+                <span>Kembali ke Workspace</span>
               </Button>
             </Link>
           </div>
         </header>
 
-        <main className="mx-auto max-w-2xl px-4 sm:px-6 py-12">
-          <div className="text-center mb-8">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 mb-4">
-              <Sparkles className="h-6 w-6 text-primary" />
+        <main className="mx-auto max-w-2xl w-full px-4 sm:px-6 py-10 flex-1 relative z-10">
+          <div className="text-center mb-8 space-y-2">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-2 shadow-xs ring-1 ring-primary/20">
+              <Sparkles className="h-6 w-6" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
               Buat Workspace Baru
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Workspace adalah ruang kerja untuk tim kamu. Semua event, task, dan
-              board brainstorming akan ada di dalamnya.
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Ruang kerja kolaboratif untuk tim. Semua event, task divisi, bank ide, dan kas Baitul Maal akan terkelola di sini.
             </p>
           </div>
 
-          <Card className="border-2 border-dashed border-border/60 shadow-sm">
-            <CardContent className="pt-6">
+          <Card className="glass-panel rounded-2xl shadow-xl border-border/80 overflow-hidden">
+            <CardContent className="p-6 sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Preview */}
+                {/* Live Preview Avatar */}
                 <div className="flex justify-center">
-                  <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-col items-center gap-2">
                     <div
-                      className={`flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${gradientColor} text-white font-bold text-2xl shadow-lg transition-all duration-300`}
+                      className={`flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${gradientColor} text-white font-black text-2xl shadow-lg ring-4 ring-background transition-all duration-300`}
                     >
                       {initials || "?"}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Preview logo
-                    </p>
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                      Pratinjau Logo
+                    </span>
                   </div>
                 </div>
 
-                {/* Name */}
+                {/* Workspace Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium">
-                    Nama Workspace <span className="text-destructive">*</span>
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Nama Workspace <span className="text-destructive">*</span>
+                    </Label>
+                    <span className="text-[11px] text-muted-foreground">
+                      {name.length}/50
+                    </span>
+                  </div>
                   <Input
                     id="name"
                     type="text"
-                    placeholder='contoh: "Tim Marketing Q1" atau "Proyek Website"'
+                    placeholder='contoh: "Panitia Ramadhan 1448H" atau "Tim Media & Dakwah"'
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     maxLength={50}
                     required
                     autoFocus
-                    className="h-11"
+                    className="h-11 rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30 text-base"
                   />
-                  <p className="text-xs text-muted-foreground text-right">
-                    {name.length}/50
-                  </p>
                 </div>
 
                 {/* Description */}
                 <div className="space-y-2">
-                  <Label htmlFor="description" className="text-sm font-medium">
-                    Deskripsi{" "}
-                    <span className="text-muted-foreground font-normal">
-                      (opsional)
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Deskripsi Singkat <span className="text-muted-foreground/60 font-normal lowercase">(opsional)</span>
+                    </Label>
+                    <span className="text-[11px] text-muted-foreground">
+                      {description.length}/500
                     </span>
-                  </Label>
+                  </div>
                   <Textarea
                     id="description"
-                    placeholder="Jelaskan tujuan workspace ini secara singkat..."
+                    placeholder="Jelaskan tujuan atau cakupan tugas workspace ini..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     maxLength={500}
                     rows={3}
-                    className="resize-none"
+                    className="rounded-xl bg-background/50 border-border/70 focus-visible:ring-primary/30 resize-none text-sm"
                   />
-                  <p className="text-xs text-muted-foreground text-right">
-                    {description.length}/500
-                  </p>
                 </div>
 
-                {/* Info box */}
-                <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    <strong>Yang akan otomatis dibuat:</strong>
+                {/* Info feature box */}
+                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>Fitur otomatis yang akan disiapkan:</span>
                   </p>
-                  <ul className="text-sm text-blue-600 dark:text-blue-400 mt-1 space-y-0.5">
-                    <li>
-                      &bull; Kamu menjadi <strong>Owner</strong> workspace
+                  <ul className="text-xs text-muted-foreground space-y-1.5 pl-1">
+                    <li className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                      <span>Anda otomatis menjadi <strong>Owner</strong> utama workspace</span>
                     </li>
-                    <li>
-                      &bull; 4 kolom kanban default: To Do, In Progress, Review, Done
+                    <li className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                      <span>4 kolom kanban bawaan: <em>To Do, In Progress, Review, Selesai</em></span>
                     </li>
-                    <li>&bull; Tautan undangan untuk mengundang anggota tim</li>
+                    <li className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                      <span>Tautan undangan instan untuk mengundang anggota tim</span>
+                    </li>
                   </ul>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <Link href="/workspaces">
-                    <Button type="button" variant="outline">
+                    <Button type="button" variant="outline" className="rounded-xl h-11 px-5 font-medium">
                       Batal
                     </Button>
                   </Link>
                   <Button
                     type="submit"
                     disabled={loading || !name.trim()}
-                    className="min-w-[140px]"
+                    className="rounded-xl h-11 px-6 font-semibold shadow-md gap-2 active:scale-[0.98] transition-all"
                   >
                     {loading ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Membuat...
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Membuat...</span>
                       </>
                     ) : (
-                      "Buat Workspace"
+                      <>
+                        <span>Buat Workspace</span>
+                        <Sparkles className="h-4 w-4" />
+                      </>
                     )}
                   </Button>
                 </div>

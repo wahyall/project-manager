@@ -55,38 +55,45 @@ function Topbar({ workspace, workspaceId }) {
   const notificationsHook = useNotifications();
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-      {/* Sidebar trigger (hamburger on mobile, collapse toggle on desktop) */}
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mr-2 h-4" />
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-background/80 backdrop-blur-md px-4 sm:px-6 transition-colors">
+      {/* Sidebar trigger */}
+      <SidebarTrigger className="-ml-1 hover:bg-accent/80 rounded-lg h-8 w-8 transition-colors" />
+      <Separator orientation="vertical" className="mr-2 h-4 opacity-50" />
 
-      {/* Archived badge */}
-      {workspace?.isArchived && (
-        <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
-          Diarsipkan
+      {/* Workspace title breadcrumb snippet */}
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="hidden sm:inline-block font-semibold text-sm tracking-tight text-foreground/90 truncate max-w-[200px]">
+          {workspace?.name}
         </span>
-      )}
+        {workspace?.isArchived && (
+          <span className="text-[11px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 shrink-0">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            Diarsipkan
+          </span>
+        )}
+      </div>
 
       {/* Spacer */}
       <div className="flex-1" />
 
       {/* Right section */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         <ThemeToggle />
+
         {/* Notification bell */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 relative"
+              className="h-9 w-9 relative rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent/80 transition-colors"
               onClick={() => setIsNotificationsOpen(true)}
             >
               <Bell className="h-4 w-4" />
               {notificationsHook.unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                <span className="absolute top-2 right-2 flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 ring-2 ring-background"></span>
                 </span>
               )}
             </Button>
@@ -100,47 +107,60 @@ function Topbar({ workspace, workspaceId }) {
           notificationsHook={notificationsHook}
         />
 
+        <Separator orientation="vertical" className="h-4 mx-1 opacity-50 hidden sm:block" />
+
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-2 ml-1">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2.5 pl-1.5 pr-2.5 py-1 h-9 rounded-xl hover:bg-accent/80 transition-colors"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs font-bold ring-1 ring-primary/20">
                 {user?.name?.charAt(0).toUpperCase() || "U"}
               </div>
-              <span className="hidden md:inline text-sm font-medium max-w-[120px] truncate">
+              <span className="hidden md:inline text-sm font-medium max-w-[130px] truncate text-foreground">
                 {user?.name}
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="px-3 py-2.5">
-              <p className="text-sm font-medium">{user?.name}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
+          <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5 shadow-lg border-border/70">
+            <div className="px-3 py-2">
+              <p className="text-sm font-semibold text-foreground truncate">{user?.name}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/settings/account")}>
-              <Settings className="h-4 w-4 mr-2" />
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuItem
+              onClick={() => router.push("/settings/account")}
+              className="rounded-lg py-2 text-xs font-medium cursor-pointer"
+            >
+              <Settings className="h-4 w-4 mr-2.5 text-muted-foreground" />
               Pengaturan Akun
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() =>
                 router.push(`/workspace/${id}/members/${user?._id}`)
               }
+              className="rounded-lg py-2 text-xs font-medium cursor-pointer"
             >
-              <User className="h-4 w-4 mr-2" />
+              <User className="h-4 w-4 mr-2.5 text-muted-foreground" />
               Lihat Profil
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/workspaces")}>
-              <ChevronLeft className="h-4 w-4 mr-2" />
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuItem
+              onClick={() => router.push("/workspaces")}
+              className="rounded-lg py-2 text-xs font-medium cursor-pointer"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2.5 text-muted-foreground" />
               Semua Workspace
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="my-1" />
             <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
+              className="text-destructive focus:text-destructive focus:bg-destructive/10 rounded-lg py-2 text-xs font-medium cursor-pointer"
               onClick={logout}
             >
-              <LogOut className="h-4 w-4 mr-2" />
+              <LogOut className="h-4 w-4 mr-2.5" />
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

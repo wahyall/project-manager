@@ -19,8 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
-import { Lightbulb, Plus, Loader2, Search } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Lightbulb, Plus, Loader2, Search, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export default function BrainstormingPage({ params }) {
@@ -136,21 +136,30 @@ export default function BrainstormingPage({ params }) {
   if (!currentWorkspace) return null;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 md:pb-8">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Lightbulb className="h-6 w-6 text-amber-500" />
-            Brainstorming
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+              <Sparkles className="w-3 h-3" />
+              Kolaborasi Visual
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-2xs">
+              <Lightbulb className="h-5 w-5" />
+            </div>
+            Brainstorming Boards
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Catat ide, diskusi, dan rencana bersama tim
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Papan kanvas interaktif untuk eksplorasi konsep, mind-map, diagram alir, dan mading tim
           </p>
         </div>
+
         {!isReadOnly && (
           <Button
-            className="gap-2 shadow-sm"
+            className="gap-2 rounded-xl h-9 text-xs shadow-xs self-start sm:self-auto"
             onClick={() => setCreateDialogOpen(true)}
           >
             <Plus className="h-4 w-4" />
@@ -162,43 +171,48 @@ export default function BrainstormingPage({ params }) {
       {/* Search */}
       {boards.length > 0 && (
         <div className="relative max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
           <Input
-            placeholder="Cari board..."
+            placeholder="Cari nama board..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9"
+            className="pl-9 h-10 rounded-xl bg-background/50 border-border/80 text-xs focus:ring-2 focus:ring-primary/20"
           />
         </div>
       )}
 
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-20">
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted-foreground">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-xs">Memuat daftar papan brainstorming...</p>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && boards.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/10 mb-6">
-            <Lightbulb className="h-10 w-10 text-amber-500/60" />
-          </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Belum ada board
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-md mb-6">
-            Buat board brainstorming pertama untuk mulai mengumpulkan ide
-            bersama tim.
-          </p>
-          {!isReadOnly && (
-            <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4" />
-              Buat Board Pertama
-            </Button>
-          )}
-        </div>
+        <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
+          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-4 shadow-2xs">
+              <Lightbulb className="h-8 w-8" />
+            </div>
+            <h3 className="text-base font-bold text-foreground mb-1">
+              Belum Ada Board Brainstorming
+            </h3>
+            <p className="text-xs text-muted-foreground max-w-sm mb-6 leading-relaxed">
+              Mulai buat board pertama untuk mendesain arsitektur ide, membuat sticky notes, atau menyematkan mading informasi.
+            </p>
+            {!isReadOnly && (
+              <Button
+                className="gap-2 rounded-xl text-xs shadow-xs"
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Buat Board Pertama
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Board grid */}
@@ -222,11 +236,11 @@ export default function BrainstormingPage({ params }) {
 
       {/* No search results */}
       {!loading && boards.length > 0 && filteredBoards.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>
-            Tidak ada board yang cocok dengan pencarian &quot;{searchQuery}
-            &quot;
+        <div className="text-center py-16 text-muted-foreground text-xs border border-dashed border-border/80 rounded-2xl">
+          <p className="font-medium text-foreground">
+            Tidak ada board yang cocok dengan pencarian &quot;{searchQuery}&quot;
           </p>
+          <p className="text-muted-foreground mt-1">Coba gunakan kata kunci pencarian yang lain.</p>
         </div>
       )}
 
@@ -250,25 +264,26 @@ export default function BrainstormingPage({ params }) {
         open={!!deleteBoardTarget}
         onOpenChange={(open) => !open && setDeleteBoardTarget(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Board?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Yakin hapus board &quot;{deleteBoardTarget?.name}&quot;? Board
-              akan dihapus beserta semua widget di dalamnya.
+            <AlertDialogTitle className="text-base font-semibold text-destructive">
+              Hapus Board Brainstorming?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground pt-1">
+              Yakin hapus board &quot;{deleteBoardTarget?.name}&quot;? Seluruh widget, sticky note, dan diagram koneksi di dalamnya akan terhapus permanen.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2 sm:gap-0 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs">Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl text-xs"
               disabled={deleteLoading}
             >
               {deleteLoading && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
               )}
-              Hapus
+              Hapus Permanen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

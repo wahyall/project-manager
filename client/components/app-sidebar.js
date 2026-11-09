@@ -127,40 +127,41 @@ function WorkspaceSwitcher({ workspaceId, workspace }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground rounded-xl transition-all duration-200 hover:bg-sidebar-accent/70"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-xs">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-xs shadow-sm ring-1 ring-primary/20">
                 {initials}
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
+              <div className="grid flex-1 text-left text-sm leading-tight pl-0.5">
+                <span className="truncate font-semibold tracking-tight text-foreground">
                   {workspace?.name || "Workspace"}
                 </span>
-                <span className="truncate text-xs text-sidebar-foreground/60">
-                  {workspace?.memberCount || 0} member
+                <span className="truncate text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
+                  {workspace?.memberCount || 0} anggota
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <ChevronsUpDown className="ml-auto h-4 w-4 opacity-50" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-60 rounded-xl p-1.5 shadow-lg border-border/70"
             align="start"
             side="bottom"
-            sideOffset={4}
+            sideOffset={6}
           >
-            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Workspace
+            <div className="px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Workspace Aktif
             </div>
             {workspaces?.active?.map((ws) => (
               <DropdownMenuItem
                 key={ws._id}
                 onClick={() => router.push(`/workspace/${ws._id}`)}
-                className={
-                  ws._id === workspaceId ? "bg-accent font-medium" : ""
-                }
+                className={`rounded-lg py-2 cursor-pointer transition-colors ${
+                  ws._id === workspaceId ? "bg-accent/80 font-medium text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-primary/10 text-primary text-[10px] font-bold mr-2">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary text-[10px] font-bold mr-2">
                   {ws.name
                     ?.split(" ")
                     .map((w) => w[0])
@@ -168,15 +169,24 @@ function WorkspaceSwitcher({ workspaceId, workspace }) {
                     .toUpperCase()
                     .slice(0, 2)}
                 </div>
-                <span className="truncate">{ws.name}</span>
+                <span className="truncate flex-1 text-sm">{ws.name}</span>
+                {ws._id === workspaceId && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary ml-auto" />
+                )}
               </DropdownMenuItem>
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/workspaces")}>
-              <ChevronLeft className="h-4 w-4 mr-2" />
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuItem
+              onClick={() => router.push("/workspaces")}
+              className="rounded-lg py-2 text-xs cursor-pointer"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2 text-muted-foreground" />
               Semua Workspace
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/workspaces/new")}>
+            <DropdownMenuItem
+              onClick={() => router.push("/workspaces/new")}
+              className="rounded-lg py-2 text-xs font-medium text-primary cursor-pointer"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Buat Workspace Baru
             </DropdownMenuItem>
@@ -190,14 +200,27 @@ function WorkspaceSwitcher({ workspaceId, workspace }) {
 // ─── Nav Group renderer ──────────────────────────────
 function NavGroup({ items, basePath, pathname }) {
   return (
-    <SidebarMenu>
+    <SidebarMenu className="gap-1">
       {items.map((item) => {
         const active = isActive(pathname, basePath, item.href);
         return (
           <SidebarMenuItem key={item.href}>
-            <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-              <Link href={`${basePath}${item.href}`}>
-                <item.icon />
+            <SidebarMenuButton
+              asChild
+              isActive={active}
+              tooltip={item.label}
+              className={`rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 ${
+                active
+                  ? "bg-primary/10 text-primary hover:bg-primary/15 font-semibold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              }`}
+            >
+              <Link href={`${basePath}${item.href}`} className="flex items-center gap-3">
+                <item.icon
+                  className={`h-4 w-4 shrink-0 transition-colors ${
+                    active ? "text-primary stroke-[2.25]" : "text-muted-foreground/80 stroke-[1.75]"
+                  }`}
+                />
                 <span>{item.label}</span>
               </Link>
             </SidebarMenuButton>

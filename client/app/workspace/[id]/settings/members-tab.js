@@ -24,11 +24,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -71,7 +69,7 @@ import {
   Search,
   LogOut,
   Check,
-  ExternalLink,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AvatarWithStatus } from "@/components/online-indicator";
@@ -82,23 +80,25 @@ const ROLE_CONFIG = {
     label: "Owner",
     icon: Crown,
     color:
-      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+      "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
   },
   admin: {
     label: "Admin",
     icon: ShieldCheck,
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+    color:
+      "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
   },
   member: {
     label: "Member",
     icon: Shield,
     color:
-      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+      "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
   },
   guest: {
     label: "Guest",
     icon: Shield,
-    color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+    color:
+      "bg-muted text-muted-foreground border-border/60",
   },
 };
 
@@ -115,15 +115,18 @@ function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction,
   const RoleIcon = roleConfig.icon;
 
   return (
-    <div className="flex items-center gap-3 py-3 px-1 group">
+    <div className="flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-muted/40 transition-colors group">
       {/* Avatar with online indicator */}
-      <a href={`/workspace/${workspace._id}/members/${member.userId}`}>
+      <a
+        href={`/workspace/${workspace._id}/members/${member.userId}`}
+        className="shrink-0"
+      >
         <AvatarWithStatus
           src={member.avatar}
           name={member.name}
           isOnline={isOnline}
           size="md"
-          className="cursor-pointer hover:opacity-80 transition-opacity"
+          className="cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all rounded-full"
         />
       </a>
 
@@ -132,12 +135,14 @@ function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction,
         <div className="flex items-center gap-2">
           <a
             href={`/workspace/${workspace._id}/members/${member.userId}`}
-            className="font-medium text-sm text-foreground truncate hover:underline"
+            className="font-medium text-sm text-foreground truncate hover:text-primary transition-colors"
           >
             {member.name}
           </a>
           {isCurrentUser && (
-            <span className="text-xs text-muted-foreground">(Kamu)</span>
+            <span className="text-2xs font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+              Kamu
+            </span>
           )}
         </div>
         <span className="text-xs text-muted-foreground truncate block">
@@ -147,8 +152,8 @@ function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction,
 
       {/* Role badge */}
       <Badge
-        variant="secondary"
-        className={`text-xs font-medium shrink-0 gap-1 ${roleConfig.color}`}
+        variant="outline"
+        className={`text-2xs font-medium shrink-0 gap-1 rounded-full px-2.5 py-0.5 border ${roleConfig.color}`}
       >
         <RoleIcon className="h-3 w-3" />
         {roleConfig.label}
@@ -161,33 +166,36 @@ function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction,
             <Button
               variant="ghost"
               size="icon-xs"
-              className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              className="h-8 w-8 rounded-lg opacity-70 group-hover:opacity-100 transition-opacity shrink-0"
             >
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg">
             {canManage && (
               <>
                 <DropdownMenuItem
                   onClick={() => onAction("changeRole", member, "admin")}
                   disabled={member.role === "admin"}
+                  className="rounded-lg text-xs"
                 >
-                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  <ShieldCheck className="h-4 w-4 mr-2 text-blue-500" />
                   Jadikan Admin
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onAction("changeRole", member, "member")}
                   disabled={member.role === "member"}
+                  className="rounded-lg text-xs"
                 >
-                  <Shield className="h-4 w-4 mr-2" />
+                  <Shield className="h-4 w-4 mr-2 text-emerald-500" />
                   Jadikan Member
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onAction("changeRole", member, "guest")}
                   disabled={member.role === "guest"}
+                  className="rounded-lg text-xs"
                 >
-                  <Shield className="h-4 w-4 mr-2" />
+                  <Shield className="h-4 w-4 mr-2 text-muted-foreground" />
                   Jadikan Guest
                 </DropdownMenuItem>
                 {workspace.role === "owner" && (
@@ -195,6 +203,7 @@ function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction,
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => onAction("transfer", member)}
+                      className="rounded-lg text-xs text-amber-600 dark:text-amber-400"
                     >
                       <ArrowRightLeft className="h-4 w-4 mr-2" />
                       Transfer Ownership
@@ -203,7 +212,7 @@ function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction,
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
+                  className="rounded-lg text-xs text-destructive focus:text-destructive"
                   onClick={() => onAction("remove", member)}
                 >
                   <UserMinus className="h-4 w-4 mr-2" />
@@ -213,7 +222,7 @@ function MemberRow({ member, workspace, currentUserId, isAdminOrOwner, onAction,
             )}
             {isCurrentUser && !isOwner && (
               <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
+                className="rounded-lg text-xs text-destructive focus:text-destructive"
                 onClick={() => onAction("leave")}
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -304,32 +313,38 @@ function InviteDialog({ workspace, open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg rounded-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Undang Member
-          </DialogTitle>
-          <DialogDescription>
-            Undang anggota baru ke workspace "{workspace.name}"
-          </DialogDescription>
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+              <UserPlus className="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-semibold">
+                Undang Anggota Baru
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Ajak tim kamu bergabung ke workspace "{workspace.name}"
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
           {/* Invite via Link */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Link2 className="h-4 w-4" />
-              Tautan Undangan
+          <div className="space-y-2 p-3.5 rounded-xl bg-muted/40 border border-border/80">
+            <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
+              <Link2 className="h-3.5 w-3.5 text-primary" />
+              Tautan Undangan Cepat
             </Label>
-            <p className="text-xs text-muted-foreground">
-              Bagikan tautan ini agar orang lain bisa langsung bergabung
+            <p className="text-2xs text-muted-foreground">
+              Siapapun yang memiliki link ini dapat langsung bergabung ke workspace
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-1">
               <Input
                 value={inviteLink}
                 readOnly
-                className="text-xs font-mono bg-muted"
+                className="text-xs font-mono bg-background/80 h-9 rounded-lg"
               />
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -337,9 +352,10 @@ function InviteDialog({ workspace, open, onOpenChange }) {
                     variant="outline"
                     size="icon"
                     onClick={handleCopyLink}
+                    className="h-9 w-9 shrink-0 rounded-lg"
                   >
                     {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className="h-4 w-4 text-emerald-500" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
@@ -354,6 +370,7 @@ function InviteDialog({ workspace, open, onOpenChange }) {
                     size="icon"
                     onClick={handleRegenerateLink}
                     disabled={regenerating}
+                    className="h-9 w-9 shrink-0 rounded-lg"
                   >
                     <RefreshCw
                       className={`h-4 w-4 ${regenerating ? "animate-spin" : ""}`}
@@ -361,7 +378,7 @@ function InviteDialog({ workspace, open, onOpenChange }) {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Generate tautan baru (tautan lama tidak berlaku)
+                  Generate tautan baru (batalkan tautan lama)
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -369,74 +386,73 @@ function InviteDialog({ workspace, open, onOpenChange }) {
 
           <div className="relative">
             <Separator />
-            <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
-              atau
+            <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-2xs uppercase tracking-wider text-muted-foreground font-semibold">
+              atau via email
             </span>
           </div>
 
           {/* Invite via Email */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Undang via Email
-            </Label>
-            <Textarea
-              value={emails}
-              onChange={(e) => setEmails(e.target.value)}
-              placeholder="email1@example.com, email2@example.com&#10;atau pisahkan dengan baris baru..."
-              rows={3}
-              className="resize-none text-sm"
-            />
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                Alamat Email
+              </Label>
+              <Textarea
+                value={emails}
+                onChange={(e) => setEmails(e.target.value)}
+                placeholder="rekan1@organisasi.id, rekan2@organisasi.id&#10;atau pisahkan dengan enter..."
+                rows={3}
+                className="resize-none text-xs rounded-xl bg-background/50 border-border/80"
+              />
+            </div>
 
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Label className="text-xs text-muted-foreground mb-1 block">
-                  Role
-                </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Peran Default</Label>
                 <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-9 rounded-xl text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="member">Member</SelectItem>
-                    <SelectItem value="guest">Guest</SelectItem>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="admin">Admin (Kelola semua fitur)</SelectItem>
+                    <SelectItem value="member">Member (Kontributor standar)</SelectItem>
+                    <SelectItem value="guest">Guest (Akses terbatas)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1 block">
-                Pesan (opsional)
-              </Label>
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Yuk gabung ke workspace kita!"
-                maxLength={500}
-                className="h-9"
-              />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Pesan Tambahan (Opsional)</Label>
+                <Input
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Yuk gabung ke proyek ini!"
+                  maxLength={500}
+                  className="h-9 rounded-xl text-xs bg-background/50"
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-0 pt-2">
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => onOpenChange(false)}
+            className="rounded-xl text-xs"
           >
             Tutup
           </Button>
           <Button
             onClick={handleSendInvites}
             disabled={sending || !emails.trim()}
-            className="gap-2"
+            className="gap-2 rounded-xl text-xs shadow-xs"
           >
             {sending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Mail className="h-4 w-4" />
+              <Mail className="h-3.5 w-3.5" />
             )}
             Kirim Undangan
           </Button>
@@ -490,20 +506,20 @@ export default function MembersTab({ workspace, isAdminOrOwner }) {
           type: "remove",
           member,
           title: "Keluarkan Member",
-          description: `Yakin ingin mengeluarkan ${member.name} dari workspace ini? Task yang di-assign ke mereka akan tetap ada.`,
+          description: `Yakin ingin mengeluarkan ${member.name} dari workspace ini? Seluruh task yang di-assign akan tetap dipertahankan.`,
         });
       } else if (action === "transfer") {
         setConfirmAction({
           type: "transfer",
           member,
-          title: "Transfer Ownership",
-          description: `Yakin ingin mentransfer ownership ke ${member.name}? Kamu akan menjadi Admin setelah transfer.`,
+          title: "Transfer Kepemilikan Workspace",
+          description: `Yakin ingin mentransfer ownership kepada ${member.name}? Peran kamu akan otomatis disesuaikan menjadi Admin.`,
         });
       } else if (action === "leave") {
         setConfirmAction({
           type: "leave",
           title: "Keluar dari Workspace",
-          description: `Yakin ingin keluar dari workspace "${workspace.name}"?`,
+          description: `Yakin ingin keluar dari workspace "${workspace.name}"? Kamu memerlukan undangan baru untuk bergabung kembali.`,
         });
       }
     },
@@ -560,51 +576,62 @@ export default function MembersTab({ workspace, isAdminOrOwner }) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <CardTitle>Anggota Workspace</CardTitle>
-              <CardDescription>
-                {members.length} member di workspace ini
-              </CardDescription>
+      <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold">
+                  Daftar Anggota Tim
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  {members.length} anggota terdaftar dalam workspace ini
+                </CardDescription>
+              </div>
             </div>
             {isAdminOrOwner && (
               <Button
-                className="gap-2 shrink-0"
+                className="gap-2 shrink-0 rounded-xl h-9 text-xs shadow-xs"
                 onClick={() => setInviteOpen(true)}
               >
                 <UserPlus className="h-4 w-4" />
-                Undang Member
+                Undang Anggota
               </Button>
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {/* Search */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama atau email..."
-              className="pl-9 h-9"
+              placeholder="Cari anggota berdasarkan nama atau email..."
+              className="pl-9 h-10 rounded-xl bg-background/50 border-border/80 text-sm focus:ring-2 focus:ring-primary/20"
             />
           </div>
 
           {/* Members list */}
           {membersLoading ? (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <p className="text-xs">Memuat daftar anggota...</p>
             </div>
           ) : filteredMembers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              {searchQuery
-                ? "Tidak ada member yang cocok"
-                : "Belum ada member"}
+            <div className="text-center py-12 text-muted-foreground text-sm border border-dashed border-border/80 rounded-xl">
+              <p className="font-medium text-foreground">
+                {searchQuery ? "Tidak ditemukan anggota yang sesuai" : "Belum ada anggota"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {searchQuery ? "Coba gunakan kata kunci pencarian yang lain." : "Undang tim kamu untuk mulai berkolaborasi."}
+              </p>
             </div>
           ) : (
-            <div className="divide-y divide-border/50">
+            <div className="space-y-1">
               {filteredMembers.map((member) => (
                 <MemberRow
                   key={member._id}
@@ -633,15 +660,17 @@ export default function MembersTab({ workspace, isAdminOrOwner }) {
         open={!!confirmAction}
         onOpenChange={(open) => !open && setConfirmAction(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle>{confirmAction?.title}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base font-semibold">
+              {confirmAction?.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed pt-1">
               {confirmAction?.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={actionLoading}>
+          <AlertDialogFooter className="gap-2 sm:gap-0 mt-4">
+            <AlertDialogCancel disabled={actionLoading} className="rounded-xl text-xs">
               Batal
             </AlertDialogCancel>
             <Button
@@ -653,17 +682,18 @@ export default function MembersTab({ workspace, isAdminOrOwner }) {
               }
               onClick={executeAction}
               disabled={actionLoading}
+              className="rounded-xl text-xs gap-1.5"
             >
               {actionLoading && (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               )}
               {confirmAction?.type === "remove"
                 ? "Keluarkan"
                 : confirmAction?.type === "leave"
                   ? "Keluar"
                   : confirmAction?.type === "transfer"
-                    ? "Transfer"
-                    : "Ubah"}
+                    ? "Transfer Kepemilikan"
+                    : "Simpan"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -671,4 +701,3 @@ export default function MembersTab({ workspace, isAdminOrOwner }) {
     </div>
   );
 }
-

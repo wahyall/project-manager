@@ -19,10 +19,11 @@ import {
   Plus,
   CalendarDays,
   Clock,
-  MapPin,
+  CheckCircle2,
   Inbox,
   Columns3,
   Calendar as CalendarIcon,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -140,25 +141,32 @@ export default function EventsPage({ params }) {
       : undefined;
 
   return (
-    <div className="p-4 lg:p-6 space-y-5 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 md:pb-8">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-sm">
-              <CalendarRange className="h-5 w-5 text-white" />
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+              <Sparkles className="w-3 h-3" />
+              Manajemen Program & Acara
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">
+              <CalendarRange className="h-5 w-5" />
             </div>
-            Event
+            Event & Milestone
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1.5">
             {scope.isLocked
-              ? "Event divisi kamu — dikelompokkan per divisi"
-              : "Kelola jadwal, milestone, dan acara penting per divisi"}
+              ? "Event divisi kamu — dikelompokkan secara terstruktur"
+              : "Kelola agenda, kepanitiaan, tenggat waktu, dan koordinasi acara"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* View mode: Kanban | Kalender */}
-          <div className="flex items-center rounded-lg border bg-background shadow-sm p-0.5">
+
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          {/* View mode toggle */}
+          <div className="flex items-center rounded-xl border border-border/80 bg-muted/40 p-1 shadow-2xs">
             {[
               { value: "kanban", label: "Kanban", icon: Columns3 },
               { value: "calendar", label: "Kalender", icon: CalendarIcon },
@@ -169,10 +177,10 @@ export default function EventsPage({ params }) {
                 <button
                   key={opt.value}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                   )}
                   onClick={() => setViewMode(opt.value)}
                 >
@@ -182,9 +190,10 @@ export default function EventsPage({ params }) {
               );
             })}
           </div>
+
           {userCanCreateEvent && (
             <Button
-              className="gap-2 shadow-sm"
+              className="gap-2 rounded-xl h-9 text-xs shadow-xs"
               onClick={() => setCreateDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
@@ -196,32 +205,44 @@ export default function EventsPage({ params }) {
 
       {/* Quick stats */}
       {!loading && events.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
-            <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <Clock className="h-4 w-4 text-blue-500" />
+        <div className="grid grid-cols-3 gap-3.5">
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/60 border border-border/80 shadow-xs backdrop-blur-xs">
+            <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+              <Clock className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-lg font-bold text-foreground">{upcomingCount}</p>
-              <p className="text-xs text-muted-foreground">Upcoming</p>
+              <p className="text-xl font-bold tracking-tight text-foreground">
+                {upcomingCount}
+              </p>
+              <p className="text-xs font-medium text-muted-foreground">
+                Upcoming
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10">
-            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <CalendarDays className="h-4 w-4 text-emerald-500" />
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/60 border border-border/80 shadow-xs backdrop-blur-xs">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <CalendarDays className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-lg font-bold text-foreground">{ongoingCount}</p>
-              <p className="text-xs text-muted-foreground">Ongoing</p>
+              <p className="text-xl font-bold tracking-tight text-foreground">
+                {ongoingCount}
+              </p>
+              <p className="text-xs font-medium text-muted-foreground">
+                Ongoing
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-500/5 border border-gray-500/10">
-            <div className="h-8 w-8 rounded-lg bg-gray-500/10 flex items-center justify-center">
-              <MapPin className="h-4 w-4 text-gray-400" />
+          <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-card/60 border border-border/80 shadow-xs backdrop-blur-xs">
+            <div className="h-10 w-10 rounded-xl bg-muted text-muted-foreground border border-border/60 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-lg font-bold text-foreground">{completedCount}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
+              <p className="text-xl font-bold tracking-tight text-foreground">
+                {completedCount}
+              </p>
+              <p className="text-xs font-medium text-muted-foreground">
+                Completed
+              </p>
             </div>
           </div>
         </div>
@@ -245,7 +266,7 @@ export default function EventsPage({ params }) {
 
       {/* Error */}
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl text-xs font-medium">
           {error}
         </div>
       )}
@@ -254,23 +275,19 @@ export default function EventsPage({ params }) {
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-0">
-                <Skeleton className="h-1 rounded-t-lg" />
-                <div className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-5 w-20" />
-                    <Skeleton className="h-4 w-16" />
-                  </div>
-                  <Skeleton className="h-5 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <div className="flex items-center justify-between pt-1">
-                    <Skeleton className="h-4 w-16" />
-                    <div className="flex -space-x-1.5">
-                      <Skeleton className="h-6 w-6 rounded-full" />
-                      <Skeleton className="h-6 w-6 rounded-full" />
-                      <Skeleton className="h-6 w-6 rounded-full" />
-                    </div>
+            <Card key={i} className="rounded-2xl border-border/80 shadow-xs">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-5 w-20 rounded-md" />
+                  <Skeleton className="h-4 w-16 rounded-md" />
+                </div>
+                <Skeleton className="h-5 w-3/4 rounded-md" />
+                <Skeleton className="h-4 w-full rounded-md" />
+                <div className="flex items-center justify-between pt-1">
+                  <Skeleton className="h-4 w-16 rounded-md" />
+                  <div className="flex -space-x-1.5">
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-6 w-6 rounded-full" />
                   </div>
                 </div>
               </CardContent>
@@ -303,27 +320,32 @@ export default function EventsPage({ params }) {
 
       {/* Empty state (kanban) */}
       {!loading && viewMode === "kanban" && events.length === 0 && !error && (
-        <Card>
+        <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
           <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/10 mb-6">
-              <Inbox className="h-10 w-10 text-violet-500/60" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 mb-4 shadow-2xs">
+              <Inbox className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              {filters.keyword || filters.status.length > 0 || filters.participant
-                ? "Tidak ada event yang cocok"
-                : "Belum ada event"}
+            <h3 className="text-base font-bold text-foreground mb-1">
+              {filters.keyword ||
+              filters.status.length > 0 ||
+              filters.participant
+                ? "Tidak ada event yang cocok dengan filter"
+                : "Belum ada agenda event"}
             </h3>
-            <p className="text-sm text-muted-foreground max-w-md mb-6">
-              {filters.keyword || filters.status.length > 0 || filters.participant
-                ? "Coba ubah filter pencarian kamu."
-                : "Buat event pertama untuk mulai mengelola jadwal, milestone, dan acara penting workspace."}
+            <p className="text-xs text-muted-foreground max-w-sm mb-6 leading-relaxed">
+              {filters.keyword ||
+              filters.status.length > 0 ||
+              filters.participant
+                ? "Coba sesuaikan kata kunci atau bersihkan kriteria filter pencarian."
+                : "Rencanakan kegiatan organisasi, milestone kepanitiaan, atau proyek baru bersama tim."}
             </p>
             {!filters.keyword &&
               filters.status.length === 0 &&
-              !filters.participant && (
+              !filters.participant &&
+              userCanCreateEvent && (
                 <Button
                   onClick={() => setCreateDialogOpen(true)}
-                  className="gap-2"
+                  className="gap-2 rounded-xl text-xs shadow-xs"
                 >
                   <Plus className="h-4 w-4" />
                   Buat Event Pertama

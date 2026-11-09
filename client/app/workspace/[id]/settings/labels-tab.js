@@ -33,7 +33,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, Trash2, Loader2, Pencil, Tag } from "lucide-react";
+import { Plus, Trash2, Loader2, Pencil, Tag, Check } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -156,23 +156,25 @@ export default function LabelsTab({ workspace }) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Tag className="h-5 w-5" />
-                Label Workspace
-              </CardTitle>
-              <CardDescription>
-                Kelola label yang dapat digunakan untuk mengkategorikan task di
-                workspace ini.
-              </CardDescription>
+      <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <Tag className="w-4 h-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold">
+                  Label Workspace
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Kelola tag dan klasifikasi warna untuk membedakan task serta prioritas
+                </CardDescription>
+              </div>
             </div>
             <Button
-              variant="outline"
               size="sm"
-              className="gap-2 shrink-0"
+              className="gap-2 shrink-0 rounded-xl h-9 text-xs shadow-xs"
               onClick={() => handleOpenForm()}
             >
               <Plus className="h-4 w-4" />
@@ -182,41 +184,46 @@ export default function LabelsTab({ workspace }) {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex justify-center py-8">
+            <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <p className="text-xs">Memuat label...</p>
             </div>
           ) : labels.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm border rounded-lg border-dashed">
-              Belum ada label di workspace ini
+            <div className="text-center py-12 text-muted-foreground text-sm border border-dashed border-border/80 rounded-xl">
+              <p className="font-medium text-foreground">Belum ada label</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Buat label baru untuk mengorganisasi dan memfilter task secara efisien.
+              </p>
             </div>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {labels.map((label) => (
                 <div
                   key={label._id}
-                  className="flex items-center justify-between p-3 border rounded-lg bg-card group hover:border-primary/50 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl border border-border/70 bg-background/50 hover:bg-muted/30 hover:border-primary/40 transition-all group shadow-2xs"
                 >
-                  <div className="flex items-center gap-3 truncate">
+                  <div className="flex items-center gap-2.5 truncate">
                     <div
-                      className="h-4 w-4 rounded-full shrink-0 ring-1 ring-border shadow-sm"
+                      className="h-3.5 w-3.5 rounded-full shrink-0 shadow-xs ring-2 ring-background"
                       style={{ backgroundColor: label.color }}
                     />
                     <span
-                      className="text-sm font-medium truncate"
+                      className="text-xs font-medium text-foreground truncate"
                       title={label.name}
                     >
                       {label.name}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="icon-xs"
                           onClick={() => handleOpenForm(label)}
+                          className="h-7 w-7 rounded-lg"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Edit label</TooltipContent>
@@ -227,7 +234,7 @@ export default function LabelsTab({ workspace }) {
                           variant="ghost"
                           size="icon-xs"
                           onClick={() => setDeleteConfirm(label)}
-                          className="text-destructive hover:text-destructive"
+                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
@@ -244,81 +251,97 @@ export default function LabelsTab({ workspace }) {
 
       {/* Form Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle>
-              {editingLabel ? "Edit Label" : "Buat Label Baru"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingLabel
-                ? "Ubah nama atau warna label ini"
-                : "Tambahkan label baru untuk workspace ini"}
-            </DialogDescription>
+            <div className="flex items-center gap-2.5 mb-1">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-white shadow-xs"
+                style={{ backgroundColor: formData.color }}
+              >
+                <Tag className="w-4 h-4" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-semibold">
+                  {editingLabel ? "Edit Label" : "Buat Label Baru"}
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  {editingLabel
+                    ? "Sesuaikan nama dan warna label ini"
+                    : "Tambahkan label kategori untuk proyek kamu"}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Nama Label</Label>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Nama Label</Label>
               <Input
                 value={formData.name}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
-                placeholder="Mis: Bug, Feature, Urgent..."
+                placeholder="Mis: Bug, Mendesak, Prioritas Tinggi..."
                 maxLength={50}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSave();
                 }}
                 autoFocus
+                className="rounded-xl h-10 bg-background/50 text-sm"
               />
             </div>
             <div className="space-y-2">
-              <Label>Warna</Label>
-              <div className="flex gap-4 items-center">
+              <Label className="text-xs font-medium">Pilihan Warna</Label>
+              <div className="flex items-center gap-3">
                 <input
                   type="color"
                   value={formData.color}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, color: e.target.value }))
                   }
-                  className="h-10 w-14 p-1 cursor-pointer rounded-md bg-background border"
+                  className="h-10 w-12 p-1 cursor-pointer rounded-xl bg-background border border-border shrink-0"
                 />
-                <div className="flex-1 flex flex-wrap gap-2">
-                  {DEFAULT_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({ ...prev, color }))
-                      }
-                      className={`h-6 w-6 rounded-full border shadow-sm transition-transform hover:scale-110 ${
-                        formData.color === color
-                          ? "ring-2 ring-primary ring-offset-1 ring-offset-background"
-                          : "ring-1 ring-border/50"
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
+                <div className="flex-1 flex flex-wrap gap-1.5">
+                  {DEFAULT_COLORS.map((color) => {
+                    const isSelected = formData.color.toLowerCase() === color.toLowerCase();
+                    return (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, color }))
+                        }
+                        className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all ${
+                          isSelected
+                            ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-105"
+                            : "opacity-80 hover:opacity-100"
+                        }`}
+                        style={{ backgroundColor: color }}
+                      >
+                        {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setFormOpen(false)}
               disabled={saving}
+              className="rounded-xl text-xs"
             >
               Batal
             </Button>
             <Button
               onClick={handleSave}
               disabled={saving || !formData.name.trim()}
+              className="rounded-xl text-xs gap-1.5 shadow-xs"
             >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {saving ? "Menyimpan..." : "Simpan Label"}
             </Button>
           </DialogFooter>
@@ -330,25 +353,28 @@ export default function LabelsTab({ workspace }) {
         open={deleteConfirm !== null}
         onOpenChange={(open) => !open && setDeleteConfirm(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Label</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base font-semibold">
+              Hapus Label
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground pt-1">
               Yakin ingin menghapus label "{deleteConfirm?.name}"? Label ini
-              akan dihapus dari semua task yang menggunakannya. Tindakan ini
+              akan dilepaskan dari semua task yang menggunakannya. Tindakan ini
               tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2 sm:gap-0 mt-4">
+            <AlertDialogCancel disabled={deleting} className="rounded-xl text-xs">
+              Batal
+            </AlertDialogCancel>
             <Button
               variant="destructive"
               onClick={confirmDelete}
               disabled={deleting}
+              className="rounded-xl text-xs gap-1.5"
             >
-              {deleting ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
+              {deleting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {deleting ? "Menghapus..." : "Ya, Hapus"}
             </Button>
           </AlertDialogFooter>

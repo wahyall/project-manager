@@ -34,6 +34,7 @@ import {
   Keyboard,
   AlertCircle,
   Calendar as CalendarIcon,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -123,7 +124,6 @@ export default function TasksPage({ params }) {
   useEffect(() => {
     if (workspaceId) {
       fetchMembers(workspaceId);
-      // Fetch events for event selector (non-deleted, all statuses)
       api
         .get(
           `/workspaces/${workspaceId}/events?limit=200&sortBy=startDate&sortOrder=desc`,
@@ -153,77 +153,85 @@ export default function TasksPage({ params }) {
   const handleDateRangeChange = useCallback(
     ({ start, end }) => {
       calendar.setDateRange({ start, end });
-      // Update title after a tick (FC title updates async)
       setTimeout(() => {
         setCalendarTitle(calendarViewRef.current?.getTitle() || "");
       }, 0);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [calendar.setDateRange],
+    [calendar],
   );
 
-  // ── Date click → open quick create with prefilled due date ──
-  const handleDateClick = useCallback((date) => {
-    setQuickCreateColumnId(null);
-    setQuickCreateDefaultDueDate(date);
-    setQuickCreateOpen(true);
-  }, []);
+  // ── Date click in calendar: open quick create with prefilled date ──
+  const handleDateClick = useCallback(
+    (arg) => {
+      if (!userCanCreateTask) return;
+      setQuickCreateDefaultDueDate(arg.date);
+      setQuickCreateColumnId(
+        kanban.columns[0]?._id || calendar.columns[0]?._id || null,
+      );
+      setQuickCreateOpen(true);
+    },
+    [userCanCreateTask, kanban.columns, calendar.columns],
+  );
 
-  // ── Open quick create from kanban column ─────────
+  // ── Event click in calendar: open task detail panel ──
+  const handleCalendarEventClick = useCallback(
+    (clickInfo) => {
+      calendar.handleEventClick(clickInfo);
+    },
+    [calendar],
+  );
+
+  // ── Event drag & drop in calendar ────────────────
+  const handleEventDrop = useCallback(
+    async (dropInfo) => {
+      try {
+        await calendar.handleEventDrop(dropInfo);
+        kanban.fetchTasks();
+        toast.success("Tenggat waktu task diperbarui");
+      } catch (err) {
+        dropInfo.revert();
+        toast.error("Gagal memindahkan task");
+      }
+    },
+    [calendar, kanban],
+  );
+
+  // ── Event resize in calendar ─────────────────────
+  const handleEventResize = useCallback(
+    async (resizeInfo) => {
+      try {
+        await calendar.handleEventResize(resizeInfo);
+        kanban.fetchTasks();
+        toast.success("Tenggat waktu task diperbarui");
+      } catch (err) {
+        resizeInfo.revert();
+        toast.error("Gagal mengubah durasi task");
+      }
+    },
+    [calendar, kanban],
+  );
+
+  // ── Task click (kanban): open detail panel ───────
+  const handleTaskClick = useCallback(
+    (task) => {
+      kanban.setActiveTaskId(task._id);
+    },
+    [kanban],
+  );
+
+  // ── Quick create handler ─────────────────────────
   const handleQuickCreate = useCallback((columnId) => {
     setQuickCreateColumnId(columnId);
     setQuickCreateDefaultDueDate(null);
     setQuickCreateOpen(true);
   }, []);
 
-  // ── Task click (kanban) → open detail panel ──────
-  const handleTaskClick = useCallback(
-    (taskId) => {
-      kanban.setActiveTaskId(taskId);
-    },
-    [kanban],
-  );
-
-  // ── Event click (calendar) → task panel / event detail ──
-  const handleCalendarEventClick = useCallback(
-    (fcEventId) => {
-      // If it's an event (prefixed with "event-"), navigate to event detail
-      if (fcEventId.startsWith("event-")) {
-        const eventId = fcEventId.replace("event-", "");
-        router.push(`/workspace/${workspaceId}/events/${eventId}`);
-        return;
-      }
-      // Otherwise it's a task → open detail panel
-      calendar.setActiveTaskId(fcEventId);
-    },
-    [calendar.setActiveTaskId, router, workspaceId],
-  );
-
-  // ── Drag → update dates ──────────────────────────
-  const handleEventDrop = useCallback(
-    (taskId, newStart, newEnd) => {
-      calendar.updateTaskDates(taskId, newStart, newEnd);
-      toast.success("Tanggal task diperbarui");
-    },
-    [calendar.updateTaskDates],
-  );
-
-  const handleEventResize = useCallback(
-    (taskId, newStart, newEnd) => {
-      calendar.updateTaskDates(taskId, newStart, newEnd);
-      toast.success("Rentang waktu task diperbarui");
-    },
-    [calendar.updateTaskDates],
-  );
-
-  // ── Create task (shared, sinkron ke kedua view) ──
   const handleCreateTask = useCallback(
     async (taskData) => {
       try {
-        const task = await kanban.createTask(taskData);
+        await kanban.createTask(taskData);
         calendar.refetch();
         toast.success("Task berhasil dibuat");
-        return task;
       } catch (err) {
         toast.error("Gagal membuat task");
         throw err;
@@ -382,7 +390,6 @@ export default function TasksPage({ params }) {
   // ── Keyboard shortcuts ───────────────────────────
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore if typing in input/textarea
       const tag = e.target.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.target.isContentEditable) return;
@@ -427,7 +434,6 @@ export default function TasksPage({ params }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [kanban, calendar, viewMode, handleToday]);
 
-  // ── Early return if workspace not loaded ─────────
   if (!currentWorkspace) return null;
 
   const columns = kanban.columns.length > 0 ? kanban.columns : calendar.columns;
@@ -441,27 +447,34 @@ export default function TasksPage({ params }) {
       : "";
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full pb-20 md:pb-0">
       {/* Page header */}
-      <div className="px-6 pt-6 pb-4 space-y-4">
+      <div className="px-4 sm:px-6 lg:px-8 pt-5 pb-4 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
               <Columns3 className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Task</h1>
-              <p className="text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  Task Management
+                </h1>
+                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-2xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                  {columns.length} Kolom
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {viewMode === "kanban"
-                  ? `${totalTasks} task aktif di ${columns.length} kolom${divisionSuffix}`
-                  : `${taskCount} task dalam tampilan${divisionSuffix}`}
+                  ? `${totalTasks} task aktif dalam papan kanban${divisionSuffix}`
+                  : `${taskCount} task terjadwal dalam rentang tanggal${divisionSuffix}`}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {/* View mode: Kanban | Kalender */}
-            <div className="flex items-center rounded-lg border bg-background shadow-sm p-0.5">
+            <div className="flex items-center rounded-xl border border-border/80 bg-muted/40 p-1 shadow-2xs">
               {[
                 { value: "kanban", label: "Kanban", icon: Columns3 },
                 { value: "calendar", label: "Kalender", icon: CalendarIcon },
@@ -472,10 +485,10 @@ export default function TasksPage({ params }) {
                   <button
                     key={opt.value}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
                       isActive
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                        ? "bg-background text-foreground shadow-xs font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                     )}
                     onClick={() => setViewMode(opt.value)}
                   >
@@ -489,30 +502,30 @@ export default function TasksPage({ params }) {
             {/* Keyboard shortcuts hint */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Keyboard className="h-4 w-4 text-muted-foreground" />
+                <Button variant="ghost" size="icon" className="h-8.5 w-8.5 rounded-xl text-muted-foreground">
+                  <Keyboard className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs max-w-[200px]">
-                <p className="font-semibold mb-1">Keyboard Shortcuts</p>
-                <p>
-                  <kbd className="px-1 rounded bg-muted text-[10px]">N</kbd>{" "}
-                  Buat task baru
+              <TooltipContent side="bottom" className="text-xs max-w-[200px] rounded-xl p-3 shadow-lg">
+                <p className="font-semibold mb-1 text-foreground">Pintasan Keyboard</p>
+                <p className="flex justify-between py-0.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">N</kbd>{" "}
+                  <span>Buat task baru</span>
                 </p>
                 {viewMode === "kanban" ? (
-                  <p>
-                    <kbd className="px-1 rounded bg-muted text-[10px]">F</kbd>{" "}
-                    Fokus pencarian
+                  <p className="flex justify-between py-0.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">F</kbd>{" "}
+                    <span>Fokus pencarian</span>
                   </p>
                 ) : (
-                  <p>
-                    <kbd className="px-1 rounded bg-muted text-[10px]">T</kbd>{" "}
-                    Ke hari ini
+                  <p className="flex justify-between py-0.5">
+                    <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">T</kbd>{" "}
+                    <span>Ke hari ini</span>
                   </p>
                 )}
-                <p>
-                  <kbd className="px-1 rounded bg-muted text-[10px]">Esc</kbd>{" "}
-                  Tutup panel
+                <p className="flex justify-between py-0.5">
+                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">Esc</kbd>{" "}
+                  <span>Tutup panel</span>
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -523,13 +536,13 @@ export default function TasksPage({ params }) {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8.5 w-8.5 rounded-xl border-border/80 shadow-2xs"
                   onClick={handleRefresh}
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
+                  <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Refresh data</TooltipContent>
+              <TooltipContent>Muat ulang data</TooltipContent>
             </Tooltip>
 
             {/* Export (kanban) */}
@@ -546,7 +559,7 @@ export default function TasksPage({ params }) {
             {/* New task button */}
             {userCanCreateTask && (
               <Button
-                className="gap-2 shadow-sm h-9"
+                className="gap-2 rounded-xl h-8.5 text-xs shadow-xs"
                 onClick={() => {
                   setQuickCreateColumnId(columns[0]?._id || null);
                   setQuickCreateDefaultDueDate(null);
@@ -560,7 +573,7 @@ export default function TasksPage({ params }) {
           </div>
         </div>
 
-        {/* Filter toolbar (sesuai view aktif) */}
+        {/* Filter toolbar */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-3">
           <DivisionFilter scope={scope} />
           <div className="flex-1 min-w-0">
@@ -593,17 +606,17 @@ export default function TasksPage({ params }) {
         </div>
       </div>
 
-      <Separator />
+      <Separator className="border-border/60" />
 
       {/* View: Kanban */}
       {viewMode === "kanban" && (
-        <div className="flex-1 overflow-hidden px-6 py-4">
+        <div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 py-4">
           {kanban.error ? (
-            <Card>
+            <Card className="rounded-2xl border-destructive/30 shadow-xs bg-card/60">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <AlertCircle className="h-10 w-10 text-destructive/60 mb-4" />
+                <AlertCircle className="h-10 w-10 text-destructive mb-3" />
                 <h3 className="text-sm font-semibold text-foreground mb-1">
-                  Terjadi kesalahan
+                  Gagal Memuat Data Task
                 </h3>
                 <p className="text-xs text-muted-foreground mb-4">
                   {kanban.error}
@@ -612,25 +625,26 @@ export default function TasksPage({ params }) {
                   variant="outline"
                   size="sm"
                   onClick={() => kanban.fetchTasks()}
+                  className="rounded-xl text-xs"
                 >
                   Coba Lagi
                 </Button>
               </CardContent>
             </Card>
           ) : columns.length === 0 ? (
-            <Card>
+            <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
               <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/10 mb-6">
-                  <Columns3 className="h-10 w-10 text-emerald-500/60" />
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 mb-4 shadow-2xs">
+                  <Columns3 className="h-8 w-8" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Belum ada kolom Kanban
+                <h3 className="text-base font-bold text-foreground mb-1">
+                  Belum Ada Kolom Kanban
                 </h3>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  Konfigurasi kolom kanban terlebih dahulu di{" "}
+                <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
+                  Konfigurasikan alur kerja dan kolom kanban terlebih dahulu di{" "}
                   <a
                     href={`/workspace/${workspaceId}/settings`}
-                    className="text-primary underline underline-offset-2 hover:text-primary/80"
+                    className="text-primary font-medium underline underline-offset-2 hover:text-primary/80"
                   >
                     Pengaturan Workspace
                   </a>
@@ -659,13 +673,13 @@ export default function TasksPage({ params }) {
 
       {/* View: Kalender */}
       {viewMode === "calendar" && (
-        <div className="flex-1 overflow-auto px-6 py-4">
+        <div className="flex-1 overflow-auto px-4 sm:px-6 lg:px-8 py-4 space-y-4">
           {calendar.error ? (
-            <Card>
+            <Card className="rounded-2xl border-destructive/30 shadow-xs bg-card/60">
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <AlertCircle className="h-10 w-10 text-destructive/60 mb-4" />
+                <AlertCircle className="h-10 w-10 text-destructive mb-3" />
                 <h3 className="text-sm font-semibold text-foreground mb-1">
-                  Terjadi kesalahan
+                  Gagal Memuat Kalender
                 </h3>
                 <p className="text-xs text-muted-foreground mb-4">
                   {calendar.error}
@@ -674,14 +688,15 @@ export default function TasksPage({ params }) {
                   variant="outline"
                   size="sm"
                   onClick={() => calendar.refetch()}
+                  className="rounded-xl text-xs"
                 >
                   Coba Lagi
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <Card className="overflow-hidden">
-              <CardContent className="p-3 sm:p-4 md:p-6">
+            <Card className="overflow-hidden rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
+              <CardContent className="p-3 sm:p-5">
                 <CalendarView
                   ref={calendarViewRef}
                   events={calendar.calendarEvents}
@@ -698,19 +713,19 @@ export default function TasksPage({ params }) {
           )}
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 px-1">
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1">
+            <span className="text-2xs text-muted-foreground font-semibold uppercase tracking-wider">
               Prioritas:
             </span>
             {[
               { label: "Low", color: "bg-slate-400" },
-              { label: "Medium", color: "bg-amber-400" },
-              { label: "High", color: "bg-orange-500" },
-              { label: "Critical", color: "bg-red-500" },
+              { label: "Medium", color: "bg-blue-500" },
+              { label: "High", color: "bg-amber-500" },
+              { label: "Critical", color: "bg-rose-500" },
             ].map((p) => (
               <div key={p.label} className="flex items-center gap-1.5">
                 <span className={`h-2 w-2 rounded-full ${p.color}`} />
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-2xs text-muted-foreground font-medium">
                   {p.label}
                 </span>
               </div>
@@ -718,9 +733,8 @@ export default function TasksPage({ params }) {
 
             <Separator orientation="vertical" className="h-3 hidden sm:block" />
 
-            <span className="text-[10px] text-muted-foreground/70">
-              Drag task untuk ubah tanggal • Klik tanggal kosong untuk buat task
-              baru
+            <span className="text-2xs text-muted-foreground/80">
+              Tarik & letakkan task untuk menggeser deadline &bull; Klik tanggal untuk membuat task cepat
             </span>
           </div>
         </div>
@@ -748,70 +762,64 @@ export default function TasksPage({ params }) {
             ? scope.selected
             : undefined
         }
-        onCreateTask={handleCreateTask}
-        onCreateAndOpen={(taskId) =>
+        onSubmit={handleCreateTask}
+      />
+
+      {/* Task Detail Panel (drawer dari kanan) */}
+      <TaskDetailPanel
+        taskId={
           viewMode === "kanban"
-            ? kanban.setActiveTaskId(taskId)
-            : calendar.setActiveTaskId(taskId)
+            ? kanban.activeTaskId
+            : calendar.activeTaskId
         }
-      />
-
-      {/* Task Detail Panel — Kanban */}
-      <TaskDetailPanel
-        task={kanban.activeTask}
-        open={viewMode === "kanban" && !!kanban.activeTaskId}
-        onClose={() => kanban.setActiveTaskId(null)}
+        onClose={() => {
+          if (viewMode === "kanban") {
+            kanban.setActiveTaskId(null);
+          } else {
+            calendar.setActiveTaskId(null);
+          }
+        }}
         columns={columns}
         members={members}
         labels={kanban.labels}
         events={events}
         divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
-        allDivisions={scope.divisions}
         currentUserId={user?._id}
-        memberRole={currentWorkspace?.role}
-        workspaceId={workspaceId}
         onUpdate={handleUpdateTask}
         onDelete={handleDeleteTask}
         onArchive={handleArchiveTask}
         onUnarchive={handleUnarchiveTask}
         onWatch={handleWatchTask}
         onUnwatch={handleUnwatchTask}
-      />
-
-      {/* Task Detail Panel — Kalender */}
-      <TaskDetailPanel
-        task={calendar.activeTask}
-        open={viewMode === "calendar" && !!calendar.activeTaskId}
-        onClose={() => calendar.setActiveTaskId(null)}
-        columns={columns}
-        members={members}
-        labels={kanban.labels}
-        events={events}
-        divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
-        allDivisions={scope.divisions}
-        currentUserId={user?._id}
-        memberRole={currentWorkspace?.role}
         workspaceId={workspaceId}
-        onUpdate={handleUpdateTask}
-        onDelete={handleDeleteTask}
-        onArchive={handleArchiveTask}
-        onUnarchive={handleUnarchiveTask}
-        onWatch={handleWatchTask}
-        onUnwatch={handleUnwatchTask}
       />
 
-      {/* Bulk Action Bar (kanban) */}
-      <BulkActionBar
-        selectedCount={kanban.selectedTaskIds.size}
-        selectedTaskIds={kanban.selectedTaskIds}
-        columns={columns}
-        onMoveToColumn={handleBulkMoveToColumn}
-        onChangePriority={handleBulkChangePriority}
-        onArchive={handleBulkArchive}
-        onDelete={handleBulkDelete}
-        onClearSelection={kanban.clearSelection}
-        canManage={userCanCreateTask}
-      />
+      {/* Bulk Action Bar (muncul saat checkbox tercentang) */}
+      {viewMode === "kanban" && kanban.selectedTaskIds.size > 0 && (
+        <BulkActionBar
+          selectedCount={kanban.selectedTaskIds.size}
+          columns={columns}
+          onClearSelection={kanban.clearSelection}
+          onMoveToColumn={(columnId) =>
+            handleBulkMoveToColumn(
+              Array.from(kanban.selectedTaskIds),
+              columnId,
+            )
+          }
+          onChangePriority={(priority) =>
+            handleBulkChangePriority(
+              Array.from(kanban.selectedTaskIds),
+              priority,
+            )
+          }
+          onArchive={() =>
+            handleBulkArchive(Array.from(kanban.selectedTaskIds))
+          }
+          onDelete={() =>
+            handleBulkDelete(Array.from(kanban.selectedTaskIds))
+          }
+        />
+      )}
     </div>
   );
 }

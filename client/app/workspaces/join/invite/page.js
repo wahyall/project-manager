@@ -6,14 +6,8 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2, CheckCircle2, XCircle, LogIn, Mail } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Loader2, CheckCircle2, XCircle, LogIn, Mail, ArrowRight, Sparkles } from "lucide-react";
 
 function JoinInviteContent() {
   const searchParams = useSearchParams();
@@ -65,78 +59,84 @@ function JoinInviteContent() {
   }, [token, user, authLoading, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-3">
-            {status === "loading" || status === "joining" ? (
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : status === "success" ? (
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900/30">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
-              </div>
-            ) : status === "needLogin" ? (
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900/30">
-                <Mail className="h-8 w-8 text-blue-600" />
-              </div>
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-900/30">
-                <XCircle className="h-8 w-8 text-red-600" />
-              </div>
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background bg-dot-pattern p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md mx-auto relative z-10">
+        <Card className="glass-panel rounded-2xl shadow-xl border-border/80 overflow-hidden">
+          <div className="p-6 sm:p-8 space-y-6 text-center">
+            {/* Status Icon */}
+            <div className="flex justify-center">
+              {status === "loading" || status === "joining" ? (
+                <div className="h-16 w-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-xs">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : status === "success" ? (
+                <div className="h-16 w-16 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
+                  <CheckCircle2 className="h-8 w-8" />
+                </div>
+              ) : status === "needLogin" ? (
+                <div className="h-16 w-16 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-xs">
+                  <Mail className="h-8 w-8" />
+                </div>
+              ) : (
+                <div className="h-16 w-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center shadow-xs">
+                  <XCircle className="h-8 w-8" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                {status === "loading" || status === "joining"
+                  ? "Memproses Undangan..."
+                  : status === "success"
+                    ? "Berhasil Bergabung!"
+                    : status === "needLogin"
+                      ? "Masuk untuk Bergabung"
+                      : "Undangan Tidak Valid"}
+              </h1>
+
+              <p className="text-sm text-muted-foreground">
+                {status === "loading" || status === "joining"
+                  ? "Sedang memverifikasi token undangan workspace..."
+                  : status === "success"
+                    ? message || "Kamu telah resmi ditambahkan ke workspace!"
+                    : status === "needLogin"
+                      ? "Silakan masuk ke akunmu terlebih dahulu untuk menerima undangan ini."
+                      : message || "Tautan undangan tidak berlaku atau telah kedaluwarsa."}
+              </p>
+            </div>
+
+            {status === "success" && (
+              <p className="text-xs text-muted-foreground animate-pulse font-medium">
+                Mengalihkan kamu ke workspace...
+              </p>
             )}
+
+            <div className="space-y-3 pt-2">
+              {status === "needLogin" && (
+                <Button asChild className="w-full h-11 rounded-xl font-semibold shadow-md gap-2">
+                  <Link href={`/login?redirect=/workspaces/join/invite?token=${token}`}>
+                    <LogIn className="h-4 w-4" />
+                    <span>Masuk ke Akun</span>
+                  </Link>
+                </Button>
+              )}
+
+              {status === "error" && (
+                <Button asChild variant="outline" className="w-full h-11 rounded-xl font-medium">
+                  <Link href="/workspaces">
+                    <span>Ke Daftar Workspace</span>
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
-
-          <CardTitle className="text-xl">
-            {status === "loading" || status === "joining"
-              ? "Memproses Undangan..."
-              : status === "success"
-                ? "Berhasil Bergabung!"
-                : status === "needLogin"
-                  ? "Masuk untuk Bergabung"
-                  : "Undangan Tidak Valid"}
-          </CardTitle>
-
-          <CardDescription className="mt-2">
-            {status === "loading" || status === "joining"
-              ? "Memverifikasi undangan email..."
-              : status === "success"
-                ? message
-                : status === "needLogin"
-                  ? "Kamu perlu masuk terlebih dahulu"
-                  : message}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="flex flex-col items-center gap-3">
-          {status === "success" && (
-            <p className="text-sm text-muted-foreground">
-              Mengalihkan ke workspace...
-            </p>
-          )}
-
-          {status === "needLogin" && (
-            <Link
-              href={`/login?redirect=/workspaces/join/invite?token=${token}`}
-              className="w-full"
-            >
-              <Button className="w-full gap-2">
-                <LogIn className="h-4 w-4" />
-                Masuk
-              </Button>
-            </Link>
-          )}
-
-          {status === "error" && (
-            <Link href="/workspaces" className="w-full">
-              <Button variant="outline" className="w-full">
-                Ke Daftar Workspace
-              </Button>
-            </Link>
-          )}
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -145,7 +145,7 @@ export default function JoinInvitePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-[100dvh] flex items-center justify-center bg-background">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       }
