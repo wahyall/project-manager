@@ -74,7 +74,9 @@ export function CommentThread({
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <Loader2 className="h-7 w-7 text-primary animate-spin mb-3" />
-        <p className="text-xs font-medium text-muted-foreground">Memuat komentar & diskusi...</p>
+        <p className="text-xs font-medium text-muted-foreground">
+          Memuat komentar & diskusi...
+        </p>
       </div>
     );
   }
@@ -131,7 +133,9 @@ export function CommentThread({
             <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center mb-3 text-muted-foreground/60 shadow-2xs">
               <MessageSquare className="h-6 w-6" />
             </div>
-            <p className="text-xs font-semibold text-foreground">Belum ada komentar</p>
+            <p className="text-xs font-semibold text-foreground">
+              Belum ada komentar
+            </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               Tulis catatan atau mulai diskusi bersama tim di bawah.
             </p>

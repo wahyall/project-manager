@@ -35,7 +35,11 @@ const CATEGORIES = [
   { value: "lainnya", label: "Lainnya" },
 ];
 
-export function DivisionCongregantsTab({ workspaceId, divisionId, canEdit = true }) {
+export function DivisionCongregantsTab({
+  workspaceId,
+  divisionId,
+  canEdit = true,
+}) {
   const {
     congregants,
     totalCount,
@@ -140,7 +144,8 @@ export function DivisionCongregantsTab({ workspaceId, divisionId, canEdit = true
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Apakah kamu yakin ingin menghapus data jamaah ini?")) return;
+    if (!window.confirm("Apakah kamu yakin ingin menghapus data jamaah ini?"))
+      return;
     try {
       await deleteCongregant(id);
     } catch (err) {
@@ -152,25 +157,37 @@ export function DivisionCongregantsTab({ workspaceId, divisionId, canEdit = true
     switch (cat) {
       case "mustahik":
         return (
-          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25 font-semibold text-[11px] rounded-lg">
+          <Badge
+            variant="outline"
+            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25 font-semibold text-[11px] rounded-lg"
+          >
             Mustahik
           </Badge>
         );
       case "donatur":
         return (
-          <Badge variant="outline" className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25 font-semibold text-[11px] rounded-lg">
+          <Badge
+            variant="outline"
+            className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25 font-semibold text-[11px] rounded-lg"
+          >
             Donatur
           </Badge>
         );
       case "jamaah_rutin":
         return (
-          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 font-semibold text-[11px] rounded-lg">
+          <Badge
+            variant="outline"
+            className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 font-semibold text-[11px] rounded-lg"
+          >
             Jamaah Rutin
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="bg-muted text-muted-foreground border-border/80 font-semibold text-[11px] rounded-lg">
+          <Badge
+            variant="outline"
+            className="bg-muted text-muted-foreground border-border/80 font-semibold text-[11px] rounded-lg"
+          >
             Lainnya
           </Badge>
         );
@@ -209,7 +226,8 @@ export function DivisionCongregantsTab({ workspaceId, divisionId, canEdit = true
 
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground hidden lg:inline font-medium">
-            Total Jamaah: <span className="font-bold text-foreground">{totalCount}</span>
+            Total Jamaah:{" "}
+            <span className="font-bold text-foreground">{totalCount}</span>
           </span>
           {canEdit && (
             <Button
@@ -242,9 +260,12 @@ export function DivisionCongregantsTab({ workspaceId, divisionId, canEdit = true
             <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground mb-3">
               <Users className="w-6 h-6" />
             </div>
-            <h3 className="font-semibold text-foreground text-sm">Tidak ada data jamaah</h3>
+            <h3 className="font-semibold text-foreground text-sm">
+              Tidak ada data jamaah
+            </h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-              Belum ada data jamaah yang tersimpan atau sesuai kriteria filter saat ini.
+              Belum ada data jamaah yang tersimpan atau sesuai kriteria filter
+              saat ini.
             </p>
             {canEdit && (
               <Button
@@ -276,7 +297,10 @@ export function DivisionCongregantsTab({ workspaceId, divisionId, canEdit = true
                 {congregants.map((c) => {
                   const waLink = getWaLink(c.phone);
                   return (
-                    <tr key={c._id} className="hover:bg-muted/30 transition-colors">
+                    <tr
+                      key={c._id}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
                       <td className="px-4 py-3 whitespace-nowrap font-semibold text-foreground">
                         {c.name}
                       </td>
@@ -303,7 +327,9 @@ export function DivisionCongregantsTab({ workspaceId, divisionId, canEdit = true
                             )}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
+                          <span className="text-muted-foreground text-xs">
+                            -
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground max-w-xs truncate">
@@ -318,11 +344,14 @@ export function DivisionCongregantsTab({ workspaceId, divisionId, canEdit = true
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-xs text-muted-foreground">
                         {c.lastVisitedAt
-                          ? new Date(c.lastVisitedAt).toLocaleDateString("id-ID", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })
+                          ? new Date(c.lastVisitedAt).toLocaleDateString(
+                              "id-ID",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
                           : "-"}
                       </td>
                       <td className="px-4 py-3 text-xs text-muted-foreground max-w-xs truncate">
