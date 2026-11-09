@@ -59,9 +59,8 @@ import {
   Crown,
   ArrowRightLeft,
   TriangleAlert,
-  Activity,
+  Sparkles,
 } from "lucide-react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -98,15 +97,6 @@ function getEmail(m) {
   return m?.email || "";
 }
 
-/**
- * DivisionManager: shared UI for Workspace divisions page and
- * Event divisions section. Same hierarchy, same labels, same states.
- *
- * Shape rule: outer cards rounded-xl, inner panels rounded-lg,
- * buttons and inputs default radius. One accent: primary.
- * Division color appears only as left bar and select dot.
- * Amber appears only for Ketua badge (semantic state).
- */
 export function DivisionManager({
   title,
   subtitle,
@@ -288,553 +278,548 @@ export function DivisionManager({
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader className="border-b bg-muted/30 pb-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-9 w-9 rounded-lg" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-56" />
-            </div>
-            <Skeleton className="h-8 w-32" />
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-48 rounded-md" />
+            <Skeleton className="h-3.5 w-64 rounded-md" />
           </div>
-        </CardHeader>
-        <CardContent className="space-y-3 p-3 sm:p-4">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="rounded-xl border p-3">
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-7 w-7 rounded-md" />
-                <Skeleton className="h-4 flex-1" />
-                <Skeleton className="h-5 w-10 rounded-full" />
-              </div>
-            </div>
+          <Skeleton className="h-9 w-32 rounded-xl" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-32 rounded-2xl" />
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="p-4">
-          <Alert variant="destructive">
-            <TriangleAlert className="h-4 w-4" />
-            <AlertTitle>Gagal memuat divisi</AlertTitle>
-            <AlertDescription className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="text-sm">{error}</span>
-              {onRetry && (
-                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={onRetry}>
-                  Coba lagi
-                </Button>
-              )}
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <div className="p-4 rounded-2xl border border-destructive/20 bg-destructive/10 text-destructive">
+        <div className="flex items-center gap-2">
+          <TriangleAlert className="h-5 w-5 shrink-0" />
+          <p className="text-sm font-semibold">Gagal memuat divisi</p>
+        </div>
+        <p className="text-xs mt-1">{error}</p>
+        {onRetry && (
+          <Button size="sm" variant="outline" className="h-8 text-xs rounded-xl mt-3" onClick={onRetry}>
+            Coba lagi
+          </Button>
+        )}
+      </div>
     );
   }
 
   return (
-    <>
-      <Card className="overflow-hidden">
-        <CardHeader className="border-b bg-muted/30 pb-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-4 w-4 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <CardTitle className="text-base font-semibold leading-tight">
-                  {title} ({divisions.length})
-                </CardTitle>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {divisions.length === 0
-                    ? subtitle
-                    : `${stats.unique} anggota, ${stats.leaders} ketua${stats.empty > 0 ? `, ${stats.empty} divisi kosong` : ""}${stats.noLeader > 0 ? `, ${stats.noLeader} tanpa ketua` : ""}`}
-                </p>
-              </div>
+    <div className="space-y-6">
+      {/* Action and Metrics bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs shadow-xs">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+            <Users className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-bold text-foreground truncate">
+              {title} ({divisions.length})
+            </h3>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
+              {divisions.length === 0
+                ? subtitle
+                : `${stats.unique} anggota relasi &bull; ${stats.leaders} ketua divisi${stats.empty > 0 ? ` &bull; ${stats.empty} kosong` : ""}`}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          {divisions.length > 0 && (
+            <div className="relative flex-1 sm:w-56 sm:flex-initial">
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Cari divisi / anggota..."
+                className="h-9 pl-8.5 rounded-xl text-xs bg-background/50 border-border/80"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              {divisions.length > 0 && (
-                <div className="relative flex-1 lg:w-56 lg:flex-none">
-                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Cari divisi atau anggota"
-                    aria-label="Cari divisi atau anggota"
-                    className="h-8 pl-8 text-xs"
-                  />
-                </div>
-              )}
-              <Button
-                size="sm"
-                className="h-8 shrink-0 gap-1.5 px-3 text-xs"
-                onClick={() => setShowCreateForm((v) => !v)}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Tambah Divisi
-              </Button>
+          )}
+          <Button
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 px-3.5 rounded-xl text-xs shadow-xs"
+            onClick={() => setShowCreateForm((v) => !v)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Tambah Divisi</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Inline Create Form */}
+      {showCreateForm && (
+        <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/[0.03] p-5 shadow-xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-primary">
+              Buat Divisi Baru
+            </h4>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="new-division-name" className="text-xs font-semibold text-foreground">
+              Nama Divisi
+            </Label>
+            <Input
+              id="new-division-name"
+              placeholder="Contoh: Media & Komunikasi, Acara & Logistik..."
+              value={newDivName}
+              onChange={(e) => setNewDivName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape") setShowCreateForm(false);
+              }}
+              className="h-10 rounded-xl bg-background/70 text-sm border-border/80"
+              maxLength={100}
+              autoFocus
+            />
+          </div>
+          <div className="space-y-1.5">
+            <span className="text-xs font-semibold text-foreground block">
+              Pilih Warna Penanda
+            </span>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {DIVISION_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setNewDivColor(c)}
+                  className={cn(
+                    "h-7 w-7 rounded-lg border transition-all",
+                    newDivColor === c
+                      ? "scale-110 ring-2 ring-primary ring-offset-2 ring-offset-background border-transparent"
+                      : "border-border/50 hover:scale-105",
+                  )}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
             </div>
           </div>
-        </CardHeader>
+          <div className="flex gap-2 pt-1">
+            <Button
+              size="sm"
+              className="h-9 rounded-xl text-xs px-4"
+              onClick={handleCreate}
+              disabled={!newDivName.trim()}
+            >
+              Simpan Divisi
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 rounded-xl text-xs"
+              onClick={() => setShowCreateForm(false)}
+            >
+              Batal
+            </Button>
+          </div>
+        </div>
+      )}
 
-        <CardContent className="space-y-3 p-3 sm:p-4">
-          {showCreateForm && (
-            <div className="space-y-3 rounded-lg border border-dashed bg-muted/30 p-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="new-division-name">Nama divisi</Label>
-                <Input
-                  id="new-division-name"
-                  placeholder="Contoh: Acara, Konsumsi, Media"
-                  value={newDivName}
-                  onChange={(e) => setNewDivName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreate();
-                    if (e.key === "Escape") setShowCreateForm(false);
-                  }}
-                  className="h-9 bg-background text-sm"
-                  maxLength={100}
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-1.5">
-                <span className="text-xs font-medium">Warna penanda</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {DIVISION_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setNewDivColor(c)}
-                      aria-label={`Pilih warna ${c}`}
-                      aria-pressed={newDivColor === c}
-                      className={cn(
-                        "h-6 w-6 rounded-full border-2 transition-all",
-                        newDivColor === c
-                          ? "scale-110 border-foreground"
-                          : "border-transparent hover:scale-105",
-                      )}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={handleCreate}
-                  disabled={!newDivName.trim()}
-                >
-                  Buat
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs"
-                  onClick={() => setShowCreateForm(false)}
-                >
-                  Batal
-                </Button>
-              </div>
-            </div>
-          )}
+      {/* Empty States */}
+      {divisions.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-border/80 bg-card/40">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-3 shadow-2xs">
+            <Users className="h-7 w-7" />
+          </div>
+          <h4 className="text-base font-bold text-foreground">Belum ada divisi</h4>
+          <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground mb-4">
+            {subtitle} Mulai susun struktur kepanitiaan atau departemen dengan tombol di atas.
+          </p>
+          <Button
+            size="sm"
+            className="rounded-xl h-9 text-xs gap-1.5"
+            onClick={() => setShowCreateForm(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Buat Divisi Pertama
+          </Button>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-10 text-center rounded-2xl border border-dashed border-border/80 bg-card/40">
+          <Search className="h-8 w-8 text-muted-foreground/60 mb-2" />
+          <p className="text-sm font-semibold text-foreground">Tidak ditemukan hasil</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Tidak ada divisi atau anggota yang cocok dengan kata kunci &quot;{query}&quot;.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-3 h-8 text-xs rounded-xl"
+            onClick={() => setQuery("")}
+          >
+            Bersihkan Pencarian
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filtered.map((div) => {
+            const isOpen = openDivisions[div._id] !== false;
+            const isEditing = editingDiv === div._id;
+            const memberList = [...(div.members || [])].sort((a, b) =>
+              a.role === b.role ? getName(a).localeCompare(getName(b)) : a.role === "leader" ? -1 : 1,
+            );
+            const leaders = memberList.filter((m) => m.role === "leader");
+            const adding = addMemberDivId === div._id;
+            const available = adding ? availableMembers(div._id) : [];
 
-          {divisions.length === 0 ? (
-            <div className="flex flex-col items-center px-4 py-10 text-center">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
-                <Users className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="mt-3 text-sm font-semibold">Belum ada divisi</p>
-              <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
-                {subtitle} Gunakan tombol Tambah Divisi di atas untuk membuat
-                yang pertama.
-              </p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center px-4 py-10 text-center">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
-                <Search className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="mt-3 text-sm font-semibold">Tidak ada hasil</p>
-              <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                Tidak ada divisi atau anggota yang cocok dengan {query}.
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3 h-8 text-xs"
-                onClick={() => setQuery("")}
+            return (
+              <Collapsible
+                key={div._id}
+                open={isOpen}
+                onOpenChange={() => toggleDivision(div._id)}
+                className="flex flex-col rounded-2xl border border-border/80 bg-card/70 backdrop-blur-xs shadow-xs overflow-hidden transition-all hover:border-primary/40"
               >
-                Hapus pencarian
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {query.trim() && (
-                <p className="text-xs text-muted-foreground">
-                  Menampilkan {filtered.length} dari {divisions.length} divisi
-                </p>
-              )}
-              {filtered.map((div) => {
-                const isOpen = openDivisions[div._id] !== false;
-                const isEditing = editingDiv === div._id;
-                const memberList = [...(div.members || [])].sort((a, b) =>
-                  a.role === b.role ? getName(a).localeCompare(getName(b)) : a.role === "leader" ? -1 : 1,
-                );
-                const leaders = memberList.filter((m) => m.role === "leader");
-                const adding = addMemberDivId === div._id;
-                const available = adding ? availableMembers(div._id) : [];
+                {/* Accent line top */}
+                <div
+                  className="h-1.5 w-full shrink-0"
+                  style={{ backgroundColor: div.color || "var(--primary)" }}
+                />
 
-                return (
-                  <Collapsible
-                    key={div._id}
-                    open={isOpen}
-                    onOpenChange={() => toggleDivision(div._id)}
-                  >
-                    <div className="flex overflow-hidden rounded-xl border bg-card">
-                      <div
-                        className="w-1 shrink-0"
-                        style={{ backgroundColor: div.color || "var(--muted)" }}
-                        aria-hidden="true"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 px-2.5 py-2">
-                          <CollapsibleTrigger asChild>
+                {/* Division Header */}
+                <div className="p-4 flex items-center justify-between gap-2.5 border-b border-border/60">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={isOpen ? `Tutup ${div.name}` : `Buka ${div.name}`}
+                        className="rounded-lg p-1 text-muted-foreground hover:bg-muted/80 transition-colors"
+                      >
+                        {isOpen ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </button>
+                    </CollapsibleTrigger>
+
+                    {isEditing ? (
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 py-0.5">
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleUpdate(div._id);
+                            if (e.key === "Escape") setEditingDiv(null);
+                          }}
+                          className="h-8 min-w-36 flex-1 text-xs rounded-lg"
+                          maxLength={100}
+                          autoFocus
+                        />
+                        <div className="flex gap-1">
+                          {DIVISION_COLORS.map((c) => (
                             <button
+                              key={c}
                               type="button"
-                              aria-label={isOpen ? `Tutup ${div.name}` : `Buka ${div.name}`}
-                              className="rounded-md p-1.5 transition-colors hover:bg-accent"
-                            >
-                              {isOpen ? (
-                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              onClick={() => setEditColor(c)}
+                              className={cn(
+                                "h-5 w-5 rounded-md border transition-all",
+                                editColor === c
+                                  ? "ring-2 ring-primary ring-offset-1 border-transparent"
+                                  : "border-transparent hover:scale-105",
                               )}
-                            </button>
-                          </CollapsibleTrigger>
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
+                        </div>
+                        <Button
+                          size="sm"
+                          className="h-8 rounded-lg text-xs"
+                          onClick={() => handleUpdate(div._id)}
+                          disabled={!editName.trim()}
+                        >
+                          Simpan
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 rounded-lg text-xs"
+                          onClick={() => setEditingDiv(null)}
+                        >
+                          Batal
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-foreground truncate">
+                            {div.name}
+                          </h4>
+                          <Badge variant="outline" className="text-2xs font-semibold px-2 py-0 h-4.5 rounded-full border-border/80">
+                            {memberList.length}
+                          </Badge>
+                        </div>
+                        <p className="text-2xs text-muted-foreground truncate mt-0.5">
+                          {memberList.length === 0
+                            ? "Belum ada anggota"
+                            : leaders.length > 0
+                            ? `Ketua: ${leaders.map((l) => getName(l)).join(", ")}`
+                            : `${memberList.length} anggota, belum ada ketua`}
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-                          {isEditing ? (
-                            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 py-0.5">
-                              <Input
-                                value={editName}
-                                onChange={(e) => setEditName(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") handleUpdate(div._id);
-                                  if (e.key === "Escape") setEditingDiv(null);
-                                }}
-                                className="h-8 min-w-36 flex-1 text-sm"
-                                maxLength={100}
-                                aria-label="Nama divisi"
-                                autoFocus
-                              />
-                              <div className="flex gap-1">
-                                {DIVISION_COLORS.map((c) => (
-                                  <button
-                                    key={c}
-                                    type="button"
-                                    onClick={() => setEditColor(c)}
-                                    aria-label={`Pilih warna ${c}`}
-                                    aria-pressed={editColor === c}
-                                    className={cn(
-                                      "h-5 w-5 rounded-full border-2 transition-all",
-                                      editColor === c
-                                        ? "scale-110 border-foreground"
-                                        : "border-transparent hover:scale-105",
+                  {!isEditing && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-2xs font-semibold rounded-lg px-2 gap-1 text-primary hover:bg-primary/10"
+                        onClick={() =>
+                          adding ? setAddMemberDivId(null) : openAddMember(div._id)
+                        }
+                      >
+                        <UserPlus className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Anggota</span>
+                      </Button>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-lg text-muted-foreground"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="rounded-xl w-40 shadow-lg">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingDiv(div._id);
+                              setEditName(div.name);
+                              setEditColor(div.color || DIVISION_COLORS[0]);
+                            }}
+                            className="gap-2 text-xs rounded-lg"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Ubah Divisi
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setConfirmDeleteDiv(div)}
+                            className="gap-2 text-xs rounded-lg text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Hapus Divisi
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                </div>
+
+                {/* Collapsible Content */}
+                <CollapsibleContent>
+                  <div className="p-3.5 space-y-2">
+                    {/* Add Member Drawer Box */}
+                    {adding && (
+                      <div className="space-y-2.5 rounded-xl bg-muted/40 border border-border/80 p-3 shadow-2xs">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor={`search-${div._id}`} className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                            Tambah Anggota ke {div.name}
+                          </Label>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-2xs px-2"
+                            onClick={() => setAddMemberDivId(null)}
+                          >
+                            Tutup
+                          </Button>
+                        </div>
+                        <Input
+                          id={`search-${div._id}`}
+                          placeholder={memberSearchHint}
+                          value={memberSearch}
+                          onChange={(e) => setMemberSearch(e.target.value)}
+                          className="h-8.5 rounded-xl bg-background/80 text-xs"
+                          autoFocus
+                        />
+                        {allowAddAsLeader && (
+                          <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-muted-foreground font-medium">
+                            <input
+                              type="checkbox"
+                              checked={addAsLeader}
+                              onChange={(e) => setAddAsLeader(e.target.checked)}
+                              className="h-3.5 w-3.5 rounded text-amber-500"
+                            />
+                            Tambahkan langsung sebagai Ketua Divisi
+                          </label>
+                        )}
+                        <div className="max-h-40 space-y-1 overflow-y-auto soft-scrollbar">
+                          {available.length > 0 ? (
+                            available.slice(0, 10).map((m) => {
+                              const uid =
+                                typeof m.userId === "object"
+                                  ? m.userId?._id
+                                  : m.userId || m._id;
+                              const uname =
+                                typeof m.userId === "object"
+                                  ? m.userId?.name
+                                  : m.name;
+                              const uemail =
+                                typeof m.userId === "object"
+                                  ? m.userId?.email
+                                  : m.email;
+                              if (!uid) return null;
+                              return (
+                                <button
+                                  key={uid.toString()}
+                                  type="button"
+                                  onClick={() => handleAddMember(div._id, uid)}
+                                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-colors hover:bg-muted text-xs group"
+                                >
+                                  <Avatar className="h-6 w-6 rounded-full shrink-0">
+                                    <AvatarFallback className="bg-primary/10 text-[9px] font-bold text-primary">
+                                      {initials(uname)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="min-w-0 flex-1 truncate">
+                                    <span className="font-semibold text-foreground block truncate">
+                                      {uname}
+                                    </span>
+                                    {uemail && (
+                                      <span className="text-2xs text-muted-foreground block truncate">
+                                        {uemail}
+                                      </span>
                                     )}
-                                    style={{ backgroundColor: c }}
-                                  />
-                                ))}
-                              </div>
-                              <Button
-                                size="sm"
-                                className="h-8 text-xs"
-                                onClick={() => handleUpdate(div._id)}
-                                disabled={!editName.trim()}
-                              >
-                                Simpan
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 text-xs"
-                                onClick={() => setEditingDiv(null)}
-                              >
-                                Batal
-                              </Button>
-                            </div>
+                                  </span>
+                                  <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary transition-colors" />
+                                </button>
+                              );
+                            })
                           ) : (
-                            <>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold leading-tight">
-                                  {div.name}
-                                </p>
-                                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                                  {memberList.length === 0
-                                    ? "Kosong, belum ada anggota"
-                                    : leaders.length > 0
-                                      ? `Ketua: ${leaders.map((l) => getName(l)).join(", ")}`
-                                      : `${memberList.length} anggota, belum ada ketua`}
-                                </p>
-                              </div>
-                              <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-[10px]">
-                                {memberList.length}
-                              </Badge>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 shrink-0 gap-1 px-2 text-[11px]"
-                                onClick={() =>
-                                  adding ? setAddMemberDivId(null) : openAddMember(div._id)
-                                }
-                              >
-                                <UserPlus className="h-3.5 w-3.5" />
-                                <span className="hidden sm:inline">Tambah</span>
-                              </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 shrink-0"
-                                    aria-label={`Opsi ${div.name}`}
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setEditingDiv(div._id);
-                                      setEditName(div.name);
-                                      setEditColor(div.color || DIVISION_COLORS[0]);
-                                    }}
-                                    className="gap-2 text-sm"
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                    Edit Divisi
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => setConfirmDeleteDiv(div)}
-                                    className="gap-2 text-sm text-destructive focus:text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    Hapus Divisi
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </>
+                            <p className="py-3 text-center text-xs text-muted-foreground">
+                              {memberSearch
+                                ? "Tidak ada member yang cocok"
+                                : "Semua member sudah masuk ke divisi ini"}
+                            </p>
                           )}
                         </div>
-
-                        <CollapsibleContent>
-                          <Separator />
-                          <div className="space-y-1 p-2.5">
-                            {adding && (
-                              <div className="space-y-2 rounded-lg bg-muted/50 p-2.5">
-                                <Label htmlFor={`search-${div._id}`}>
-                                  Tambah anggota ke {div.name}
-                                </Label>
-                                <Input
-                                  id={`search-${div._id}`}
-                                  placeholder={memberSearchHint}
-                                  value={memberSearch}
-                                  onChange={(e) => setMemberSearch(e.target.value)}
-                                  className="h-8 bg-background text-sm"
-                                  autoFocus
-                                />
-                                {allowAddAsLeader && (
-                                  <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-muted-foreground">
-                                    <input
-                                      type="checkbox"
-                                      checked={addAsLeader}
-                                      onChange={(e) => setAddAsLeader(e.target.checked)}
-                                      className="h-3.5 w-3.5 accent-amber-500"
-                                    />
-                                    Tambahkan sebagai ketua divisi
-                                  </label>
-                                )}
-                                <div className="max-h-44 space-y-0.5 overflow-y-auto">
-                                  {available.length > 0 ? (
-                                    available.slice(0, 12).map((m) => {
-                                      const uid =
-                                        typeof m.userId === "object"
-                                          ? m.userId?._id
-                                          : m.userId || m._id;
-                                      const uname =
-                                        typeof m.userId === "object"
-                                          ? m.userId?.name
-                                          : m.name;
-                                      const uemail =
-                                        typeof m.userId === "object"
-                                          ? m.userId?.email
-                                          : m.email;
-                                      if (!uid) return null;
-                                      return (
-                                        <button
-                                          key={uid.toString()}
-                                          type="button"
-                                          onClick={() => handleAddMember(div._id, uid)}
-                                          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent"
-                                        >
-                                          <Avatar className="h-6 w-6 shrink-0">
-                                            <AvatarFallback className="bg-primary/10 text-[9px] font-medium text-primary">
-                                              {initials(uname)}
-                                            </AvatarFallback>
-                                          </Avatar>
-                                          <span className="min-w-0 flex-1">
-                                            <span className="block truncate text-[13px] font-medium">
-                                              {uname}
-                                            </span>
-                                            {uemail && (
-                                              <span className="block truncate text-[11px] text-muted-foreground">
-                                                {uemail}
-                                              </span>
-                                            )}
-                                          </span>
-                                          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                        </button>
-                                      );
-                                    })
-                                  ) : (
-                                    <p className="py-2 text-center text-xs text-muted-foreground">
-                                      {memberSearch
-                                        ? "Tidak ada member yang cocok"
-                                        : "Semua member sudah masuk divisi ini"}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                  <p className="text-[11px] text-muted-foreground">
-                                    {available.length} tersedia
-                                  </p>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 text-[11px]"
-                                    onClick={() => setAddMemberDivId(null)}
-                                  >
-                                    Tutup
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-
-                            {memberList.length > 0 ? (
-                              memberList.map((m) => {
-                                const uid = getUid(m);
-                                const name = getName(m);
-                                const email = getEmail(m);
-                                const isLeader = m.role === "leader";
-                                return (
-                                  <div
-                                    key={uid}
-                                    className="group flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-accent/50"
-                                  >
-                                    <Avatar className="h-7 w-7 shrink-0">
-                                      <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
-                                        {initials(name)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="truncate text-[13px] font-medium leading-tight">
-                                        {name}
-                                      </p>
-                                      {email ? (
-                                        <p className="truncate text-[11px] text-muted-foreground">
-                                          {email}
-                                        </p>
-                                      ) : null}
-                                    </div>
-                                    {isLeader ? (
-                                      <Badge className="h-5 shrink-0 gap-1 bg-amber-500/15 px-1.5 text-[10px] font-medium text-amber-700 hover:bg-amber-500/20 dark:text-amber-400">
-                                        <Crown className="h-3 w-3" />
-                                        Ketua
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[10px] font-normal text-muted-foreground">
-                                        Anggota
-                                      </Badge>
-                                    )}
-                                    <div className="flex shrink-0 items-center transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
-                                      <button
-                                        type="button"
-                                        onClick={() => handleToggleRole(div._id, uid, m.role)}
-                                        title={isLeader ? "Jadikan anggota" : "Jadikan ketua"}
-                                        aria-label={isLeader ? `Jadikan ${name} anggota` : `Jadikan ${name} ketua`}
-                                        className="rounded-md p-1.5 transition-colors hover:bg-accent"
-                                      >
-                                        <Crown
-                                          className={cn(
-                                            "h-3.5 w-3.5",
-                                            isLeader ? "text-amber-500" : "text-muted-foreground",
-                                          )}
-                                        />
-                                      </button>
-                                      {divisions.length > 1 && (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setMovingMember({
-                                              divisionId: div._id,
-                                              userId: uid,
-                                              name,
-                                              divisionName: div.name,
-                                            })
-                                          }
-                                          title="Pindah divisi"
-                                          aria-label={`Pindahkan ${name} ke divisi lain`}
-                                          className="rounded-md p-1.5 transition-colors hover:bg-accent"
-                                        >
-                                          <ArrowRightLeft className="h-3.5 w-3.5 text-muted-foreground" />
-                                        </button>
-                                      )}
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemoveMember(div._id, uid)}
-                                        title="Keluarkan dari divisi"
-                                        aria-label={`Keluarkan ${name} dari ${div.name}`}
-                                        className="rounded-md p-1.5 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                      >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })
-                            ) : (
-                              <div className="flex flex-col items-center rounded-lg border border-dashed px-4 py-5 text-center">
-                                <p className="text-xs font-medium">Divisi ini masih kosong</p>
-                                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                  Tambahkan member agar divisi siap bertugas
-                                </p>
-                                {!adding && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-2.5 h-7 gap-1.5 text-[11px]"
-                                    onClick={() => openAddMember(div._id)}
-                                  >
-                                    <UserPlus className="h-3.5 w-3.5" />
-                                    Tambah
-                                  </Button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </CollapsibleContent>
                       </div>
-                    </div>
-                  </Collapsible>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    )}
 
+                    {/* Member List */}
+                    {memberList.length > 0 ? (
+                      <div className="space-y-1">
+                        {memberList.map((m) => {
+                          const uid = getUid(m);
+                          const name = getName(m);
+                          const email = getEmail(m);
+                          const isLeader = m.role === "leader";
+                          return (
+                            <div
+                              key={uid}
+                              className="group flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-colors hover:bg-muted/40 text-xs"
+                            >
+                              <Avatar className="h-7 w-7 rounded-full shrink-0">
+                                <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary">
+                                  {initials(name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-semibold text-foreground">
+                                  {name}
+                                </p>
+                                {email && (
+                                  <p className="truncate text-2xs text-muted-foreground">
+                                    {email}
+                                  </p>
+                                )}
+                              </div>
+                              {isLeader ? (
+                                <Badge className="h-5 shrink-0 gap-1 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-2 text-2xs font-semibold rounded-full shadow-2xs">
+                                  <Crown className="h-3 w-3" />
+                                  Ketua
+                                </Badge>
+                              ) : (
+                                <span className="text-2xs text-muted-foreground px-1.5 py-0.5 rounded bg-muted/60">
+                                  Anggota
+                                </span>
+                              )}
+                              <div className="flex shrink-0 items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleRole(div._id, uid, m.role)}
+                                  title={isLeader ? "Jadikan anggota biasa" : "Jadikan ketua divisi"}
+                                  className="rounded-lg p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-amber-500"
+                                >
+                                  <Crown
+                                    className={cn(
+                                      "h-3.5 w-3.5",
+                                      isLeader ? "text-amber-500" : "text-muted-foreground",
+                                    )}
+                                  />
+                                </button>
+                                {divisions.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setMovingMember({
+                                        divisionId: div._id,
+                                        userId: uid,
+                                        name,
+                                        divisionName: div.name,
+                                      })
+                                    }
+                                    title="Pindahkan ke divisi lain"
+                                    className="rounded-lg p-1.5 transition-colors hover:bg-muted text-muted-foreground hover:text-foreground"
+                                  >
+                                    <ArrowRightLeft className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveMember(div._id, uid)}
+                                  title="Keluarkan dari divisi"
+                                  className="rounded-lg p-1.5 transition-colors hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-6 text-center rounded-xl border border-dashed border-border/80">
+                        <p className="text-xs font-semibold text-foreground">Divisi belum memiliki anggota</p>
+                        <p className="text-2xs text-muted-foreground mt-0.5">
+                          Tugaskan personil tim ke divisi ini agar koordinasi berjalan
+                        </p>
+                        {!adding && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2.5 h-7.5 rounded-lg text-2xs gap-1"
+                            onClick={() => openAddMember(div._id)}
+                          >
+                            <UserPlus className="h-3.5 w-3.5" />
+                            Tambah Anggota
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Move Member Dialog */}
       <Dialog
         open={!!movingMember}
         onOpenChange={(open) => {
@@ -844,22 +829,24 @@ export function DivisionManager({
           }
         }}
       >
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-base">Pindah anggota</DialogTitle>
+            <DialogTitle className="text-base font-bold">Pindah Divisi</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            <p className="text-sm text-muted-foreground">
-              Pindahkan <span className="font-medium text-foreground">{movingMember?.name}</span> dari{" "}
-              <span className="font-medium text-foreground">{movingMember?.divisionName}</span> ke divisi berikut.
+          <div className="space-y-3 py-2 text-xs">
+            <p className="text-muted-foreground">
+              Pindahkan <strong className="text-foreground">{movingMember?.name}</strong> dari{" "}
+              <strong className="text-foreground">{movingMember?.divisionName}</strong> ke divisi tujuan:
             </p>
             <div className="space-y-1.5">
-              <Label htmlFor="move-target">Divisi tujuan</Label>
+              <Label htmlFor="move-target" className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
+                Divisi Baru
+              </Label>
               <Select value={moveTargetDiv} onValueChange={setMoveTargetDiv}>
-                <SelectTrigger id="move-target" className="h-9">
+                <SelectTrigger id="move-target" className="h-9 rounded-xl text-xs bg-background/50">
                   <SelectValue placeholder="Pilih divisi tujuan" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {divisions
                     .filter((d) => d._id !== movingMember?.divisionId)
                     .map((d) => (
@@ -879,42 +866,44 @@ export function DivisionManager({
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setMovingMember(null)}>
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            <Button variant="ghost" className="rounded-xl text-xs" onClick={() => setMovingMember(null)}>
               Batal
             </Button>
-            <Button onClick={handleMoveMember} disabled={!moveTargetDiv}>
+            <Button className="rounded-xl text-xs shadow-xs" onClick={handleMoveMember} disabled={!moveTargetDiv}>
               Pindahkan
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Delete Division Dialog */}
       <AlertDialog
         open={!!confirmDeleteDiv}
         onOpenChange={(open) => {
           if (!open) setConfirmDeleteDiv(null);
         }}
       >
-        <AlertDialogContent size="sm">
+        <AlertDialogContent className="rounded-2xl p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus {confirmDeleteDiv?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Divisi dihapus dan {(confirmDeleteDiv?.members || []).length} anggota keluar dari divisi ini.
-              Anggota tetap menjadi member workspace atau event.
+            <AlertDialogTitle className="text-base font-bold text-destructive">
+              Hapus Divisi {confirmDeleteDiv?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground pt-1 leading-relaxed">
+              Divisi ini akan dihapus permanen. Sebanyak {(confirmDeleteDiv?.members || []).length} anggota yang terdaftar akan dilepaskan dari divisi ini tanpa menghapus akun mereka dari workspace.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2 sm:gap-0 mt-4">
+            <AlertDialogCancel className="rounded-xl text-xs">Batal</AlertDialogCancel>
             <AlertDialogAction
-              variant="destructive"
+              className="bg-destructive hover:bg-destructive/90 rounded-xl text-xs"
               onClick={handleConfirmDelete}
             >
-              Hapus
+              Hapus Divisi
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

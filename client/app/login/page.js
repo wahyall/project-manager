@@ -21,7 +21,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 
 export default function LoginPage() {
   const { login, resendVerification } = useAuth();
@@ -120,141 +119,139 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side: Login Card */}
+        {/* Right Side: Login Box */}
         <div className="lg:col-span-6 w-full max-w-md mx-auto">
-          <Card className="rounded-2xl border border-border/80 bg-card/85 backdrop-blur-xl shadow-xl overflow-hidden">
-            <div className="p-6 sm:p-8 space-y-6">
-              {/* Header */}
-              <div className="space-y-2 text-center lg:text-left">
-                <div className="lg:hidden inline-flex items-center justify-center mb-2">
-                  <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black flex items-center justify-center text-sm shadow-md ring-1 ring-primary/25">
-                    YN
-                  </div>
+          <div className="rounded-2xl border border-border/80 bg-card/90 backdrop-blur-xl shadow-xl p-6 sm:p-8 space-y-6">
+            {/* Header */}
+            <div className="space-y-2 text-center lg:text-left">
+              <div className="lg:hidden inline-flex items-center justify-center mb-2">
+                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black flex items-center justify-center text-sm shadow-md ring-1 ring-primary/25">
+                  YN
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-                  Selamat Datang
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Masuk ke akunmu untuk mengakses ruang kerja komunitas
-                </p>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                Selamat Datang
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Masuk ke akunmu untuk mengakses ruang kerja komunitas
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="flex items-start gap-2.5 bg-destructive/10 text-destructive text-xs px-3.5 py-3 rounded-xl border border-destructive/20 font-medium">
+                  <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span className="flex-1">{error}</span>
+                </div>
+              )}
+              {info && (
+                <div className="flex items-start gap-2.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs px-3.5 py-3 rounded-xl border border-emerald-500/20 font-medium">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span className="flex-1">{info}</span>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="nama@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    className="pl-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
+                  />
+                </div>
               </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <div className="flex items-start gap-2.5 bg-destructive/10 text-destructive text-xs px-3.5 py-3 rounded-xl border border-destructive/20 font-medium">
-                    <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span className="flex-1">{error}</span>
-                  </div>
-                )}
-                {info && (
-                  <div className="flex items-start gap-2.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs px-3.5 py-3 rounded-xl border border-emerald-500/20 font-medium">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span className="flex-1">{info}</span>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Email
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Password
                   </Label>
-                  <div className="relative">
-                    <Mail className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="nama@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      autoComplete="email"
-                      className="pl-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Password
-                    </Label>
-                    <Link
-                      href="/forgot-password"
-                      className="text-xs font-medium text-primary hover:underline underline-offset-2"
-                    >
-                      Lupa password?
-                    </Link>
-                  </div>
-                  <div className="relative">
-                    <Lock className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Minimal 8 karakter"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      autoComplete="current-password"
-                      className="pl-10 pr-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
-                      tabIndex={-1}
-                      aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {showResend && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-10 rounded-xl text-xs font-medium"
-                    onClick={handleResend}
-                    disabled={resendLoading || !email}
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-medium text-primary hover:underline underline-offset-2"
                   >
-                    {resendLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    {resendLoading ? "Mengirim ulang..." : "Kirim ulang email verifikasi"}
-                  </Button>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 mt-2 transition-all duration-200 active:scale-[0.98]"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Memproses...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Masuk ke Akun</span>
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-
-                <p className="text-xs text-muted-foreground text-center pt-2">
-                  Belum punya akun?{" "}
-                  <Link href="/register" className="font-semibold text-primary hover:underline underline-offset-2">
-                    Daftar di sini
+                    Lupa password?
                   </Link>
-                </p>
-              </form>
-            </div>
-          </Card>
+                </div>
+                <div className="relative">
+                  <Lock className="h-4 w-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/70" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Minimal 8 karakter"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    className="pl-10 pr-10 h-11 rounded-xl bg-background/50 border-border/80 focus-visible:ring-primary/25 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {showResend && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-10 rounded-xl text-xs font-medium"
+                  onClick={handleResend}
+                  disabled={resendLoading || !email}
+                >
+                  {resendLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  {resendLoading ? "Mengirim ulang..." : "Kirim ulang email verifikasi"}
+                </Button>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full h-11 rounded-xl font-semibold shadow-md gap-2 mt-2 transition-all duration-200 active:scale-[0.98]"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Memproses...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Masuk ke Akun</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                Belum punya akun?{" "}
+                <Link href="/register" className="font-semibold text-primary hover:underline underline-offset-2">
+                  Daftar di sini
+                </Link>
+              </p>
+            </form>
+          </div>
         </div>
       </div>
     </div>

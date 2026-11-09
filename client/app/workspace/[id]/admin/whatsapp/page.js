@@ -5,13 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWorkspace } from "@/contexts/workspace-context";
 import api from "@/lib/api";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -108,7 +101,6 @@ export default function AdminWhatsAppPage({ params }) {
     try {
       await api.post(`/workspaces/${id}/whatsapp/reconnect`);
       toast.success("Mencoba menghubungkan ulang WhatsApp...");
-      // Poll faster during reconnect
       setTimeout(fetchStatus, 3000);
       setTimeout(fetchStatus, 6000);
       setTimeout(fetchStatus, 10000);
@@ -131,7 +123,7 @@ export default function AdminWhatsAppPage({ params }) {
       await api.post(`/workspaces/${id}/whatsapp/test`, testForm);
       toast.success("Pesan percobaan ditambahkan ke antrian");
       setTestForm({ number: "", message: "" });
-      setTimeout(fetchLogs, 2000); // refresh logs after a bit
+      setTimeout(fetchLogs, 2000);
     } catch (error) {
       toast.error(error.response?.data?.message || "Gagal mengirim pesan");
     } finally {
@@ -143,20 +135,20 @@ export default function AdminWhatsAppPage({ params }) {
     switch (logStatus) {
       case "sent":
         return (
-          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white text-2xs rounded-full px-2">
+          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-semibold rounded-full px-2 py-0.5">
             Dikirim
           </Badge>
         );
       case "failed":
         return (
-          <Badge variant="destructive" className="text-2xs rounded-full px-2">
+          <Badge variant="destructive" className="text-[10px] font-semibold rounded-full px-2 py-0.5">
             Gagal
           </Badge>
         );
       case "pending":
       default:
         return (
-          <Badge variant="secondary" className="text-2xs rounded-full px-2">
+          <Badge variant="secondary" className="text-[10px] font-semibold rounded-full px-2 py-0.5">
             Tertunda
           </Badge>
         );
@@ -167,7 +159,7 @@ export default function AdminWhatsAppPage({ params }) {
     return (
       <div className="flex flex-col justify-center items-center h-[60vh] gap-3 text-muted-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-xs">Memeriksa koneksi WhatsApp Gateway...</p>
+        <p className="text-xs font-semibold">Memeriksa koneksi WhatsApp Gateway...</p>
       </div>
     );
   }
@@ -178,7 +170,7 @@ export default function AdminWhatsAppPage({ params }) {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 pb-24 md:pb-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-border/60">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-border/60">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Link
@@ -189,13 +181,13 @@ export default function AdminWhatsAppPage({ params }) {
               Kembali ke Pengaturan
             </Link>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
               <MessageSquare className="h-5 w-5" />
             </div>
             Admin WhatsApp Gateway
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Kelola sesi WhatsApp Web untuk mengirimkan notifikasi deadline, broadcast event, dan info Baitul Maal
           </p>
         </div>
@@ -210,28 +202,29 @@ export default function AdminWhatsAppPage({ params }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Status Card */}
-        <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs flex flex-col justify-between">
-          <CardHeader className="pb-3">
+        <div className="rounded-2xl border border-border/80 shadow-xs bg-card/90 backdrop-blur-xs p-5 sm:p-6 flex flex-col justify-between space-y-5">
+          <div className="space-y-1">
             <div className="flex items-center justify-between gap-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                 <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 Status Perangkat
-              </CardTitle>
+              </h3>
               {status?.connected ? (
-                <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 rounded-full px-2.5 py-0.5 text-2xs font-semibold gap-1">
+                <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 rounded-full px-2.5 py-0.5 text-[10px] font-semibold gap-1">
                   <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Terhubung
                 </Badge>
               ) : (
-                <Badge variant="outline" className="border-destructive/30 text-destructive bg-destructive/10 rounded-full px-2.5 py-0.5 text-2xs font-semibold gap-1">
+                <Badge variant="outline" className="border-destructive/30 text-destructive bg-destructive/10 rounded-full px-2.5 py-0.5 text-[10px] font-semibold gap-1">
                   <XCircle className="w-3 h-3" /> Terputus
                 </Badge>
               )}
             </div>
-            <CardDescription className="text-xs">
+            <p className="text-xs text-muted-foreground">
               Tautkan akun WhatsApp organisasi melalui pemindaian QR code
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+
+          <div className="space-y-4">
             {!status?.connected && status?.qrCodeStr ? (
               <div className="flex flex-col items-center justify-center p-6 border rounded-2xl bg-muted/20 border-border/80">
                 <div className="p-3 bg-white rounded-2xl shadow-sm border mb-4">
@@ -257,7 +250,7 @@ export default function AdminWhatsAppPage({ params }) {
                 <div className="h-14 w-14 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mb-3 text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="h-7 w-7" />
                 </div>
-                <h3 className="font-semibold text-sm text-foreground">
+                <h3 className="font-bold text-sm text-foreground">
                   WhatsApp Gateway Aktif
                 </h3>
                 <p className="text-xs text-center text-muted-foreground mt-1 max-w-xs">
@@ -278,7 +271,7 @@ export default function AdminWhatsAppPage({ params }) {
                 size="sm"
                 onClick={handleReconnect}
                 disabled={reconnecting}
-                className="rounded-xl h-8 text-xs gap-1.5 shadow-2xs"
+                className="rounded-xl h-8 text-xs font-semibold gap-1.5 shadow-2xs"
               >
                 {reconnecting ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -288,25 +281,26 @@ export default function AdminWhatsAppPage({ params }) {
                 {status?.connected ? "Hubungkan Ulang" : "Segarkan QR"}
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Test Message Card */}
-        <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs flex flex-col justify-between">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <div className="rounded-2xl border border-border/80 shadow-xs bg-card/90 backdrop-blur-xs p-5 sm:p-6 flex flex-col justify-between space-y-5">
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
               <Send className="w-4 h-4 text-primary" />
               Uji Coba Pengiriman
-            </CardTitle>
-            <CardDescription className="text-xs">
+            </h3>
+            <p className="text-xs text-muted-foreground">
               Kirim pesan simulasi ke nomor pribadi untuk memverifikasi fungsionalitas bot
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+
+          <div>
             {status?.connected ? (
               <form onSubmit={handleTestSend} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">
+                  <label className="text-xs font-semibold text-foreground">
                     Nomor WhatsApp Tujuan
                   </label>
                   <Input
@@ -316,14 +310,14 @@ export default function AdminWhatsAppPage({ params }) {
                       setTestForm({ ...testForm, number: e.target.value })
                     }
                     disabled={sendingTest}
-                    className="rounded-xl h-9 text-xs bg-background/50"
+                    className="rounded-xl h-10 text-xs bg-background/50"
                   />
-                  <p className="text-2xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Format lokal (08...) atau internasional (628...)
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">
+                  <label className="text-xs font-semibold text-foreground">
                     Teks Pesan
                   </label>
                   <Textarea
@@ -340,118 +334,117 @@ export default function AdminWhatsAppPage({ params }) {
                 <Button
                   type="submit"
                   disabled={sendingTest || !status.connected}
-                  className="w-full rounded-xl h-9 text-xs gap-2 shadow-xs"
+                  className="w-full rounded-xl h-10 text-xs font-semibold gap-2 shadow-xs active:scale-[0.98] transition-all"
                 >
                   {sendingTest ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <Send className="w-3.5 h-3.5" />
                   )}
-                  Kirim Pesan Tes
+                  <span>Kirim Pesan Tes</span>
                 </Button>
               </form>
             ) : (
               <div className="h-full flex flex-col items-center justify-center p-8 text-center border border-dashed border-border/80 rounded-2xl bg-muted/10">
                 <ShieldAlert className="w-10 h-10 text-amber-500 mb-2 opacity-60" />
-                <p className="text-xs font-medium text-foreground">
+                <p className="text-xs font-semibold text-foreground">
                   Perangkat Belum Terhubung
                 </p>
-                <p className="text-2xs text-muted-foreground mt-1 max-w-xs">
+                <p className="text-[11px] text-muted-foreground mt-1 max-w-xs">
                   Selesaikan pemindaian QR code di sebelah kiri untuk menguji pengiriman pesan.
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Logs Table */}
-      <Card className="rounded-2xl border-border/80 shadow-xs bg-card/60 backdrop-blur-xs">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+      <div className="rounded-2xl border border-border/80 shadow-xs bg-card/90 backdrop-blur-xs p-5 sm:p-6 space-y-4">
+        <div className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base font-semibold">
+            <h3 className="text-base font-bold text-foreground">
               Log Riwayat Pengiriman
-            </CardTitle>
-            <CardDescription className="text-xs">
+            </h3>
+            <p className="text-xs text-muted-foreground">
               10 pesan pemberitahuan terakhir yang diproses oleh antrian bot
-            </CardDescription>
+            </p>
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={fetchLogs}
-            className="rounded-xl h-8 text-xs gap-1.5 shadow-2xs"
+            className="rounded-xl h-8 text-xs font-semibold gap-1.5 shadow-2xs"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Refresh
+            <span>Refresh</span>
           </Button>
-        </CardHeader>
-        <CardContent>
-          {logs.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground text-xs border rounded-xl border-dashed border-border/80">
-              Belum ada riwayat pengiriman pesan WhatsApp.
-            </div>
-          ) : (
-            <div className="border border-border/70 rounded-xl overflow-hidden shadow-2xs">
-              <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow>
-                    <TableHead className="text-xs">Penerima</TableHead>
-                    <TableHead className="text-xs">Tipe Notifikasi</TableHead>
-                    <TableHead className="text-xs">Status</TableHead>
-                    <TableHead className="text-xs">Waktu</TableHead>
-                    <TableHead className="text-xs text-right">Percobaan</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map((log) => (
-                    <TableRow key={log._id} className="hover:bg-muted/30 transition-colors">
-                      <TableCell>
-                        <div className="font-medium text-xs text-foreground">
-                          {log.recipientId?.name || "Unknown"}
-                        </div>
-                        <div className="text-2xs text-muted-foreground tabular-nums">
-                          {log.recipientNumber}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize text-2xs rounded-md">
-                          {log.notificationType?.replace?.("_", " ") || "Pesan"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {renderStatusBadge(log.status)}
-                        {log.error && (
-                          <div
-                            className="text-2xs text-destructive mt-1 max-w-[150px] truncate"
-                            title={log.error}
-                          >
-                            {log.error}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className="text-xs text-muted-foreground tabular-nums"
-                          title={new Date(log.createdAt).toLocaleString("id-ID")}
+        </div>
+
+        {logs.length === 0 ? (
+          <div className="text-center py-10 text-muted-foreground text-xs border rounded-xl border-dashed border-border/80">
+            Belum ada riwayat pengiriman pesan WhatsApp.
+          </div>
+        ) : (
+          <div className="border border-border/70 rounded-xl overflow-hidden shadow-2xs">
+            <Table>
+              <TableHeader className="bg-muted/40">
+                <TableRow>
+                  <TableHead className="text-xs font-semibold">Penerima</TableHead>
+                  <TableHead className="text-xs font-semibold">Tipe Notifikasi</TableHead>
+                  <TableHead className="text-xs font-semibold">Status</TableHead>
+                  <TableHead className="text-xs font-semibold">Waktu</TableHead>
+                  <TableHead className="text-xs font-semibold text-right">Percobaan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log._id} className="hover:bg-muted/30 transition-colors">
+                    <TableCell>
+                      <div className="font-semibold text-xs text-foreground">
+                        {log.recipientId?.name || "Unknown"}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground tabular-nums">
+                        {log.recipientNumber}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize text-[10px] font-medium rounded-md">
+                        {log.notificationType?.replace?.("_", " ") || "Pesan"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {renderStatusBadge(log.status)}
+                      {log.error && (
+                        <div
+                          className="text-[10px] text-destructive mt-1 max-w-[150px] truncate"
+                          title={log.error}
                         >
-                          {formatDistanceToNow(new Date(log.createdAt), {
-                            addSuffix: true,
-                            locale: localeId,
-                          })}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-xs text-right tabular-nums text-muted-foreground">
-                        {log.attempts || 0}x
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                          {log.error}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className="text-xs text-muted-foreground tabular-nums"
+                        title={new Date(log.createdAt).toLocaleString("id-ID")}
+                      >
+                        {formatDistanceToNow(new Date(log.createdAt), {
+                          addSuffix: true,
+                          locale: localeId,
+                        })}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-xs text-right tabular-nums text-muted-foreground font-semibold">
+                      {log.attempts || 0}x
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
