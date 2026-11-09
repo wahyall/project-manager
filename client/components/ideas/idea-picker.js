@@ -17,7 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { IDEA_STATUS_CONFIG } from "@/components/ideas/idea-status-badge";
-import { Check, ChevronDown, ChevronUp, Loader2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Lightbulb, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function IdeaPicker({
@@ -32,8 +32,6 @@ export function IdeaPicker({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Diambil saat popover pertama kali dibuka, bukan saat render,
-  // supaya form Event tidak menanggung permintaan yang sering tak terpakai.
   const loadOptions = useCallback(async () => {
     if (loaded || loading || !workspaceId) return;
     setLoading(true);
@@ -55,8 +53,6 @@ export function IdeaPicker({
     if (open) loadOptions();
   }, [open, loadOptions]);
 
-  // Ide yang sudah dipilih tetap ditampilkan sebagai chip meskipun
-  // daftar opsi belum dimuat, memakai judul dari opsi bila tersedia.
   const selected = value.map((id) => {
     const found = options.find((o) => o._id === id);
     return { _id: id, title: found?.title || "Ide", status: found?.status };
@@ -70,14 +66,12 @@ export function IdeaPicker({
     );
   };
 
-  // Ide berstatus diarsipkan disembunyikan dari pilihan, kecuali
-  // kalau sudah terlanjur terpilih sebelumnya.
   const selectable = options.filter(
     (o) => o.status !== "diarsipkan" || value.includes(o._id),
   );
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -86,18 +80,19 @@ export function IdeaPicker({
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
-            className="h-auto min-h-9 w-full justify-between px-3 py-2 font-normal"
+            className="h-auto min-h-10 w-full justify-between rounded-xl border-border/80 bg-background/80 px-3 py-2 text-sm font-normal shadow-2xs hover:border-border hover:bg-background transition-all"
           >
             {selected.length === 0 ? (
-              <span className="text-muted-foreground">
-                Pilih ide yang diwujudkan
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <Lightbulb className="h-4 w-4 opacity-60" />
+                <span>Pilih ide yang diwujudkan...</span>
               </span>
             ) : (
-              <span className="flex flex-wrap gap-1 pr-2">
+              <span className="flex flex-wrap gap-1.5 pr-2">
                 {selected.map((s) => (
                   <span
                     key={s._id}
-                    className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400"
                   >
                     <span className="max-w-[160px] truncate">{s.title}</span>
                     <span
@@ -108,7 +103,7 @@ export function IdeaPicker({
                         e.stopPropagation();
                         toggle(s._id);
                       }}
-                      className="rounded-sm hover:bg-foreground/10"
+                      className="rounded p-0.5 hover:bg-amber-500/20 transition-colors"
                     >
                       <X className="h-3 w-3" />
                     </span>
@@ -121,28 +116,28 @@ export function IdeaPicker({
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-[--radix-popover-trigger-width] p-0"
+          className="w-[--radix-popover-trigger-width] rounded-2xl border-border/80 bg-popover/95 p-1 backdrop-blur-md shadow-xl"
           align="start"
         >
-          <Command>
-            <CommandInput placeholder="Cari ide..." />
-            <CommandList>
+          <Command className="bg-transparent">
+            <CommandInput placeholder="Cari ide..." className="h-9 text-xs" />
+            <CommandList className="max-h-60 p-1">
               {loading && (
-                <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   Memuat ide...
                 </div>
               )}
 
               {error && (
-                <div className="px-3 py-6 text-center text-sm text-destructive">
+                <div className="px-3 py-4 text-center text-xs text-destructive">
                   {error}
                 </div>
               )}
 
               {!loading && !error && (
                 <>
-                  <CommandEmpty>
+                  <CommandEmpty className="py-4 text-center text-xs text-muted-foreground">
                     Belum ada ide di Bank Ide workspace ini.
                   </CommandEmpty>
                   <CommandGroup>
@@ -156,24 +151,33 @@ export function IdeaPicker({
                           key={idea._id}
                           value={idea.title}
                           onSelect={() => toggle(idea._id)}
-                          className="gap-2"
+                          className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs cursor-pointer"
                         >
-                          <Check
+                          <div
                             className={cn(
-                              "h-4 w-4 shrink-0",
-                              picked ? "opacity-100" : "opacity-0",
+                              "flex h-4 w-4 shrink-0 items-center justify-center rounded-md border",
+                              picked
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-muted-foreground/30",
                             )}
-                          />
+                          >
+                            <Check
+                              className={cn(
+                                "h-3 w-3",
+                                picked ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                          </div>
                           <span
                             className={cn(
                               "h-2 w-2 shrink-0 rounded-full",
                               config.dotClass,
                             )}
                           />
-                          <span className="min-w-0 flex-1 truncate">
+                          <span className="min-w-0 flex-1 truncate font-medium text-foreground">
                             {idea.title}
                           </span>
-                          <span className="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">
+                          <span className="flex shrink-0 items-center gap-0.5 rounded-md bg-muted/60 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
                             <ChevronUp className="h-3 w-3" />
                             {idea.voteCount}
                           </span>
@@ -188,8 +192,8 @@ export function IdeaPicker({
         </PopoverContent>
       </Popover>
 
-      <p className="text-xs text-muted-foreground">
-        Event ini menjadi wujud nyata dari ide yang dipilih
+      <p className="text-[11px] text-muted-foreground pl-0.5">
+        Event ini akan ditautkan sebagai realisasi dari ide yang dipilih
       </p>
     </div>
   );

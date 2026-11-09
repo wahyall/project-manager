@@ -103,16 +103,16 @@ export function DivisionSpreadsheetTab({
   // Jika Google Spreadsheet belum dibuat
   if (!embedUrl) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[460px] p-8 border-2 border-dashed border-border rounded-xl text-center bg-card shadow-sm space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center min-h-[460px] p-8 border border-border/80 rounded-2xl text-center bg-card/60 backdrop-blur-xs shadow-xs space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs">
           <FileSpreadsheet className="w-8 h-8" />
         </div>
 
         <div className="space-y-1.5 max-w-md">
-          <h3 className="text-lg font-bold text-foreground">
+          <h3 className="text-base font-bold text-foreground">
             Google Spreadsheet Divisi Belum Dibuat
           </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Hubungkan tracking divisi dengan Google Spreadsheet resmi. Sistem akan
             otomatis menyiapkan 3 sheet tab: <strong>Kas Bulanan</strong>,{" "}
             <strong>Infaq Anggota</strong>, dan <strong>Data Jamaah</strong>.
@@ -123,7 +123,7 @@ export function DivisionSpreadsheetTab({
           <Button
             onClick={handleCreateGoogleSheet}
             disabled={creating}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-md px-6 py-2.5 h-auto mt-2"
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs px-5 py-2.5 h-auto rounded-xl mt-2"
           >
             {creating ? (
               <>
@@ -145,11 +145,11 @@ export function DivisionSpreadsheetTab({
   return (
     <div className="space-y-4">
       {/* ── Control Header ──────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card/60 backdrop-blur-xs p-3.5 rounded-2xl border border-border/80 shadow-xs">
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-semibold gap-1 text-xs"
+            className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 font-bold gap-1 text-[11px] rounded-lg"
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
             Google Sheets Terhubung
@@ -166,7 +166,7 @@ export function DivisionSpreadsheetTab({
               size="sm"
               disabled={syncing}
               onClick={handleSyncData}
-              className="gap-1.5 text-xs text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+              className="gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 h-8 rounded-xl font-semibold"
             >
               {syncing ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -181,7 +181,7 @@ export function DivisionSpreadsheetTab({
             variant="ghost"
             size="sm"
             onClick={handleRefreshIframe}
-            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            className="gap-1.5 text-xs text-muted-foreground hover:text-foreground h-8 rounded-xl font-semibold"
           >
             <RotateCw className="w-3.5 h-3.5" />
             Muat Ulang
@@ -191,7 +191,7 @@ export function DivisionSpreadsheetTab({
             variant="default"
             size="sm"
             onClick={handleOpenExternal}
-            className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white h-8 rounded-xl font-semibold shadow-xs"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Buka di Google Sheets
@@ -200,7 +200,7 @@ export function DivisionSpreadsheetTab({
       </div>
 
       {/* ── Iframe Container ────────────────────────────── */}
-      <div className="relative w-full h-[650px] rounded-xl border border-border bg-background shadow-sm overflow-hidden">
+      <div className="relative w-full h-[650px] rounded-2xl border border-border/80 bg-background shadow-xs overflow-hidden">
         <iframe
           key={iframeKey}
           src={embedUrl}

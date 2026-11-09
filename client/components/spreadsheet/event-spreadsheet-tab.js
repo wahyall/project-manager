@@ -28,17 +28,13 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
     event?.googleSpreadsheetId || null
   );
   const [creating, setCreating] = useState(false);
-  const [key, setKey] = useState(0); // For forcing iframe reload
+  const [key, setKey] = useState(0);
 
-  // Helper to build iframe src URL with minimal UI
   const getEmbedUrl = (url, id) => {
     if (id) {
       return `https://docs.google.com/spreadsheets/d/${id}/edit`;
     }
     if (url) {
-      if (url.includes("?")) {
-        return `${url}`;
-      }
       return `${url}`;
     }
     return "";
@@ -85,22 +81,21 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
   // If event does not have Google Spreadsheet yet
   if (!embedUrl) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 border rounded-lg bg-background text-center space-y-4">
-        <div className="p-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+      <div className="flex flex-col items-center justify-center p-12 rounded-2xl border border-dashed border-border/80 bg-card/40 text-center space-y-4 shadow-2xs backdrop-blur-xs">
+        <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-2xs">
           <FileSpreadsheet className="h-10 w-10" />
         </div>
-        <div className="max-w-md space-y-1">
-          <h3 className="text-lg font-semibold">Google Spreadsheet Event</h3>
-          <p className="text-sm text-muted-foreground">
-            Event ini belum memiliki Google Spreadsheet. Buat spreadsheet baru
-            untuk mengelola data event ini secara fleksibel.
+        <div className="max-w-md space-y-1.5">
+          <h3 className="text-base font-bold text-foreground tracking-tight">Google Spreadsheet Event</h3>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Event ini belum terhubung ke Google Spreadsheet. Buat lembar kerja baru untuk mengelola rekap, absensi, atau anggaran secara fleksibel dan kolaboratif.
           </p>
         </div>
         {!isReadOnly && (
           <Button
             onClick={handleCreateGoogleSheet}
             disabled={creating}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="h-9.5 rounded-xl gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs"
           >
             {creating ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -115,22 +110,19 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
   }
 
   return (
-    <div className="flex flex-col gap-0 border rounded-lg overflow-hidden bg-background">
+    <div className="flex flex-col gap-0 border border-border/80 rounded-2xl overflow-hidden bg-card/60 shadow-2xs backdrop-blur-xs">
       {/* ── Header Bar ──────────────────────────────── */}
-      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/60 bg-muted/40">
         <div className="flex items-center gap-2">
           <Table2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-xs font-bold text-foreground tracking-tight">
             Google Spreadsheet
           </span>
           {isReadOnly && (
-            <Badge
-              variant="secondary"
-              className="text-[10px] h-5 gap-1 font-normal"
-            >
-              <Eye className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border border-border/70 bg-muted/60 text-muted-foreground">
+              <Eye className="h-2.5 w-2.5" />
               Read-only
-            </Badge>
+            </span>
           )}
         </div>
 
@@ -138,7 +130,7 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs gap-1"
+            className="h-7.5 px-2.5 text-xs rounded-lg gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={handleRefreshIframe}
             title="Muat ulang spreadsheet"
           >
@@ -149,23 +141,25 @@ export function EventSpreadsheetTab({ event, workspaceId }) {
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-xs gap-1 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+            className="h-7.5 px-2.5 text-xs rounded-lg gap-1.5 border-border/80 shadow-2xs"
             onClick={handleOpenExternal}
+            title="Buka di Google Sheets tab baru"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            <span>Buka di Google Sheets</span>
+            <span className="hidden sm:inline">Buka di Tab Baru</span>
           </Button>
         </div>
       </div>
 
-      {/* ── Google Spreadsheet iframe ───────────────── */}
-      <div className="relative w-full h-[680px] bg-background">
+      {/* ── Iframe Container ────────────────────────── */}
+      <div className="relative w-full h-[650px] bg-background">
         <iframe
           key={key}
           src={embedUrl}
           className="w-full h-full border-0"
-          allow="clipboard-write; auto-fill; fullscreen"
-          title={`Google Spreadsheet - ${event?.title || "Event"}`}
+          title="Google Spreadsheet Embed"
+          allow="autoplay; encrypted-media; fullscreen"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         />
       </div>
     </div>

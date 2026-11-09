@@ -2,8 +2,6 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { id as localeId } from "date-fns/locale/id";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +20,9 @@ import {
   User,
   Pin,
   PinOff,
+  Clock,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function BoardCard({
   board,
@@ -41,60 +41,75 @@ export function BoardCard({
     : "";
 
   return (
-    <Card
-      className="group overflow-hidden cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200 flex flex-col"
+    <div
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
+      className="group relative flex flex-col rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs shadow-2xs transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:bg-card/90 hover:shadow-md cursor-pointer overflow-hidden text-left"
       onClick={onClick}
     >
       {/* Thumbnail / banner / gradient header */}
-      <div className="h-32 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-yellow-950/20 flex items-center justify-center relative overflow-hidden shrink-0">
+      <div className="relative h-34 w-full shrink-0 overflow-hidden bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-yellow-500/10 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-yellow-950/20 flex items-center justify-center">
         {board.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={board.thumbnail}
             alt={board.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <Lightbulb className="h-10 w-10 text-amber-400/40" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500/80 shadow-2xs">
+            <Lightbulb className="h-6 w-6" />
+          </div>
         )}
+
+        {/* Subtle bottom shadow overlay on thumbnail */}
+        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-background/40 to-transparent pointer-events-none" />
 
         {/* Mading badge */}
         {board.isMading && (
-          <div className="absolute top-2 left-2 z-10">
-            <Badge className="bg-purple-600/95 hover:bg-purple-600 text-white font-medium text-[10px] gap-1 shadow-sm px-2 py-0.5 border-none">
-              <Pin className="h-3 w-3" />
+          <div className="absolute top-2.5 left-2.5 z-10">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/90 text-white font-medium text-[11px] px-2.5 py-0.5 shadow-xs backdrop-blur-xs">
+              <Pin className="h-3 w-3 fill-current" />
               Mading
-            </Badge>
+            </span>
           </div>
         )}
 
         {/* Actions menu */}
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 bg-background/80 dark:bg-neutral-800/80 backdrop-blur-sm shadow-sm hover:bg-background"
+                className="h-7 w-7 rounded-lg bg-background/80 backdrop-blur-md shadow-2xs hover:bg-background border border-border/60"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="rounded-xl border-border/80 shadow-lg">
               <DropdownMenuItem
+                className="rounded-lg text-xs"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (onEdit) onEdit();
                   else if (onRename) onRename();
                 }}
               >
-                <Pencil className="h-4 w-4 mr-2" />
+                <Pencil className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                 Edit Board
               </DropdownMenuItem>
 
               {onToggleMading && (
                 <DropdownMenuItem
+                  className="rounded-lg text-xs"
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleMading();
@@ -102,12 +117,12 @@ export function BoardCard({
                 >
                   {board.isMading ? (
                     <>
-                      <PinOff className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <PinOff className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                       Hapus dari Mading
                     </>
                   ) : (
                     <>
-                      <Pin className="h-4 w-4 mr-2 text-purple-500" />
+                      <Pin className="h-3.5 w-3.5 mr-2 text-purple-500" />
                       Jadikan Mading
                     </>
                   )}
@@ -115,24 +130,25 @@ export function BoardCard({
               )}
 
               <DropdownMenuItem
+                className="rounded-lg text-xs"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDuplicate?.();
                 }}
               >
-                <Copy className="h-4 w-4 mr-2" />
+                <Copy className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                 Duplikasi
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
+                className="rounded-lg text-xs text-destructive focus:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete?.();
                 }}
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="h-3.5 w-3.5 mr-2" />
                 Hapus
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -140,24 +156,37 @@ export function BoardCard({
         </div>
       </div>
 
-      <CardContent className="p-3.5 flex-1 flex flex-col justify-between">
-        <h3 className="text-sm font-semibold truncate mb-1.5">{board.name}</h3>
-        <div className="flex flex-col text-xs text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <LayoutGrid className="h-3 w-3" />
-              {board.widgetCount || 0}
+      {/* Board Body */}
+      <div className="flex flex-1 flex-col justify-between p-4 space-y-3">
+        <div>
+          <h3 className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+            {board.name}
+          </h3>
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/50">
+          <div className="flex items-center gap-2.5">
+            <span className="flex items-center gap-1 font-medium">
+              <LayoutGrid className="h-3.5 w-3.5 text-primary/70" />
+              <span>{board.widgetCount || 0} widget</span>
             </span>
             {board.createdBy && (
               <span className="flex items-center gap-1">
-                <User className="h-3 w-3" />
-                {board.createdBy.name?.split(" ")[0]}
+                <User className="h-3.5 w-3.5 text-muted-foreground/60" />
+                <span className="truncate max-w-[80px]">
+                  {board.createdBy.name?.split(" ")[0]}
+                </span>
               </span>
             )}
           </div>
-          <span className="ml-auto mt-2">{timeAgo}</span>
+          {timeAgo && (
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground/80">
+              <Clock className="h-3 w-3 opacity-60" />
+              {timeAgo}
+            </span>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -8,7 +8,6 @@ import {
 } from "@hello-pangea/dnd";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   CalendarDays,
@@ -25,7 +24,7 @@ const STATUS_COLUMNS = [
     status: "upcoming",
     label: "Upcoming",
     icon: Clock,
-    headerClass: "bg-blue-500/5 border-blue-500/10",
+    headerClass: "border-blue-500/20",
     iconClass: "bg-blue-500/10 text-blue-500",
     countClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   },
@@ -33,7 +32,7 @@ const STATUS_COLUMNS = [
     status: "ongoing",
     label: "Ongoing",
     icon: Play,
-    headerClass: "bg-emerald-500/5 border-emerald-500/10",
+    headerClass: "border-emerald-500/20",
     iconClass: "bg-emerald-500/10 text-emerald-500",
     countClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   },
@@ -41,9 +40,9 @@ const STATUS_COLUMNS = [
     status: "completed",
     label: "Completed",
     icon: CheckCheck,
-    headerClass: "bg-gray-500/5 border-gray-500/10",
-    iconClass: "bg-gray-500/10 text-gray-400",
-    countClass: "bg-gray-500/10 text-gray-500",
+    headerClass: "border-border/80",
+    iconClass: "bg-muted text-muted-foreground",
+    countClass: "bg-muted text-muted-foreground",
   },
 ];
 
@@ -54,7 +53,6 @@ function getDivisionRef(event) {
 /**
  * EventKanbanBoard — Board kanban untuk Event, dikelompokkan per status
  * (Upcoming → Ongoing → Completed). Drag antar kolom mengubah status event.
- * Badge divisi menunjukkan Divisi Workspace pemilik tiap event.
  */
 export function EventKanbanBoard({
   events = [],
@@ -106,24 +104,24 @@ export function EventKanbanBoard({
           return (
             <div
               key={col.status}
-              className={cn("rounded-xl border", col.headerClass)}
+              className={cn("rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs overflow-hidden flex flex-col", col.headerClass)}
             >
               {/* Column header */}
-              <div className="flex items-center gap-2 px-3 py-2.5">
+              <div className="flex items-center gap-2.5 px-3.5 py-3 border-b border-border/80 bg-muted/20">
                 <div
                   className={cn(
-                    "h-7 w-7 rounded-lg flex items-center justify-center",
+                    "h-7 w-7 rounded-xl flex items-center justify-center shrink-0",
                     col.iconClass,
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-sm font-semibold flex-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-foreground flex-1">
                   {col.label}
                 </span>
                 <span
                   className={cn(
-                    "text-[11px] font-bold h-5 min-w-5 px-1.5 rounded-full flex items-center justify-center",
+                    "text-[10px] font-bold h-5 min-w-5 px-2 rounded-full flex items-center justify-center",
                     col.countClass,
                   )}
                 >
@@ -138,7 +136,7 @@ export function EventKanbanBoard({
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={cn(
-                      "px-2.5 pb-2.5 space-y-2 min-h-[120px] rounded-b-xl transition-colors",
+                      "p-3 space-y-2.5 min-h-[140px] transition-colors",
                       snapshot.isDraggingOver && "bg-primary/5",
                     )}
                   >
@@ -156,91 +154,87 @@ export function EventKanbanBoard({
                           index={index}
                         >
                           {(dragProvided, dragSnapshot) => (
-                            <Card
+                            <div
                               ref={dragProvided.innerRef}
                               {...dragProvided.draggableProps}
                               {...dragProvided.dragHandleProps}
                               className={cn(
-                                "cursor-pointer transition-shadow hover:shadow-md",
+                                "group rounded-xl border border-border/80 bg-background/95 p-3 shadow-2xs transition-all duration-200 cursor-pointer overflow-hidden",
+                                "hover:shadow-md hover:border-border hover:-translate-y-0.5",
                                 dragSnapshot.isDragging &&
-                                  "shadow-lg ring-1 ring-primary/30",
+                                  "shadow-xl rotate-[1.5deg] scale-[1.02] ring-2 ring-primary/30 z-50",
                               )}
                               onClick={() => onEventClick?.(event)}
                             >
-                              <CardContent className="p-0">
-                                <div
-                                  className="h-1 rounded-t-lg"
-                                  style={{
-                                    backgroundColor:
-                                      event.color || "#8B5CF6",
-                                  }}
-                                />
-                                <div className="p-3 space-y-2">
-                                  <h4 className="font-medium text-[13px] leading-snug line-clamp-2">
-                                    {event.title}
-                                  </h4>
-                                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                                    <CalendarDays className="h-3 w-3 shrink-0" />
-                                    <span>
-                                      {format(
-                                        new Date(event.startDate),
-                                        "dd MMM yyyy",
-                                        { locale: localeId },
-                                      )}
-                                    </span>
-                                    <span>→</span>
-                                    <span>
-                                      {format(
-                                        new Date(event.endDate),
-                                        "dd MMM yyyy",
-                                        { locale: localeId },
-                                      )}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center justify-between gap-2">
-                                    {division ? (
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-[10px] h-5 px-1.5 gap-1 max-w-[140px]"
-                                      >
-                                        {division.color && (
-                                          <span
-                                            className="h-2 w-2 rounded-full shrink-0"
-                                            style={{
-                                              backgroundColor:
-                                                division.color,
-                                            }}
-                                          />
-                                        )}
-                                        <span className="truncate">
-                                          {division.name}
-                                        </span>
-                                      </Badge>
-                                    ) : (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-[10px] h-5 px-1.5 text-muted-foreground"
-                                      >
-                                        Tanpa Divisi
-                                      </Badge>
+                              <div
+                                className="-mt-3 -mx-3 mb-2.5 h-1"
+                                style={{
+                                  backgroundColor:
+                                    event.color || "#8B5CF6",
+                                }}
+                              />
+                              <div className="space-y-2">
+                                <h4 className="font-semibold text-xs leading-snug line-clamp-2 text-foreground group-hover:text-primary transition-colors">
+                                  {event.title}
+                                </h4>
+                                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium">
+                                  <CalendarDays className="h-3 w-3 shrink-0" />
+                                  <span>
+                                    {format(
+                                      new Date(event.startDate),
+                                      "dd MMM yyyy",
+                                      { locale: localeId },
                                     )}
-                                    {(event.taskCount || 0) > 0 && (
-                                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
-                                        <ListTodo className="h-3 w-3" />
-                                        {event.taskCount}
-                                      </span>
+                                  </span>
+                                  <span>→</span>
+                                  <span>
+                                    {format(
+                                      new Date(event.endDate),
+                                      "dd MMM yyyy",
+                                      { locale: localeId },
                                     )}
-                                  </div>
+                                  </span>
                                 </div>
-                              </CardContent>
-                            </Card>
+                                <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40">
+                                  {division ? (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-[10px] h-5 px-1.5 gap-1 max-w-[140px] font-semibold rounded-md"
+                                    >
+                                      {division.color && (
+                                        <span
+                                          className="h-1.5 w-1.5 rounded-full shrink-0"
+                                          style={{
+                                            backgroundColor:
+                                              division.color,
+                                          }}
+                                        />
+                                      )}
+                                      <span className="truncate">
+                                        {division.name}
+                                      </span>
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-[10px] text-muted-foreground">
+                                      Tanpa Divisi
+                                    </span>
+                                  )}
+                                  {(event.taskCount || 0) > 0 && (
+                                    <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground shrink-0">
+                                      <ListTodo className="h-3 w-3" />
+                                      {event.taskCount}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           )}
                         </Draggable>
                       );
                     })}
                     {provided.placeholder}
                     {items.length === 0 && (
-                      <p className="text-[11px] text-muted-foreground/60 text-center py-6">
+                      <p className="text-xs text-muted-foreground/60 text-center py-8 font-medium">
                         Seret event ke sini
                       </p>
                     )}

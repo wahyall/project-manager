@@ -5,13 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -27,7 +20,6 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  CalendarDays,
   Filter,
   X,
   Search,
@@ -37,6 +29,7 @@ import {
   Users,
   Tag,
   AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/components/kanban/task-card";
@@ -69,7 +62,6 @@ export function CalendarToolbar({
   fixedType = null,
   searchPlaceholder = "Cari task...",
 }) {
-  // Get member list with proper structure
   const memberList = useMemo(
     () =>
       (members || []).map((m) => ({
@@ -105,26 +97,26 @@ export function CalendarToolbar({
       {/* Row 1: Navigation + View Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Left: Navigation */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-lg border bg-background shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center rounded-xl border border-border/80 bg-background/80 shadow-2xs overflow-hidden">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-r-none"
+                  className="h-8.5 w-8.5 rounded-none hover:bg-muted/60"
                   onClick={onPrev}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Sebelumnya</TooltipContent>
+              <TooltipContent className="rounded-xl border-border/80 text-xs">Sebelumnya</TooltipContent>
             </Tooltip>
 
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 px-3 rounded-none text-xs font-medium border-x"
+              className="h-8.5 px-3.5 rounded-none text-xs font-semibold border-x border-border/80 hover:bg-muted/60"
               onClick={onToday}
             >
               Hari Ini
@@ -135,24 +127,24 @@ export function CalendarToolbar({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 rounded-l-none"
+                  className="h-8.5 w-8.5 rounded-none hover:bg-muted/60"
                   onClick={onNext}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Berikutnya</TooltipContent>
+              <TooltipContent className="rounded-xl border-border/80 text-xs">Berikutnya</TooltipContent>
             </Tooltip>
           </div>
 
-          <h2 className="text-base sm:text-lg font-semibold text-foreground ml-1 min-w-0 truncate">
+          <h2 className="text-base sm:text-lg font-bold text-foreground ml-1 min-w-0 truncate tracking-tight">
             {title}
           </h2>
         </div>
 
         {/* Right: View switcher */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-lg border bg-background shadow-sm p-0.5">
+          <div className="flex items-center rounded-xl border border-border/80 bg-background/80 shadow-2xs p-0.5">
             {VIEW_OPTIONS.map((opt) => {
               const Icon = opt.icon;
               const isActive = currentView === opt.value;
@@ -161,10 +153,10 @@ export function CalendarToolbar({
                   <TooltipTrigger asChild>
                     <button
                       className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all",
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
                         isActive
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent",
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
                       )}
                       onClick={() => onViewChange(opt.value)}
                     >
@@ -172,7 +164,7 @@ export function CalendarToolbar({
                       <span className="hidden sm:inline">{opt.label}</span>
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>{opt.label}</TooltipContent>
+                  <TooltipContent className="rounded-xl border-border/80 text-xs">{opt.label}</TooltipContent>
                 </Tooltip>
               );
             })}
@@ -191,11 +183,11 @@ export function CalendarToolbar({
             onChange={(e) =>
               onFiltersChange((prev) => ({ ...prev, keyword: e.target.value }))
             }
-            className="h-8 w-[180px] pl-8 text-xs"
+            className="h-8.5 w-[200px] pl-8.5 text-xs rounded-xl border-border/80 bg-background/80 shadow-2xs"
           />
           {filters.keyword && (
             <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               onClick={() =>
                 onFiltersChange((prev) => ({ ...prev, keyword: "" }))
               }
@@ -205,7 +197,7 @@ export function CalendarToolbar({
           )}
         </div>
 
-        <Separator orientation="vertical" className="h-5 hidden sm:block" />
+        <Separator orientation="vertical" className="h-5 hidden sm:block bg-border/60" />
 
         {/* Assignee filter */}
         <Popover>
@@ -214,40 +206,37 @@ export function CalendarToolbar({
               variant="outline"
               size="sm"
               className={cn(
-                "h-8 text-xs gap-1.5",
+                "h-8.5 text-xs gap-1.5 rounded-xl border-border/80 bg-background/80 shadow-2xs font-medium",
                 filters.assignee.length > 0 &&
-                  "border-primary/50 bg-primary/5 text-primary",
+                  "border-primary/50 bg-primary/10 text-primary font-semibold",
               )}
             >
               <Users className="h-3.5 w-3.5" />
               Assignee
               {filters.assignee.length > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="h-4 min-w-4 px-1 text-[10px] rounded-full"
-                >
+                <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
                   {filters.assignee.length}
-                </Badge>
+                </span>
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-52 p-2" align="start">
-            <div className="max-h-48 overflow-y-auto space-y-0.5">
+          <PopoverContent className="w-56 p-1 rounded-2xl border-border/80 shadow-xl" align="start">
+            <div className="max-h-52 overflow-y-auto space-y-0.5 p-1">
               {memberList.map((member) => (
                 <button
                   key={member.id}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                    filters.assignee.includes(member.id) && "bg-accent",
+                    "flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-medium hover:bg-muted/60 transition-colors cursor-pointer",
+                    filters.assignee.includes(member.id) && "bg-muted/80 font-semibold",
                   )}
                   onClick={() => toggleFilter("assignee", member.id)}
                 >
                   <Checkbox
                     checked={filters.assignee.includes(member.id)}
-                    className="h-3.5 w-3.5 pointer-events-none"
+                    className="h-3.5 w-3.5 pointer-events-none rounded-md"
                   />
                   <Avatar className="h-5 w-5">
-                    <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                    <AvatarFallback className="text-[9px] bg-primary/10 text-primary font-medium">
                       {getInitials(member.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -270,39 +259,36 @@ export function CalendarToolbar({
               variant="outline"
               size="sm"
               className={cn(
-                "h-8 text-xs gap-1.5",
+                "h-8.5 text-xs gap-1.5 rounded-xl border-border/80 bg-background/80 shadow-2xs font-medium",
                 filters.priority.length > 0 &&
-                  "border-primary/50 bg-primary/5 text-primary",
+                  "border-primary/50 bg-primary/10 text-primary font-semibold",
               )}
             >
               <AlertTriangle className="h-3.5 w-3.5" />
               Prioritas
               {filters.priority.length > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="h-4 min-w-4 px-1 text-[10px] rounded-full"
-                >
+                <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
                   {filters.priority.length}
-                </Badge>
+                </span>
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-44 p-2" align="start">
-            <div className="space-y-0.5">
+          <PopoverContent className="w-48 p-1 rounded-2xl border-border/80 shadow-xl" align="start">
+            <div className="space-y-0.5 p-1">
               {PRIORITY_OPTIONS.map((p) => (
                 <button
                   key={p.value}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                    filters.priority.includes(p.value) && "bg-accent",
+                    "flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-medium hover:bg-muted/60 transition-colors cursor-pointer",
+                    filters.priority.includes(p.value) && "bg-muted/80 font-semibold",
                   )}
                   onClick={() => toggleFilter("priority", p.value)}
                 >
                   <Checkbox
                     checked={filters.priority.includes(p.value)}
-                    className="h-3.5 w-3.5 pointer-events-none"
+                    className="h-3.5 w-3.5 pointer-events-none rounded-md"
                   />
-                  <span className={cn("h-2.5 w-2.5 rounded-full", p.color)} />
+                  <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", p.color)} />
                   <span className="text-xs">{p.label}</span>
                 </button>
               ))}
@@ -318,37 +304,34 @@ export function CalendarToolbar({
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "h-8 text-xs gap-1.5",
+                  "h-8.5 text-xs gap-1.5 rounded-xl border-border/80 bg-background/80 shadow-2xs font-medium",
                   filters.label.length > 0 &&
-                    "border-primary/50 bg-primary/5 text-primary",
+                    "border-primary/50 bg-primary/10 text-primary font-semibold",
                 )}
               >
                 <Tag className="h-3.5 w-3.5" />
                 Label
                 {filters.label.length > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="h-4 min-w-4 px-1 text-[10px] rounded-full"
-                  >
+                  <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
                     {filters.label.length}
-                  </Badge>
+                  </span>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-52 p-2" align="start">
-              <div className="max-h-48 overflow-y-auto space-y-0.5">
+            <PopoverContent className="w-56 p-1 rounded-2xl border-border/80 shadow-xl" align="start">
+              <div className="max-h-52 overflow-y-auto space-y-0.5 p-1">
                 {labels.map((label) => (
                   <button
                     key={label._id}
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                      filters.label.includes(label._id) && "bg-accent",
+                      "flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-medium hover:bg-muted/60 transition-colors cursor-pointer",
+                      filters.label.includes(label._id) && "bg-muted/80 font-semibold",
                     )}
                     onClick={() => toggleFilter("label", label._id)}
                   >
                     <Checkbox
                       checked={filters.label.includes(label._id)}
-                      className="h-3.5 w-3.5 pointer-events-none"
+                      className="h-3.5 w-3.5 pointer-events-none rounded-md"
                     />
                     <span
                       className="h-2.5 w-2.5 rounded-full shrink-0"
@@ -367,17 +350,14 @@ export function CalendarToolbar({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 text-xs gap-1 text-muted-foreground hover:text-foreground"
+            className="h-8.5 text-xs gap-1.5 rounded-xl text-muted-foreground hover:text-foreground font-medium"
             onClick={clearAllFilters}
           >
-            <X className="h-3 w-3" />
+            <RotateCcw className="h-3 w-3" />
             Hapus Filter
-            <Badge
-              variant="secondary"
-              className="h-4 min-w-4 px-1 text-[10px] rounded-full"
-            >
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-foreground px-1">
               {activeFilterCount}
-            </Badge>
+            </span>
           </Button>
         )}
       </div>

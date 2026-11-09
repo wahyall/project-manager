@@ -106,16 +106,16 @@ function SubtaskMetaFields({
   };
 
   return (
-    <div className={cn("space-y-1.5", compact && "text-xs")}>
-      <div className="grid gap-1.5 sm:grid-cols-2">
+    <div className={cn("space-y-2", compact && "text-xs")}>
+      <div className="grid gap-2 sm:grid-cols-2">
         <Select
           value={divisionId || "none"}
           onValueChange={handleDivisionChange}
         >
-          <SelectTrigger className="h-8 text-[11px]">
+          <SelectTrigger className="h-8 text-[11px] rounded-xl border-border/80">
             <SelectValue placeholder="Divisi subtask" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="rounded-xl border-border/80 shadow-xl">
             <SelectItem value="none">
               <span className="text-muted-foreground">Tanpa divisi</span>
             </SelectItem>
@@ -140,18 +140,18 @@ function SubtaskMetaFields({
           }
           disabled={divisionMembers.length === 0}
         >
-          <SelectTrigger className="h-8 text-[11px]">
+          <SelectTrigger className="h-8 text-[11px] rounded-xl border-border/80">
             <SelectValue placeholder="PIC subtask" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="rounded-xl border-border/80 shadow-xl">
             <SelectItem value="none">
               <span className="text-muted-foreground">Belum ada PIC</span>
             </SelectItem>
             {divisionMembers.map((member) => (
               <SelectItem key={member.id} value={member.id}>
                 <span className="flex items-center gap-1.5">
-                  <Avatar className="h-4 w-4">
-                    <AvatarFallback className="bg-primary/10 text-[7px] text-primary">
+                  <Avatar className="h-4 w-4 rounded-md">
+                    <AvatarFallback className="bg-primary/10 text-[7px] text-primary font-bold">
                       {getInitials(member.name)}
                     </AvatarFallback>
                   </Avatar>
@@ -163,7 +163,7 @@ function SubtaskMetaFields({
         </Select>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-2">
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -171,7 +171,7 @@ function SubtaskMetaFields({
               variant="outline"
               size="sm"
               className={cn(
-                "h-7 gap-1.5 px-2 text-[10px] font-normal",
+                "h-7 gap-1.5 px-2.5 text-[11px] font-semibold rounded-lg border-border/80",
                 !value?.dueDate && "text-muted-foreground",
               )}
             >
@@ -183,7 +183,7 @@ function SubtaskMetaFields({
                 : "Deadline"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent className="w-auto p-0 rounded-2xl border-border/80 shadow-2xl" align="start">
             <Calendar
               mode="single"
               selected={value?.dueDate ? new Date(value.dueDate) : undefined}
@@ -192,12 +192,12 @@ function SubtaskMetaFields({
               }
             />
             {value?.dueDate && (
-              <div className="border-t p-1">
+              <div className="border-t p-1.5">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-full text-[10px] text-muted-foreground"
+                  className="h-7 w-full text-[11px] text-muted-foreground font-semibold rounded-lg"
                   onClick={() => onChange({ dueDate: null })}
                 >
                   Hapus deadline
@@ -212,7 +212,7 @@ function SubtaskMetaFields({
           onChange={(event) => onChange({ notes: event.target.value })}
           placeholder="Catatan subtask..."
           maxLength={1000}
-          className="h-7 min-w-[150px] flex-1 text-[11px]"
+          className="h-7 min-w-[150px] flex-1 text-[11px] rounded-lg border-border/80"
         />
       </div>
     </div>
@@ -400,27 +400,27 @@ export function SubtaskChecklist({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <ListChecks className="h-3.5 w-3.5 text-muted-foreground" />
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-            Checklist
+          <ListChecks className="h-4 w-4 text-primary" />
+          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+            Checklist Subtask
           </h4>
-          <Badge variant="secondary" className="h-5 text-[10px]">
+          <Badge variant="secondary" className="h-5 text-[10px] font-bold rounded-md">
             {completed}/{total}
           </Badge>
         </div>
-        <span className="text-[10px] font-medium text-muted-foreground">
+        <span className="text-xs font-bold text-foreground">
           {percent}%
         </span>
       </div>
 
-      <Progress value={percent} className="h-1.5" />
+      <Progress value={percent} className="h-1.5 rounded-full" />
 
       {canEdit && (
-        <div className="space-y-2 rounded-md border bg-muted/20 p-2">
-          <div className="flex items-center gap-1.5">
+        <div className="space-y-2 rounded-2xl border border-border/80 bg-background/80 p-3 shadow-2xs">
+          <div className="flex items-center gap-2">
             <Input
               ref={inputRef}
               value={newTitle}
@@ -431,14 +431,14 @@ export function SubtaskChecklist({
                   addSubtask();
                 }
               }}
-              placeholder="Tambah checklist..."
+              placeholder="Tambah langkah checklist baru..."
               maxLength={200}
-              className="h-8 text-xs"
+              className="h-8.5 text-xs rounded-xl border-border/80 bg-card/60"
             />
             <Button
               type="button"
               size="sm"
-              className="h-8 px-2.5"
+              className="h-8.5 px-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shrink-0"
               onClick={addSubtask}
               disabled={!newTitle.trim()}
             >
@@ -448,7 +448,7 @@ export function SubtaskChecklist({
 
           <button
             type="button"
-            className="flex items-center gap-1 text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
             onClick={() => setShowAddDetails((value) => !value)}
           >
             <ChevronDown
@@ -457,32 +457,34 @@ export function SubtaskChecklist({
                 showAddDetails && "rotate-180",
               )}
             />
-            {showAddDetails ? "Sembunyikan detail" : "Atur PIC, divisi, deadline"}
+            {showAddDetails ? "Sembunyikan opsi tambahan" : "Atur PIC, divisi, dan deadline subtask"}
           </button>
 
           {showAddDetails && (
-            <SubtaskMetaFields
-              value={{
-                assignee: newAssignee,
-                divisionId: newDivisionId,
-                dueDate: newDueDate ? newDueDate.toISOString() : null,
-                notes: newNotes,
-              }}
-              onChange={(patch) => {
-                if (patch.assignee !== undefined) setNewAssignee(patch.assignee);
-                if (patch.divisionId !== undefined)
-                  setNewDivisionId(patch.divisionId);
-                if (patch.dueDate !== undefined) {
-                  setNewDueDate(
-                    patch.dueDate ? new Date(patch.dueDate) : null,
-                  );
-                }
-                if (patch.notes !== undefined) setNewNotes(patch.notes);
-              }}
-              members={defaultMembers}
-              divisions={availableDivisions}
-              compact
-            />
+            <div className="pt-1">
+              <SubtaskMetaFields
+                value={{
+                  assignee: newAssignee,
+                  divisionId: newDivisionId,
+                  dueDate: newDueDate ? newDueDate.toISOString() : null,
+                  notes: newNotes,
+                }}
+                onChange={(patch) => {
+                  if (patch.assignee !== undefined) setNewAssignee(patch.assignee);
+                  if (patch.divisionId !== undefined)
+                    setNewDivisionId(patch.divisionId);
+                  if (patch.dueDate !== undefined) {
+                    setNewDueDate(
+                      patch.dueDate ? new Date(patch.dueDate) : null,
+                    );
+                  }
+                  if (patch.notes !== undefined) setNewNotes(patch.notes);
+                }}
+                members={defaultMembers}
+                divisions={availableDivisions}
+                compact
+              />
+            </div>
           )}
         </div>
       )}
@@ -499,15 +501,15 @@ export function SubtaskChecklist({
             <div
               key={subtask._id || index}
               className={cn(
-                "group flex items-start gap-2 rounded-md border px-2 py-1.5 transition-colors",
-                subtask.isCompleted && "bg-muted/30",
+                "group flex items-start gap-2.5 rounded-xl border border-border/80 bg-background/80 px-3 py-2.5 transition-all shadow-2xs hover:bg-muted/30",
+                subtask.isCompleted && "bg-muted/20 opacity-70",
               )}
             >
               <Checkbox
                 checked={subtask.isCompleted === true}
                 disabled={!canToggle(subtask)}
                 onCheckedChange={() => toggleComplete(index)}
-                className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                className="mt-0.5 h-4 w-4 shrink-0 rounded-md"
               />
 
               <div className="min-w-0 flex-1 space-y-1">
@@ -523,16 +525,16 @@ export function SubtaskChecklist({
                         setEditTitle("");
                       }
                     }}
-                    className="h-7 text-xs"
+                    className="h-7 text-xs rounded-lg"
                     autoFocus
                   />
                 ) : (
                   <button
                     type="button"
                     className={cn(
-                      "block w-full text-left text-xs leading-snug transition-colors hover:text-primary",
+                      "block w-full text-left text-xs font-medium leading-snug transition-colors hover:text-primary",
                       subtask.isCompleted &&
-                        "text-muted-foreground line-through",
+                        "text-muted-foreground line-through font-normal",
                     )}
                     onDoubleClick={() => {
                       if (!canEdit) return;
@@ -545,14 +547,14 @@ export function SubtaskChecklist({
                   </button>
                 )}
 
-                <div className="flex flex-wrap items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   {assignee && (
                     <Badge
                       variant="secondary"
-                      className="h-5 gap-1 px-1.5 text-[9px] font-normal"
+                      className="h-5 gap-1 px-1.5 text-[9px] font-semibold rounded-md"
                     >
-                      <Avatar className="h-3.5 w-3.5">
-                        <AvatarFallback className="bg-primary/10 text-[7px] text-primary">
+                      <Avatar className="h-3.5 w-3.5 rounded-sm">
+                        <AvatarFallback className="bg-primary/10 text-[7px] text-primary font-bold">
                           {getInitials(assignee.name)}
                         </AvatarFallback>
                       </Avatar>
@@ -564,7 +566,7 @@ export function SubtaskChecklist({
                   {division && (
                     <Badge
                       variant="outline"
-                      className="h-5 gap-1 px-1.5 text-[9px] font-normal"
+                      className="h-5 gap-1 px-1.5 text-[9px] font-semibold rounded-md"
                     >
                       <span
                         className="h-1.5 w-1.5 rounded-full"
@@ -581,12 +583,12 @@ export function SubtaskChecklist({
                     <Badge
                       variant="outline"
                       className={cn(
-                        "h-5 gap-1 px-1.5 text-[9px] font-normal",
+                        "h-5 gap-1 px-1.5 text-[9px] font-semibold rounded-md",
                         overdue &&
-                          "border-red-300 text-red-600 dark:text-red-400",
+                          "border-destructive/30 text-destructive bg-destructive/10",
                         !overdue &&
                           isToday(dueDate) &&
-                          "border-amber-300 text-amber-600 dark:text-amber-400",
+                          "border-amber-300 text-amber-600 dark:text-amber-400 bg-amber-500/10",
                       )}
                     >
                       <CalendarIcon className="h-2.5 w-2.5" />
@@ -596,12 +598,12 @@ export function SubtaskChecklist({
                   {subtask.notes && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="flex items-center gap-1 text-[9px] text-muted-foreground">
-                          <StickyNote className="h-2.5 w-2.5" />
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                          <StickyNote className="h-2.5 w-2.5 text-primary" />
                           Catatan
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-[260px] whitespace-pre-wrap text-xs">
+                      <TooltipContent className="max-w-[260px] whitespace-pre-wrap text-xs rounded-xl">
                         {subtask.notes}
                       </TooltipContent>
                     </Tooltip>
@@ -609,7 +611,7 @@ export function SubtaskChecklist({
                 </div>
 
                 {subtask.notes && (
-                  <p className="line-clamp-2 text-[10px] leading-snug text-muted-foreground">
+                  <p className="line-clamp-2 text-[10px] leading-relaxed text-muted-foreground pt-0.5">
                     {subtask.notes}
                   </p>
                 )}
@@ -623,15 +625,15 @@ export function SubtaskChecklist({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6"
+                        className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
                         title="Atur detail subtask"
                       >
                         <Settings2 className="h-3 w-3" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[280px] p-2" align="end">
-                      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                        <Settings2 className="h-3 w-3" />
+                    <PopoverContent className="w-[280px] p-3 rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl" align="end">
+                      <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <Settings2 className="h-3 w-3 text-primary" />
                         Detail Subtask
                       </div>
                       <SubtaskMetaFields
@@ -640,7 +642,7 @@ export function SubtaskChecklist({
                         members={defaultMembers}
                         divisions={availableDivisions}
                       />
-                      <Separator className="my-2" />
+                      <Separator className="my-2 opacity-50" />
                       <p className="text-[10px] text-muted-foreground">
                         Perubahan tersimpan otomatis.
                       </p>
@@ -651,7 +653,7 @@ export function SubtaskChecklist({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
                     onClick={() => moveSubtask(index, -1)}
                     disabled={index === 0}
                     title="Naikkan"
@@ -662,7 +664,7 @@ export function SubtaskChecklist({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6"
+                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
                     onClick={() => moveSubtask(index, 1)}
                     disabled={index === subtasks.length - 1}
                     title="Turunkan"
@@ -673,7 +675,7 @@ export function SubtaskChecklist({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     onClick={() => deleteSubtask(index)}
                     title="Hapus"
                   >
@@ -686,11 +688,10 @@ export function SubtaskChecklist({
         })}
 
         {total === 0 && (
-          <div className="rounded-md border border-dashed px-3 py-5 text-center">
-            <ListChecks className="mx-auto mb-1 h-5 w-5 text-muted-foreground/60" />
-            <p className="text-[11px] text-muted-foreground">
-              Belum ada checklist. Tambahkan langkah kecil agar progres task
-              lebih jelas.
+          <div className="rounded-2xl border border-dashed border-border/80 px-4 py-8 text-center bg-card/40">
+            <ListChecks className="mx-auto mb-2 h-6 w-6 text-muted-foreground/50" />
+            <p className="text-xs text-muted-foreground font-medium">
+              Belum ada checklist. Tambahkan subtask agar eksekusi lebih terstruktur.
             </p>
           </div>
         )}

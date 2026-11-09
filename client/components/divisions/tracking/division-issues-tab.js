@@ -152,24 +152,26 @@ export function DivisionIssuesTab({
   return (
     <div className="space-y-6">
       {/* ── Filter Bar & Actions ────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-card/60 backdrop-blur-xs p-3.5 rounded-2xl border border-border/80 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Filter Tipe */}
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="text-sm font-medium bg-background border border-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            aria-label="Filter Tipe Kendala"
+            className="text-xs font-semibold bg-background/80 border border-border/80 rounded-xl px-3 py-1.5 focus:outline-none"
           >
             <option value="all">Semua Tipe Kendala</option>
             <option value="internal_issue">Kendala Internal</option>
-            <option value="cross_division_help">Koordinasi Bantuan Divisi Lain</option>
+            <option value="cross_division_help">Bantuan Divisi Lain</option>
           </select>
 
           {/* Filter Status */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-sm font-medium bg-background border border-border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            aria-label="Filter Status Kendala"
+            className="text-xs font-semibold bg-background/80 border border-border/80 rounded-xl px-3 py-1.5 focus:outline-none"
           >
             <option value="all">Semua Status</option>
             <option value="open">Open (Belum Ditangani)</option>
@@ -181,9 +183,9 @@ export function DivisionIssuesTab({
         {canEdit && (
           <Button
             onClick={handleOpenAdd}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm shrink-0"
+            className="h-8.5 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Catat Kendala / Bantuan
           </Button>
         )}
@@ -191,7 +193,7 @@ export function DivisionIssuesTab({
 
       {/* ── Error Banner ────────────────────────────────── */}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-sm">
+        <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
           {error}
         </div>
       )}
@@ -199,17 +201,17 @@ export function DivisionIssuesTab({
       {/* ── Issues List ─────────────────────────────────── */}
       <div className="space-y-3">
         {loading ? (
-          <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground bg-card rounded-xl border border-border">
+          <div className="p-16 flex flex-col items-center justify-center gap-3 text-muted-foreground bg-card/60 backdrop-blur-xs rounded-2xl border border-border/80">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            <span className="text-sm">Memuat kendala dan koordinasi...</span>
+            <span className="text-xs font-medium">Memuat kendala dan koordinasi...</span>
           </div>
         ) : issues.length === 0 ? (
-          <div className="p-12 text-center bg-card rounded-xl border border-border">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+          <div className="p-16 text-center bg-card/60 backdrop-blur-xs rounded-2xl border border-border/80">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <h3 className="font-semibold text-foreground">Tidak ada kendala aktif</h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            <h3 className="font-semibold text-foreground text-sm">Tidak ada kendala aktif</h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
               Seluruh operasional berjalan lancar tanpa kendala atau kebutuhan bantuan yang
               tercatat.
             </p>
@@ -220,15 +222,15 @@ export function DivisionIssuesTab({
             return (
               <div
                 key={item._id}
-                className="rounded-xl border border-border bg-card p-4 shadow-sm hover:border-border/80 transition-all space-y-3"
+                className="rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs p-5 shadow-xs hover:border-border transition-all space-y-3.5"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Badge Tipe */}
                     {isCross ? (
                       <Badge
                         variant="outline"
-                        className="bg-indigo-500/10 text-indigo-600 border-indigo-500/20 font-semibold gap-1"
+                        className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25 font-bold text-[11px] rounded-lg gap-1"
                       >
                         <HelpCircle className="w-3 h-3" />
                         Bantuan Divisi Lain
@@ -236,7 +238,7 @@ export function DivisionIssuesTab({
                     ) : (
                       <Badge
                         variant="outline"
-                        className="bg-amber-500/10 text-amber-600 border-amber-500/20 font-semibold gap-1"
+                        className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25 font-bold text-[11px] rounded-lg gap-1"
                       >
                         <AlertTriangle className="w-3 h-3" />
                         Kendala Internal
@@ -245,9 +247,9 @@ export function DivisionIssuesTab({
 
                     {/* Divisi Tujuan jika koordinasi */}
                     {isCross && item.targetDivisionId && (
-                      <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-lg">
                         <span>Ke:</span>
-                        <span className="font-semibold text-foreground">
+                        <span className="text-foreground">
                           {item.targetDivisionId.name}
                         </span>
                       </div>
@@ -255,26 +257,27 @@ export function DivisionIssuesTab({
 
                     {/* Status Badge */}
                     {item.status === "resolved" ? (
-                      <Badge className="bg-emerald-600 text-white font-medium">
+                      <Badge className="bg-emerald-600 text-white font-bold text-[11px] rounded-lg">
                         Resolved
                       </Badge>
                     ) : item.status === "in_progress" ? (
-                      <Badge className="bg-sky-600 text-white font-medium">
+                      <Badge className="bg-sky-600 text-white font-bold text-[11px] rounded-lg">
                         In Progress
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="text-amber-600 border-amber-500 font-medium">
+                      <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-500/30 font-semibold text-[11px] rounded-lg">
                         Open
                       </Badge>
                     )}
                   </div>
 
                   {canEdit && (
-                    <div className="flex items-center gap-1 self-end sm:self-auto">
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto">
                       <select
                         value={item.status}
                         onChange={(e) => handleQuickStatus(item, e.target.value)}
-                        className="text-xs font-medium bg-background border border-border rounded-md px-2 py-1"
+                        aria-label="Set Status Cepat"
+                        className="text-xs font-semibold bg-background/80 border border-border/80 rounded-lg px-2.5 py-1 cursor-pointer"
                       >
                         <option value="open">Set Open</option>
                         <option value="in_progress">Set In Progress</option>
@@ -283,7 +286,7 @@ export function DivisionIssuesTab({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg"
                         onClick={() => handleOpenEdit(item)}
                       >
                         <Edit className="w-3.5 h-3.5" />
@@ -291,7 +294,7 @@ export function DivisionIssuesTab({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive rounded-lg"
                         onClick={() => handleDelete(item._id)}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -300,40 +303,40 @@ export function DivisionIssuesTab({
                   )}
                 </div>
 
-                {/* Judul & Deskripsi */}
                 <div>
-                  <h4 className="font-semibold text-foreground text-base">
+                  <h4 className="text-sm font-bold text-foreground">
                     {item.title}
                   </h4>
                   {item.description && (
-                    <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                       {item.description}
                     </p>
                   )}
                 </div>
 
-                {/* Tindak Lanjut & PIC */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border/60 text-xs">
-                  <div>
-                    <span className="font-semibold text-muted-foreground block mb-0.5">
-                      Rencana Tindak Lanjut:
-                    </span>
-                    <span className="text-foreground">
-                      {item.actionPlan || "Belum ada rencana tindak lanjut tercatat."}
+                {/* PIC & Action Plan Single Surface Blocks */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/40 text-xs">
+                    <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">PIC:</span>
+                    <span className="font-semibold text-foreground truncate">
+                      {item.picId?.name || "Belum ditentukan"}
                     </span>
                   </div>
-                  <div className="flex flex-col sm:items-end justify-center">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <User className="w-3.5 h-3.5" />
-                      <span>PIC:</span>
-                      <span className="font-semibold text-foreground">
-                        {item.picId?.name || "Belum ditentukan"}
-                      </span>
+
+                  {item.actionPlan ? (
+                    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-muted/40 text-xs sm:col-span-1">
+                      <ArrowRight className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-muted-foreground font-medium">Rencana Aksi: </span>
+                        <span className="text-foreground font-semibold">{item.actionPlan}</span>
+                      </div>
                     </div>
-                    <span className="text-[11px] text-muted-foreground mt-0.5">
-                      Dicatat oleh {item.createdBy?.name || "-"}
-                    </span>
-                  </div>
+                  ) : (
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/40 text-xs text-muted-foreground italic">
+                      Belum ada rencana tindak lanjut
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -341,72 +344,71 @@ export function DivisionIssuesTab({
         )}
       </div>
 
-      {/* ── Dialog Tambah / Edit Kendala ────────────────── */}
+      {/* ── Dialog Tambah / Edit Kendala ───────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl p-6">
           <DialogHeader>
-            <DialogTitle>
-              {editingIssue ? "Edit Kendala & Koordinasi" : "Catat Kendala / Bantuan"}
+            <DialogTitle className="text-base font-bold">
+              {editingIssue ? "Edit Kendala / Bantuan" : "Catat Kendala / Bantuan"}
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
             {errorMessage && (
-              <div className="text-xs p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 text-rose-700 dark:text-rose-300">
+              <div className="text-xs p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive font-medium">
                 {errorMessage}
               </div>
             )}
 
             {/* Tipe Kendala */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">
-                Tipe Catatan
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Tipe Koordinasi *
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, type: "internal_issue" })}
-                  className={`flex items-center justify-center gap-1.5 p-2 rounded-lg border text-xs font-medium transition-all ${
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                     formData.type === "internal_issue"
-                      ? "bg-amber-500/10 border-amber-500/40 text-amber-600 font-bold"
-                      : "border-border text-muted-foreground"
+                      ? "bg-amber-500/10 border-amber-500/40 text-amber-600 dark:text-amber-400 shadow-xs"
+                      : "border-border/80 text-muted-foreground hover:bg-muted/40"
                   }`}
                 >
-                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <AlertTriangle className="w-4 h-4" />
                   Kendala Internal
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    setFormData({ ...formData, type: "cross_division_help" })
-                  }
-                  className={`flex items-center justify-center gap-1.5 p-2 rounded-lg border text-xs font-medium transition-all ${
+                  onClick={() => setFormData({ ...formData, type: "cross_division_help" })}
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                     formData.type === "cross_division_help"
-                      ? "bg-indigo-500/10 border-indigo-500/40 text-indigo-600 font-bold"
-                      : "border-border text-muted-foreground"
+                      ? "bg-indigo-500/10 border-indigo-500/40 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                      : "border-border/80 text-muted-foreground hover:bg-muted/40"
                   }`}
                 >
-                  <HelpCircle className="w-3.5 h-3.5" />
+                  <HelpCircle className="w-4 h-4" />
                   Bantuan Divisi Lain
                 </button>
               </div>
             </div>
 
-            {/* Jika butuh bantuan divisi lain, pilih target divisi */}
+            {/* Target Divisi jika bantuan */}
             {formData.type === "cross_division_help" && (
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase">
-                  Divisi yang Dimintai Bantuan *
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Divisi Tujuan Bantuan *
                 </label>
                 <select
                   value={formData.targetDivisionId}
                   onChange={(e) =>
                     setFormData({ ...formData, targetDivisionId: e.target.value })
                   }
-                  className="w-full text-sm rounded-lg border border-border bg-background p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  aria-label="Divisi Tujuan Bantuan"
+                  className="w-full text-xs rounded-xl border border-border/80 bg-background/80 p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 font-semibold"
                   required
                 >
-                  <option value="">Pilih Divisi...</option>
+                  <option value="">Pilih Divisi Mitra</option>
                   {otherDivisions.map((d) => (
                     <option key={d._id} value={d._id}>
                       {d.name}
@@ -416,62 +418,64 @@ export function DivisionIssuesTab({
               </div>
             )}
 
+            {/* Judul Kendala */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Judul Kendala / Bantuan *
               </label>
               <Input
                 type="text"
-                placeholder="Contoh: Sound system masjid kresek / Butuh bantuan kebersihan"
+                placeholder="Ringkasan kendala atau bantuan yang dibutuhkan..."
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
+                className="text-xs rounded-xl border-border/80 font-semibold"
                 required
               />
             </div>
 
+            {/* Deskripsi */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">
-                Deskripsi Rinci
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Deskripsi Kendala (Opsional)
               </label>
               <textarea
                 rows={3}
-                placeholder="Jelaskan detail permasalahan atau bantuan yang dibutuhkan..."
+                placeholder="Jelaskan detail kendala, dampak, atau rincian bantuan..."
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                className="w-full text-sm rounded-lg border border-border bg-background p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full text-xs rounded-xl border border-border/80 bg-background/80 p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
               />
             </div>
 
+            {/* PIC dan Status */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase">
-                  Penanggung Jawab (PIC)
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  PIC Penanggung Jawab
                 </label>
                 <select
                   value={formData.picId}
                   onChange={(e) =>
                     setFormData({ ...formData, picId: e.target.value })
                   }
-                  className="w-full text-sm rounded-lg border border-border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  aria-label="PIC Penanggung Jawab"
+                  className="w-full text-xs rounded-xl border border-border/80 bg-background/80 p-2.5 focus:outline-none font-semibold cursor-pointer"
                 >
-                  <option value="">Pilih PIC...</option>
-                  {workspaceMembers.map((m) => {
-                    const u = m.userId || m;
-                    return (
-                      <option key={u._id} value={u._id}>
-                        {u.name}
-                      </option>
-                    );
-                  })}
+                  <option value="">Tanpa PIC</option>
+                  {workspaceMembers.map((m) => (
+                    <option key={m.userId?._id || m.userId} value={m.userId?._id || m.userId}>
+                      {m.userId?.name || m.name || "Member"}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase">
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Status
                 </label>
                 <select
@@ -479,7 +483,8 @@ export function DivisionIssuesTab({
                   onChange={(e) =>
                     setFormData({ ...formData, status: e.target.value })
                   }
-                  className="w-full text-sm rounded-lg border border-border bg-background p-2 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  aria-label="Status Kendala"
+                  className="w-full text-xs rounded-xl border border-border/80 bg-background/80 p-2.5 focus:outline-none font-semibold cursor-pointer"
                 >
                   <option value="open">Open</option>
                   <option value="in_progress">In Progress</option>
@@ -488,18 +493,19 @@ export function DivisionIssuesTab({
               </div>
             </div>
 
+            {/* Action Plan */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">
-                Rencana Tindak Lanjut (Action Plan)
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Rencana Aksi / Solusi (Opsional)
               </label>
-              <textarea
-                rows={2}
-                placeholder="Langkah konkret penyelesaian atau kesepakatan solusi..."
+              <Input
+                type="text"
+                placeholder="Langkah tindak lanjut..."
                 value={formData.actionPlan}
                 onChange={(e) =>
                   setFormData({ ...formData, actionPlan: e.target.value })
                 }
-                className="w-full text-sm rounded-lg border border-border bg-background p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="text-xs rounded-xl border-border/80"
               />
             </div>
 
@@ -509,15 +515,16 @@ export function DivisionIssuesTab({
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
                 disabled={saving}
+                className="h-9 rounded-xl text-xs font-semibold"
               >
                 Batal
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="h-9 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold"
               >
-                {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Simpan
               </Button>
             </DialogFooter>

@@ -144,10 +144,10 @@ export function TextWidgetNode({ widgetId, widgetData, onUpdateWidget }) {
 
   return (
     <div
-      className="flex flex-col h-full bg-background rounded-b-lg overflow-hidden nodrag nowheel"
+      className="flex flex-col h-full bg-card/40 rounded-b-2xl overflow-hidden nodrag nowheel"
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <div className="flex-1 overflow-auto p-1 text-widget-editor">
+      <div className="flex-1 overflow-auto p-1.5 text-widget-editor">
         <BlockNoteView
           editor={editor}
           editable={true}

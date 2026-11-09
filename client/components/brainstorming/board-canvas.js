@@ -525,7 +525,7 @@ function CanvasInner({
           <MiniMap
             nodeColor="hsl(var(--primary) / 0.3)"
             maskColor="hsl(var(--background) / 0.8)"
-            className="!bg-background/80 !border !border-border !rounded-lg !shadow-lg"
+            className="!bg-card/90 !backdrop-blur-md !border !border-border/80 !rounded-2xl !shadow-xl"
             pannable
             zoomable
           />

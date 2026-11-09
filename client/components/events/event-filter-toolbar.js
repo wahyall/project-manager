@@ -71,24 +71,24 @@ export function EventFilterToolbar({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs p-3 shadow-xs space-y-3">
       {/* Main toolbar row */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Search */}
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Cari event..."
             value={filters.keyword}
             onChange={(e) =>
               setFilters((prev) => ({ ...prev, keyword: e.target.value }))
             }
-            className="pl-8 h-9"
+            className="pl-8.5 h-8.5 text-xs rounded-xl border-border/80 bg-background/80"
           />
           {filters.keyword && (
             <button
               onClick={() => setFilters((prev) => ({ ...prev, keyword: "" }))}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -100,12 +100,12 @@ export function EventFilterToolbar({
           variant={showFilters ? "secondary" : "outline"}
           size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className="gap-1.5 h-9"
+          className="gap-1.5 h-8.5 text-xs font-semibold rounded-xl border-border/80"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
           Filter
           {hasActiveFilters && (
-            <span className="ml-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-medium">
+            <span className="ml-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
               {filters.status.length +
                 (filters.participant ? 1 : 0) +
                 (filters.startDateFrom || filters.startDateTo ? 1 : 0)}
@@ -115,23 +115,24 @@ export function EventFilterToolbar({
 
         {/* Sort */}
         <Select value={sortBy} onValueChange={(val) => setSortBy(val)}>
-          <SelectTrigger className="w-[140px] h-9">
-            <ArrowUpDown className="h-3.5 w-3.5 mr-1.5" />
+          <SelectTrigger className="w-[140px] h-8.5 text-xs font-semibold rounded-xl border-border/80 bg-background/80">
+            <ArrowUpDown className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="startDate">Tanggal Mulai</SelectItem>
-            <SelectItem value="title">Nama</SelectItem>
-            <SelectItem value="status">Status</SelectItem>
-            <SelectItem value="createdAt">Dibuat</SelectItem>
+          <SelectContent className="rounded-xl border-border/80 shadow-xl">
+            <SelectItem value="startDate" className="text-xs font-semibold">Tanggal Mulai</SelectItem>
+            <SelectItem value="title" className="text-xs font-semibold">Nama Event</SelectItem>
+            <SelectItem value="status" className="text-xs font-semibold">Status</SelectItem>
+            <SelectItem value="createdAt" className="text-xs font-semibold">Tanggal Buat</SelectItem>
           </SelectContent>
         </Select>
 
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9"
+          className="h-8.5 w-8.5 rounded-xl text-muted-foreground hover:text-foreground"
           onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+          title={sortOrder === "asc" ? "Urutkan menurun" : "Urutkan menaik"}
         >
           <ArrowUpDown
             className={cn(
@@ -144,10 +145,10 @@ export function EventFilterToolbar({
 
       {/* Filter row (collapsible) */}
       {showFilters && (
-        <div className="flex flex-wrap items-center gap-2 pl-1 animate-in slide-in-from-top-1 duration-200">
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/60 animate-in slide-in-from-top-1 duration-200">
           {/* Status filter */}
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground mr-1">Status:</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-bold text-muted-foreground mr-1 uppercase tracking-wider">Status:</span>
             {STATUS_OPTIONS.map((opt) => (
               <Badge
                 key={opt.value}
@@ -155,8 +156,8 @@ export function EventFilterToolbar({
                   filters.status.includes(opt.value) ? "default" : "outline"
                 }
                 className={cn(
-                  "cursor-pointer transition-colors text-xs h-6",
-                  filters.status.includes(opt.value) ? "" : "hover:bg-accent",
+                  "cursor-pointer transition-colors text-[11px] font-semibold h-6 rounded-lg",
+                  filters.status.includes(opt.value) ? "" : "hover:bg-accent border-border/80",
                 )}
                 onClick={() => toggleStatus(opt.value)}
               >
@@ -168,19 +169,19 @@ export function EventFilterToolbar({
             ))}
           </div>
 
-          <div className="h-4 w-px bg-border" />
+          <div className="h-4 w-px bg-border/80 hidden sm:block" />
 
           {/* Date range */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground">Dari:</span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Dari:</span>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-xs gap-1 px-2"
+                  className="h-6.5 text-[11px] font-semibold gap-1 px-2.5 rounded-lg border-border/80"
                 >
-                  <CalendarIcon className="h-3 w-3" />
+                  <CalendarIcon className="h-3 w-3 text-muted-foreground" />
                   {filters.startDateFrom
                     ? format(new Date(filters.startDateFrom), "dd MMM yy", {
                         locale: localeId,
@@ -188,7 +189,7 @@ export function EventFilterToolbar({
                     : "—"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 rounded-2xl border-border/80 shadow-2xl" align="start">
                 <Calendar
                   mode="single"
                   selected={
@@ -206,15 +207,15 @@ export function EventFilterToolbar({
               </PopoverContent>
             </Popover>
 
-            <span className="text-xs text-muted-foreground">s/d:</span>
+            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">s/d:</span>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-6 text-xs gap-1 px-2"
+                  className="h-6.5 text-[11px] font-semibold gap-1 px-2.5 rounded-lg border-border/80"
                 >
-                  <CalendarIcon className="h-3 w-3" />
+                  <CalendarIcon className="h-3 w-3 text-muted-foreground" />
                   {filters.startDateTo
                     ? format(new Date(filters.startDateTo), "dd MMM yy", {
                         locale: localeId,
@@ -222,7 +223,7 @@ export function EventFilterToolbar({
                     : "—"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 rounded-2xl border-border/80 shadow-2xl" align="start">
                 <Calendar
                   mode="single"
                   selected={
@@ -241,7 +242,7 @@ export function EventFilterToolbar({
             </Popover>
           </div>
 
-          <div className="h-4 w-px bg-border" />
+          <div className="h-4 w-px bg-border/80 hidden sm:block" />
 
           {/* Participant */}
           <Select
@@ -253,18 +254,18 @@ export function EventFilterToolbar({
               }))
             }
           >
-            <SelectTrigger className="h-6 text-xs w-[130px] px-2">
+            <SelectTrigger className="h-6.5 text-[11px] font-semibold w-[130px] px-2 rounded-lg border-border/80 bg-background/80">
               <SelectValue placeholder="Peserta" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">Semua Peserta</SelectItem>
+            <SelectContent className="rounded-xl border-border/80 shadow-xl">
+              <SelectItem value="__all__" className="text-xs font-semibold">Semua Peserta</SelectItem>
               {members.map((m) => {
                 const userId =
                   typeof m.userId === "object" ? m.userId?._id : m.userId;
                 const userName =
                   typeof m.userId === "object" ? m.userId?.name : m.name;
                 return (
-                  <SelectItem key={userId} value={userId}>
+                  <SelectItem key={userId} value={userId} className="text-xs font-semibold">
                     {userName}
                   </SelectItem>
                 );
@@ -275,15 +276,15 @@ export function EventFilterToolbar({
           {/* Clear all */}
           {hasActiveFilters && (
             <>
-              <div className="h-4 w-px bg-border" />
+              <div className="h-4 w-px bg-border/80" />
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 text-xs gap-1 px-2 text-muted-foreground hover:text-destructive"
+                className="h-6.5 text-[11px] font-semibold gap-1 px-2 text-muted-foreground hover:text-destructive rounded-lg"
                 onClick={clearAllFilters}
               >
                 <X className="h-3 w-3" />
-                Hapus Filter
+                Reset Filter
               </Button>
             </>
           )}

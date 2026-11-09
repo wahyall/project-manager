@@ -4,7 +4,6 @@ import { useState, useCallback, useRef } from "react";
 import { useCalendar } from "@/hooks/use-calendar";
 import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { CalendarView } from "@/components/calendar/calendar-view";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle, RefreshCw } from "lucide-react";
@@ -71,14 +70,15 @@ export function EventCalendarView({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          {calendar.events.length} event dalam tampilan
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {calendar.events.length} event dalam kalender
         </p>
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-8"
+          className="h-8 w-8 rounded-xl border-border/80"
           onClick={() => calendar.refetch()}
+          title="Muat ulang data kalender"
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </Button>
@@ -100,41 +100,38 @@ export function EventCalendarView({
         searchPlaceholder="Cari event..."
       />
 
-      <Separator />
+      <Separator className="opacity-50" />
 
       {calendar.error ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <AlertCircle className="h-10 w-10 text-destructive/60 mb-4" />
-            <h3 className="text-sm font-semibold mb-1">Terjadi kesalahan</h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              {calendar.error}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => calendar.refetch()}
-            >
-              Coba Lagi
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-12 flex flex-col items-center justify-center text-center">
+          <AlertCircle className="h-10 w-10 text-destructive mb-3" />
+          <h3 className="text-sm font-bold text-foreground mb-1">Terjadi kesalahan</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            {calendar.error}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => calendar.refetch()}
+            className="rounded-xl text-xs font-semibold"
+          >
+            Coba Lagi
+          </Button>
+        </div>
       ) : (
-        <Card className="overflow-hidden">
-          <CardContent className="p-3 sm:p-4 md:p-6">
-            <CalendarView
-              ref={calendarViewRef}
-              events={calendar.calendarEvents}
-              currentView={currentView}
-              loading={calendar.loading}
-              onDateRangeChange={handleDateRangeChange}
-              onDateClick={(date) => onDateClick?.(date)}
-              onEventClick={handleEventClick}
-              onEventDrop={noopDrop}
-              onEventResize={noopDrop}
-            />
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs p-3 sm:p-5 shadow-xs overflow-hidden">
+          <CalendarView
+            ref={calendarViewRef}
+            events={calendar.calendarEvents}
+            currentView={currentView}
+            loading={calendar.loading}
+            onDateRangeChange={handleDateRangeChange}
+            onDateClick={(date) => onDateClick?.(date)}
+            onEventClick={handleEventClick}
+            onEventDrop={noopDrop}
+            onEventResize={noopDrop}
+          />
+        </div>
       )}
     </div>
   );

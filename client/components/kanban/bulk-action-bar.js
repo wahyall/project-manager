@@ -63,11 +63,11 @@ export function BulkActionBar({
   return (
     <>
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
-        <div className="flex items-center gap-2 bg-card border shadow-xl rounded-xl px-4 py-2.5">
+        <div className="flex items-center gap-2 bg-card/95 backdrop-blur-md border border-border/80 shadow-2xl rounded-2xl px-4 py-2.5">
           {/* Selection info */}
-          <div className="flex items-center gap-2 pr-3 border-r">
+          <div className="flex items-center gap-2 pr-3 border-r border-border/80">
             <CheckSquare className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium whitespace-nowrap">
+            <span className="text-xs font-bold whitespace-nowrap text-foreground">
               {selectedCount} task dipilih
             </span>
           </div>
@@ -79,13 +79,13 @@ export function BulkActionBar({
             }
             disabled={acting}
           >
-            <SelectTrigger className="h-8 w-auto min-w-[130px] text-xs gap-1.5 border-dashed">
+            <SelectTrigger className="h-8.5 w-auto min-w-[130px] text-xs font-semibold gap-1.5 rounded-xl border-border/80 bg-background/80">
               <MoveRight className="h-3.5 w-3.5" />
               <SelectValue placeholder="Pindahkan" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border-border/80 shadow-xl">
               {(columns || []).map((col) => (
-                <SelectItem key={col._id} value={col._id}>
+                <SelectItem key={col._id} value={col._id} className="text-xs font-semibold">
                   <div className="flex items-center gap-2">
                     <span
                       className="h-2 w-2 rounded-full"
@@ -108,18 +108,18 @@ export function BulkActionBar({
                 }
                 disabled={acting}
               >
-                <SelectTrigger className="h-8 w-auto min-w-[110px] text-xs gap-1.5 border-dashed">
+                <SelectTrigger className="h-8.5 w-auto min-w-[110px] text-xs font-semibold gap-1.5 rounded-xl border-border/80 bg-background/80">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   <SelectValue placeholder="Prioritas" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl border-border/80 shadow-xl">
                   {[
                     { value: "low", label: "Low", color: "bg-slate-400" },
                     { value: "medium", label: "Medium", color: "bg-amber-400" },
                     { value: "high", label: "High", color: "bg-orange-500" },
                     { value: "critical", label: "Critical", color: "bg-red-500" },
                   ].map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
+                    <SelectItem key={p.value} value={p.value} className="text-xs font-semibold">
                       <div className="flex items-center gap-2">
                         <span className={cn("h-2 w-2 rounded-full", p.color)} />
                         {p.label}
@@ -133,7 +133,7 @@ export function BulkActionBar({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1.5 text-xs"
+                className="h-8.5 gap-1.5 text-xs font-semibold rounded-xl border-border/80 bg-background/80 hover:bg-muted/60"
                 onClick={() => handleAction(() => onArchive(taskIds))}
                 disabled={acting}
               >
@@ -145,7 +145,7 @@ export function BulkActionBar({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 gap-1.5 text-xs text-destructive hover:text-destructive border-destructive/30"
+                className="h-8.5 gap-1.5 text-xs font-semibold rounded-xl text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10"
                 onClick={() => setDeleteDialogOpen(true)}
                 disabled={acting}
               >
@@ -162,7 +162,7 @@ export function BulkActionBar({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 ml-1"
+            className="h-7 w-7 ml-1 rounded-lg"
             onClick={onClearSelection}
             disabled={acting}
           >
@@ -173,18 +173,18 @@ export function BulkActionBar({
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus {selectedCount} Task</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base font-bold">Hapus {selectedCount} Task</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
               Apakah kamu yakin ingin menghapus {selectedCount} task yang dipilih?
-              Tindakan ini tidak bisa dibatalkan.
+              Tindakan ini permanen dan tidak bisa dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogFooter className="pt-2">
+            <AlertDialogCancel className="h-9 rounded-xl text-xs font-semibold">Batal</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90"
+              className="h-9 rounded-xl text-xs font-semibold bg-destructive hover:bg-destructive/90 text-white"
               onClick={() => {
                 handleAction(() => onDelete(taskIds));
                 setDeleteDialogOpen(false);
@@ -198,4 +198,3 @@ export function BulkActionBar({
     </>
   );
 }
-

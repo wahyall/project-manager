@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useEffect, lazy, Suspense } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -24,7 +23,7 @@ import {
   IDEA_STATUS_ORDER,
 } from "@/components/ideas/idea-status-badge";
 import { IdeaLabelPicker } from "@/components/ideas/idea-label-picker";
-import { AlignLeft, Loader2, Lock } from "lucide-react";
+import { AlignLeft, Calendar, Check, Info, Loader2, Lock, Tag, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -71,19 +70,11 @@ export function IdeaOverviewTab({
     [onUpdate],
   );
 
-  // Status dikunci selama ide punya Event tertaut. Penguncian ini baru
-  // punya arti setelah Task 10, tapi dipasang sekarang supaya perilaku
-  // antarmuka tidak berubah lagi belakangan.
+  // Status dikunci selama ide punya Event tertaut.
   const eventCount = idea.eventCount || 0;
   const statusLocked = eventCount > 0;
-  // Status juga tak bisa disunting kalau bukan pengelola. Alasan tertaut
-  // Event lebih spesifik jadi diprioritaskan saat keduanya berlaku.
   const statusReadOnly = statusLocked || !canManage;
 
-  // Deskripsi — auto-save dengan debounce, mengikuti pola tab Ringkasan
-  // Event (event-overview-tab.js). MentionEditor tidak menerima prop
-  // onBlur, jadi penyimpanan dipicu dari onChange (debounced) dan dari
-  // tombol "Selesai" saat menutup mode sunting.
   const handleDescChange = useCallback(
     (jsonString) => {
       descValueRef.current = jsonString;
@@ -107,38 +98,48 @@ export function IdeaOverviewTab({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm font-semibold">
-            <AlignLeft className="h-4 w-4 text-muted-foreground" />
-            Penjelasan
-          </CardTitle>
+      {/* Penjelasan Section */}
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 shadow-2xs backdrop-blur-xs transition-all">
+        <div className="flex items-center justify-between pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <AlignLeft className="h-4 w-4" />
+            </div>
+            <h3 className="text-sm font-semibold text-foreground tracking-tight">
+              Penjelasan
+            </h3>
+          </div>
           <div className="flex items-center gap-2">
             {saving && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span className="hidden sm:inline">Menyimpan...</span>
+              </span>
             )}
             {editingDesc && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="h-6 px-2 text-[10px]"
+                className="h-7 rounded-lg px-2.5 text-xs font-medium gap-1.5 shadow-2xs"
                 onClick={saveDescAndClose}
               >
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
                 Selesai
               </Button>
             )}
           </div>
-        </CardHeader>
-        <CardContent>
+        </div>
+
+        <div className="pt-1">
           <Suspense
             fallback={
-              <div className="flex items-center justify-center py-6 text-muted-foreground">
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
               </div>
             }
           >
             {editingDesc ? (
-              <div className="rounded-md border border-input px-4 py-2 transition-shadow focus-within:ring-1 focus-within:ring-ring">
+              <div className="rounded-xl border border-border/80 bg-background/80 p-3 shadow-2xs transition-shadow focus-within:ring-2 focus-within:ring-ring/20 focus-within:border-primary/50">
                 <MentionEditor
                   key={editorKey}
                   workspaceId={workspaceId}
@@ -158,147 +159,167 @@ export function IdeaOverviewTab({
                     : undefined
                 }
                 className={cn(
-                  "min-h-[60px] rounded-md px-2 py-1 transition-colors",
-                  canManage && "cursor-text hover:bg-muted/50",
+                  "min-h-[72px] rounded-xl px-3 py-2.5 transition-colors",
+                  canManage && "cursor-text hover:bg-muted/40",
+                  !idea.description && "border border-dashed border-border/70 flex items-center justify-center text-center",
                 )}
               >
                 {idea.description ? (
                   <MentionReadOnly content={idea.description} />
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Klik untuk menambahkan penjelasan
+                  <p className="text-sm text-muted-foreground/80">
+                    Klik di sini untuk menulis penjelasan atau latar belakang ide ini...
                   </p>
                 )}
               </div>
             )}
           </Suspense>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Detail</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Status
-              </p>
-              {statusReadOnly ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex h-9 w-full cursor-not-allowed items-center gap-2 rounded-md border border-input bg-muted/50 px-3 text-sm text-muted-foreground">
+      {/* Detail Section */}
+      <div className="rounded-2xl border border-border/80 bg-card/60 p-5 shadow-2xs backdrop-blur-xs transition-all space-y-4">
+        <div className="flex items-center gap-2 pb-1 border-b border-border/50">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Info className="h-4 w-4" />
+          </div>
+          <h3 className="text-sm font-semibold text-foreground tracking-tight">
+            Informasi Ide
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 pt-1">
+          {/* Status */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              Status Ide
+            </label>
+            {statusReadOnly ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex h-9.5 w-full cursor-not-allowed items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 text-sm text-muted-foreground shadow-2xs">
+                      <span
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          IDEA_STATUS_CONFIG[idea.status]?.dotClass,
+                        )}
+                      />
+                      <span className="font-medium text-foreground/80">
+                        {IDEA_STATUS_CONFIG[idea.status]?.label}
+                      </span>
+                      <Lock className="ml-auto h-3.5 w-3.5 opacity-60" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="rounded-xl border-border/80 shadow-md">
+                    {statusLocked ? (
+                      <>
+                        Ditentukan oleh {eventCount} Event terkait. Lepas
+                        tautannya dulu untuk mengubah status.
+                      </>
+                    ) : (
+                      "Kamu tidak punya izin mengubah status ide ini."
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Select
+                value={idea.status}
+                onValueChange={(value) => saveField("status", value)}
+              >
+                <SelectTrigger className="h-9.5 rounded-xl border-border/80 bg-background/80 shadow-2xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/80 shadow-lg">
+                  {IDEA_STATUS_ORDER.filter(
+                    (status) => status !== "direalisasi",
+                  ).map((status) => (
+                    <SelectItem key={status} value={status} className="rounded-lg">
+                      <span className="flex items-center gap-2">
                         <span
                           className={cn(
                             "h-2 w-2 rounded-full",
-                            IDEA_STATUS_CONFIG[idea.status]?.dotClass,
+                            IDEA_STATUS_CONFIG[status].dotClass,
                           )}
                         />
-                        {IDEA_STATUS_CONFIG[idea.status]?.label}
-                        <Lock className="ml-auto h-3 w-3" />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {statusLocked ? (
-                        <>
-                          Ditentukan oleh {eventCount} Event terkait. Lepas
-                          tautannya dulu untuk mengubah status.
-                        </>
-                      ) : (
-                        "Kamu tidak punya izin mengubah status ide ini."
-                      )}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                <Select
-                  value={idea.status}
-                  onValueChange={(value) => saveField("status", value)}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {IDEA_STATUS_ORDER.filter(
-                      (status) => status !== "direalisasi",
-                    ).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        <span className="flex items-center gap-2">
-                          <span
-                            className={cn(
-                              "h-2 w-2 rounded-full",
-                              IDEA_STATUS_CONFIG[status].dotClass,
-                            )}
-                          />
-                          {IDEA_STATUS_CONFIG[status].label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Pengusul
-              </p>
-              <div className="flex h-9 items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={idea.createdBy?.avatar} alt="" />
-                  <AvatarFallback className="text-[10px]">
-                    {idea.createdBy?.name?.charAt(0).toUpperCase() || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="truncate text-sm">
-                  {idea.createdBy?.name || "Tidak diketahui"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Label</p>
-            {canManage ? (
-              <IdeaLabelPicker
-                workspaceId={workspaceId}
-                value={(idea.labels || []).map((l) => l._id || l)}
-                onChange={(next) => saveField("labels", next)}
-              />
-            ) : (idea.labels || []).length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {(idea.labels || []).map((label) => (
-                  <span
-                    key={label._id || label}
-                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                    style={{
-                      backgroundColor: `${label.color}1a`,
-                      color: label.color,
-                    }}
-                  >
-                    {label.name}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Tidak ada label</p>
+                        {IDEA_STATUS_CONFIG[status].label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 
+          {/* Pengusul */}
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Dibuat</p>
-            <p className="text-sm">
-              {idea.createdAt
-                ? format(new Date(idea.createdAt), "dd MMMM yyyy, HH:mm", {
-                    locale: localeId,
-                  })
-                : "-"}
-            </p>
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-muted-foreground/70" />
+              Pengusul
+            </label>
+            <div className="flex h-9.5 items-center gap-2.5 rounded-xl border border-border/70 bg-background/50 px-3">
+              <Avatar className="h-6 w-6 ring-1 ring-border">
+                <AvatarImage src={idea.createdBy?.avatar} alt="" />
+                <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-medium">
+                  {idea.createdBy?.name?.charAt(0).toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate text-sm font-medium text-foreground">
+                {idea.createdBy?.name || "Tidak diketahui"}
+              </span>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Label */}
+        <div className="space-y-1.5 pt-1">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+            <Tag className="h-3.5 w-3.5 text-muted-foreground/70" />
+            Label & Kategori
+          </label>
+          {canManage ? (
+            <IdeaLabelPicker
+              workspaceId={workspaceId}
+              value={(idea.labels || []).map((l) => l._id || l)}
+              onChange={(next) => saveField("labels", next)}
+            />
+          ) : (idea.labels || []).length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {(idea.labels || []).map((label) => (
+                <span
+                  key={label._id || label}
+                  className="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium border"
+                  style={{
+                    backgroundColor: `${label.color}15`,
+                    color: label.color,
+                    borderColor: `${label.color}30`,
+                  }}
+                >
+                  {label.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">Tidak ada label terpasang</p>
+          )}
+        </div>
+
+        {/* Tanggal dibuat */}
+        <div className="space-y-1.5 pt-1">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground/70" />
+            Waktu Dibuat
+          </label>
+          <p className="text-xs font-medium text-foreground/80 pl-5">
+            {idea.createdAt
+              ? format(new Date(idea.createdAt), "dd MMMM yyyy, HH:mm", {
+                  locale: localeId,
+                })
+              : "-"}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

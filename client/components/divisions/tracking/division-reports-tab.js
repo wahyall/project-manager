@@ -111,9 +111,9 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
   return (
     <div className="space-y-6">
       {/* ── Header & Action ─────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/60 backdrop-blur-xs p-4 rounded-2xl border border-border/80 shadow-xs">
         <div>
-          <h3 className="font-semibold text-foreground">Riwayat Laporan Bulanan</h3>
+          <h3 className="font-bold text-foreground text-sm">Riwayat Laporan Bulanan</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Snapshot statistik kas, infaq, jamaah, dan kendala terkunci per bulan untuk
             arsip pertanggungjawaban.
@@ -123,9 +123,9 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
         {canEdit && (
           <Button
             onClick={handleOpenAdd}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm shrink-0"
+            className="h-8.5 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Generate Snapshot Laporan
           </Button>
         )}
@@ -133,24 +133,24 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
 
       {/* ── Error Banner ────────────────────────────────── */}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-sm">
+        <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
           {error}
         </div>
       )}
 
       {/* ── Reports Grid ────────────────────────────────── */}
       {loading ? (
-        <div className="p-12 flex flex-col items-center justify-center gap-3 text-muted-foreground bg-card rounded-xl border border-border">
+        <div className="p-16 flex flex-col items-center justify-center gap-3 text-muted-foreground bg-card/60 backdrop-blur-xs rounded-2xl border border-border/80">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          <span className="text-sm">Memuat arsip laporan bulanan...</span>
+          <span className="text-xs font-medium">Memuat arsip laporan bulanan...</span>
         </div>
       ) : reports.length === 0 ? (
-        <div className="p-12 text-center bg-card rounded-xl border border-border">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground mb-3">
+        <div className="p-16 text-center bg-card/60 backdrop-blur-xs rounded-2xl border border-border/80">
+          <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto text-muted-foreground mb-3">
             <FileText className="w-6 h-6" />
           </div>
-          <h3 className="font-semibold text-foreground">Belum ada snapshot laporan</h3>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+          <h3 className="font-semibold text-foreground text-sm">Belum ada snapshot laporan</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
             Klik tombol "Generate Snapshot Laporan" untuk mengunci data agregasi bulan ini
             menjadi arsip laporan bulanan resmi.
           </p>
@@ -160,23 +160,23 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
           {reports.map((rep) => (
             <div
               key={rep._id}
-              className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4 hover:border-border/80 transition-all"
+              className="rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs p-5 shadow-xs space-y-4 hover:border-border transition-all"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-foreground text-base">
+                    <h4 className="font-bold text-foreground text-sm">
                       {rep.title}
                     </h4>
                     <Badge
                       variant="outline"
-                      className="bg-zinc-500/10 text-zinc-600 border-zinc-500/20 text-[11px] gap-1"
+                      className="bg-muted text-muted-foreground border-border/80 text-[10px] font-semibold rounded-md gap-1"
                     >
-                      <Lock className="w-3 h-3" />
+                      <Lock className="w-2.5 h-2.5" />
                       Terkunci
                     </Badge>
                   </div>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground mt-0.5 inline-block">
                     Periode: {MONTH_NAMES[rep.month - 1]} {rep.year} • Dibuat oleh{" "}
                     {rep.createdById?.name || "Admin"}
                   </span>
@@ -186,7 +186,7 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive rounded-lg shrink-0"
                     onClick={() => handleDelete(rep._id)}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -197,9 +197,9 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
               {/* Grid 4 Matriks */}
               <div className="grid grid-cols-2 gap-2.5">
                 {/* Kas Saldo */}
-                <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                    <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="p-3 rounded-xl bg-muted/30">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground mb-1">
+                    <Wallet className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                     <span>Saldo Akhir Kas</span>
                   </div>
                   <div className="font-bold text-sm text-foreground">
@@ -212,9 +212,9 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                 </div>
 
                 {/* Infaq */}
-                <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                    <HeartHandshake className="w-3.5 h-3.5 text-sky-600" />
+                <div className="p-3 rounded-xl bg-muted/30">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground mb-1">
+                    <HeartHandshake className="w-3 h-3 text-sky-600 dark:text-sky-400" />
                     <span>Infaq Anggota</span>
                   </div>
                   <div className="font-bold text-sm text-foreground">
@@ -227,9 +227,9 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                 </div>
 
                 {/* Data Jamaah */}
-                <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                    <Users className="w-3.5 h-3.5 text-indigo-600" />
+                <div className="p-3 rounded-xl bg-muted/30">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground mb-1">
+                    <Users className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                     <span>Total Jamaah Binaan</span>
                   </div>
                   <div className="font-bold text-sm text-foreground">
@@ -238,9 +238,9 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                 </div>
 
                 {/* Kendala */}
-                <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
+                <div className="p-3 rounded-xl bg-muted/30">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground mb-1">
+                    <CheckCircle2 className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                     <span>Status Kendala</span>
                   </div>
                   <div className="font-bold text-sm text-foreground">
@@ -255,7 +255,7 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
               </div>
 
               {rep.notes && (
-                <div className="pt-2 border-t border-border/60 text-xs text-muted-foreground">
+                <div className="pt-2 border-t border-border/40 text-xs text-muted-foreground leading-relaxed">
                   <span className="font-semibold text-foreground">Catatan: </span>
                   {rep.notes}
                 </div>
@@ -267,21 +267,21 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
 
       {/* ── Dialog Buat Snapshot Laporan ───────────────── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl p-6">
           <DialogHeader>
-            <DialogTitle>Generate Snapshot Laporan Bulanan</DialogTitle>
+            <DialogTitle className="text-base font-bold">Generate Snapshot Laporan Bulanan</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
             {errorMessage && (
-              <div className="text-xs p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 text-rose-700 dark:text-rose-300">
+              <div className="text-xs p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive font-medium">
                 {errorMessage}
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase">
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Bulan
                 </label>
                 <select
@@ -289,7 +289,8 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                   onChange={(e) =>
                     setFormData({ ...formData, month: Number(e.target.value) })
                   }
-                  className="w-full text-sm rounded-lg border border-border bg-background p-2.5"
+                  aria-label="Pilih Bulan Snapshot"
+                  className="w-full text-xs rounded-xl border border-border/80 bg-background/80 p-2.5 font-semibold cursor-pointer"
                 >
                   {MONTH_NAMES.map((m, idx) => (
                     <option key={idx} value={idx + 1}>
@@ -300,7 +301,7 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase">
+                <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Tahun
                 </label>
                 <select
@@ -308,7 +309,8 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                   onChange={(e) =>
                     setFormData({ ...formData, year: Number(e.target.value) })
                   }
-                  className="w-full text-sm rounded-lg border border-border bg-background p-2.5"
+                  aria-label="Pilih Tahun Snapshot"
+                  className="w-full text-xs rounded-xl border border-border/80 bg-background/80 p-2.5 font-semibold cursor-pointer"
                 >
                   {[2024, 2025, 2026, 2027, 2028].map((y) => (
                     <option key={y} value={y}>
@@ -320,7 +322,7 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Judul Laporan *
               </label>
               <Input
@@ -329,12 +331,13 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
+                className="text-xs rounded-xl border-border/80 font-semibold"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Catatan / Evaluasi Ringkas
               </label>
               <textarea
@@ -344,7 +347,7 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                className="w-full text-sm rounded-lg border border-border bg-background p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full text-xs rounded-xl border border-border/80 bg-background/80 p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none"
               />
             </div>
 
@@ -354,15 +357,16 @@ export function DivisionReportsTab({ workspaceId, divisionId, canEdit = true }) 
                 variant="outline"
                 onClick={() => setDialogOpen(false)}
                 disabled={saving}
+                className="h-9 rounded-xl text-xs font-semibold"
               >
                 Batal
               </Button>
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="h-9 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold"
               >
-                {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Kunci & Simpan Snapshot
               </Button>
             </DialogFooter>

@@ -74,34 +74,34 @@ export function DiagramWidgetNode({ widgetId, widgetData, onUpdateWidget }) {
   return (
     <>
       <div
-        className="w-full h-full relative overflow-hidden bg-background/50 group nodrag nowheel flex items-center justify-center select-none"
+        className="w-full h-full relative overflow-hidden bg-card/40 rounded-b-2xl group nodrag nowheel flex items-center justify-center select-none"
         onDoubleClick={() => setIsFullscreen(true)}
       >
         {hasElements && svgContent ? (
           <div
-            className="w-full h-full p-2 flex items-center justify-center overflow-hidden pointer-events-none"
+            className="w-full h-full p-2.5 flex items-center justify-center overflow-hidden pointer-events-none"
             dangerouslySetInnerHTML={{ __html: svgContent }}
           />
         ) : isRendering ? (
           <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <span className="text-xs">Memuat pratinjau...</span>
+            <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+            <span className="text-xs font-medium">Memuat pratinjau diagram...</span>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center p-4 text-center text-muted-foreground">
-            <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-2 text-purple-500">
+          <div className="flex flex-col items-center justify-center p-5 text-center text-muted-foreground">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-2 text-purple-500 shadow-2xs">
               <PenTool className="h-6 w-6" />
             </div>
-            <p className="text-xs font-medium text-foreground">
-              Whiteboard Diagram
+            <p className="text-xs font-semibold text-foreground">
+              Whiteboard & Diagram
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5 max-w-[180px]">
-              Klik untuk mulai membuat sketsa & diagram Excalidraw
+            <p className="text-[11px] text-muted-foreground mt-0.5 max-w-[190px] leading-relaxed">
+              Buat sketsa alur, arsitektur, dan peta pikiran Excalidraw
             </p>
             <Button
               size="sm"
               variant="outline"
-              className="mt-3 text-xs h-7 gap-1.5 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
+              className="mt-3 text-xs h-7.5 rounded-xl gap-1.5 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10 shadow-2xs font-medium"
               onClick={() => setIsFullscreen(true)}
             >
               <Sparkles className="h-3.5 w-3.5 text-purple-500" />
@@ -112,13 +112,13 @@ export function DiagramWidgetNode({ widgetId, widgetData, onUpdateWidget }) {
 
         {/* Hover overlay with Edit button when elements exist */}
         {hasElements && (
-          <div className="absolute inset-0 z-10 bg-background/0 group-hover:bg-background/40 transition-colors flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 z-10 bg-background/0 group-hover:bg-background/40 transition-colors flex items-center justify-center pointer-events-none backdrop-blur-xs">
             <Button
-              className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto shadow-lg h-8 text-xs gap-1.5"
+              className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto shadow-lg h-8 rounded-xl text-xs gap-1.5 font-medium"
               onClick={() => setIsFullscreen(true)}
             >
               <Maximize2 className="h-3.5 w-3.5" />
-              Edit Diagram
+              Buka Editor
             </Button>
           </div>
         )}

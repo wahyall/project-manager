@@ -565,12 +565,11 @@
   position: relative;
   background: var(--popover);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 16px;
   box-shadow:
-    0 12px 32px -8px rgba(0, 0, 0, 0.18),
-    0 4px 12px -4px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
-  max-width: 280px;
+    0 16px 36px -8px rgba(0, 0, 0, 0.2),
+    0 4px 12px -4px rgba(0, 0, 0, 0.1);
+  max-width: 290px;
   min-width: 220px;
   overflow: visible;
   display: flex;
@@ -583,8 +582,8 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
-  border-radius: 10px 0 0 10px;
+  width: 3.5px;
+  border-radius: 16px 0 0 16px;
 }
 
 /* Inner content area offset for accent bar */

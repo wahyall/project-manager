@@ -5,7 +5,6 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getBezierPath,
-  getStraightPath,
 } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -39,18 +38,15 @@ function ConnectionEdgeComponent({
     targetPosition,
   });
 
-  // Map lineStyle to CSS
   const strokeDasharray =
     lineStyle === "dashed" ? "8 4" : lineStyle === "dotted" ? "2 4" : "none";
 
-  // Arrow marker
   const markerEnd = arrowType !== "none" ? `url(#arrow-${id})` : undefined;
   const markerStart =
     arrowType === "two-way" ? `url(#arrow-start-${id})` : undefined;
 
   return (
     <>
-      {/* SVG marker definitions for arrows */}
       <svg style={{ position: "absolute", width: 0, height: 0 }}>
         <defs>
           {arrowType !== "none" && (
@@ -95,7 +91,6 @@ function ConnectionEdgeComponent({
         markerStart={markerStart}
       />
 
-      {/* Edge label + delete button */}
       <EdgeLabelRenderer>
         <div
           style={{
@@ -103,11 +98,11 @@ function ConnectionEdgeComponent({
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
             pointerEvents: "all",
           }}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1.5"
         >
           {label && (
             <span
-              className="bg-background/90 backdrop-blur-sm border rounded px-2 py-0.5 text-xs font-medium shadow-sm"
+              className="bg-background/95 backdrop-blur-md border border-border/80 rounded-xl px-2.5 py-1 text-xs font-semibold shadow-xs"
               style={{ color }}
             >
               {label}
@@ -117,10 +112,10 @@ function ConnectionEdgeComponent({
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-full"
+              className="h-6 w-6 bg-destructive/15 hover:bg-destructive/25 text-destructive rounded-full shadow-xs transition-transform active:scale-90"
               onClick={() => onDelete?.(id)}
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>

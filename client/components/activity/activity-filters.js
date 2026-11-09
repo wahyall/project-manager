@@ -55,21 +55,23 @@ export function ActivityFilters({ onChange }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground shrink-0 shadow-2xs">
+        <Filter className="h-3.5 w-3.5" />
+      </div>
 
       {/* Member filter */}
       <Select value={actorId} onValueChange={handleActorChange}>
-        <SelectTrigger className="w-[180px] h-8 text-xs">
+        <SelectTrigger className="w-[180px] h-8.5 rounded-xl border-border/80 bg-background/80 text-xs shadow-2xs">
           <SelectValue placeholder="Semua Member" />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Semua Member</SelectItem>
+        <SelectContent className="rounded-xl border-border/80 shadow-lg">
+          <SelectItem value="all" className="rounded-lg text-xs font-medium">Semua Member</SelectItem>
           {members?.map((m) => (
-            <SelectItem key={m.userId} value={m.userId}>
+            <SelectItem key={m.userId} value={m.userId} className="rounded-lg text-xs">
               <div className="flex items-center gap-2">
-                <Avatar className="h-4 w-4">
+                <Avatar className="h-4.5 w-4.5">
                   <AvatarImage src={m.avatar} />
-                  <AvatarFallback className="text-[8px]">
+                  <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
                     {m.name?.[0] || "?"}
                   </AvatarFallback>
                 </Avatar>
@@ -82,12 +84,12 @@ export function ActivityFilters({ onChange }) {
 
       {/* Module filter */}
       <Select value={targetType} onValueChange={handleTargetTypeChange}>
-        <SelectTrigger className="w-[160px] h-8 text-xs">
+        <SelectTrigger className="w-[160px] h-8.5 rounded-xl border-border/80 bg-background/80 text-xs shadow-2xs">
           <SelectValue placeholder="Semua Modul" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="rounded-xl border-border/80 shadow-lg">
           {TARGET_TYPES.map((t) => (
-            <SelectItem key={t.value} value={t.value}>
+            <SelectItem key={t.value} value={t.value} className="rounded-lg text-xs font-medium">
               {t.label}
             </SelectItem>
           ))}
@@ -100,10 +102,10 @@ export function ActivityFilters({ onChange }) {
           variant="ghost"
           size="sm"
           onClick={handleReset}
-          className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+          className="h-8.5 px-2.5 rounded-xl text-xs text-muted-foreground hover:text-foreground gap-1"
         >
-          <X className="h-3 w-3 mr-1" />
-          Reset
+          <X className="h-3.5 w-3.5" />
+          Reset Filter
         </Button>
       )}
     </div>

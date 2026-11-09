@@ -66,10 +66,10 @@ import { isBlockNoteEmpty } from "@/components/blocknote-editor";
 // ── Field Row component ──────────────────────────────
 function FieldRow({ icon: Icon, label, children }) {
   return (
-    <div className="flex items-start gap-3 py-2.5">
-      <div className="flex items-center gap-2 w-28 shrink-0 pt-0.5">
+    <div className="flex items-start gap-3 py-2">
+      <div className="flex items-center gap-2 w-28 shrink-0 pt-1">
         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
       </div>
@@ -141,8 +141,6 @@ export function TabDetail({
       descTimerRef.current = setTimeout(() => {
         if (descValueRef.current !== task.description) {
           onUpdate({ description: descValueRef.current });
-          // Note: Full implementation would also send custom mentions if supported at the task level
-          // For now, task description update primarily updates the 'description' field.
         }
       }, 800);
     },
@@ -264,9 +262,9 @@ export function TabDetail({
   };
 
   return (
-    <div className="space-y-1 py-2">
+    <div className="space-y-2 py-1">
       {/* ── Title ──────────────────────────────────── */}
-      <div className="px-1">
+      <div>
         {editingTitle ? (
           <Input
             value={titleValue}
@@ -279,14 +277,14 @@ export function TabDetail({
                 setEditingTitle(false);
               }
             }}
-            className="text-lg font-semibold h-auto py-1"
+            className="text-base font-bold h-auto py-1.5 px-3 rounded-xl border-border/80"
             autoFocus
           />
         ) : (
           <h2
             className={cn(
-              "text-lg font-semibold text-foreground rounded px-2 py-1 -mx-1 transition-colors",
-              canManage && "cursor-pointer hover:bg-accent/50",
+              "text-base font-bold text-foreground rounded-xl px-2.5 py-1.5 -mx-1 transition-colors",
+              canManage && "cursor-pointer hover:bg-muted/40",
             )}
             onClick={() => {
               if (!canManage) return;
@@ -300,11 +298,11 @@ export function TabDetail({
       </div>
 
       {/* ── Watch button ──────────────────────────── */}
-      <div className="flex items-center gap-2 px-1 pt-1 pb-2">
+      <div className="flex items-center gap-2 pt-1 pb-2">
         <Button
           variant={isWatching ? "secondary" : "outline"}
           size="sm"
-          className="h-7 gap-1.5 text-xs"
+          className="h-7 gap-1.5 text-xs font-semibold rounded-lg border-border/80"
           onClick={() => (isWatching ? onUnwatch?.() : onWatch?.())}
         >
           {isWatching ? (
@@ -320,17 +318,17 @@ export function TabDetail({
         {task.isArchived && (
           <Badge
             variant="outline"
-            className="text-[10px] border-amber-300 text-amber-600"
+            className="text-[10px] font-bold border-amber-300 text-amber-600 rounded-md"
           >
             Diarsipkan
           </Badge>
         )}
       </div>
 
-      <Separator />
+      <Separator className="my-2 opacity-50" />
 
       {/* ── Fields ─────────────────────────────────── */}
-      <div className="space-y-0.5 px-1">
+      <div className="space-y-1">
         {/* Status / Column */}
         <FieldRow icon={Columns3} label="Status">
           <Select
@@ -342,12 +340,12 @@ export function TabDetail({
             onValueChange={(val) => onUpdate({ columnId: val })}
             disabled={memberRole === "guest"}
           >
-            <SelectTrigger className="h-8 text-xs w-auto min-w-[140px]">
+            <SelectTrigger className="h-8 text-xs font-semibold w-auto min-w-[140px] rounded-xl border-border/80 bg-background/80">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border-border/80 shadow-xl">
               {(columns || []).map((col) => (
-                <SelectItem key={col._id} value={col._id}>
+                <SelectItem key={col._id} value={col._id} className="text-xs font-semibold">
                   <div className="flex items-center gap-2">
                     <span
                       className="h-2 w-2 rounded-full"
@@ -368,17 +366,17 @@ export function TabDetail({
             onValueChange={(val) => onUpdate({ priority: val })}
             disabled={!canManage}
           >
-            <SelectTrigger className="h-8 text-xs w-auto min-w-[120px]">
+            <SelectTrigger className="h-8 text-xs font-semibold w-auto min-w-[120px] rounded-xl border-border/80 bg-background/80">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border-border/80 shadow-xl">
               {[
                 { value: "low", label: "Low", color: "bg-slate-400" },
                 { value: "medium", label: "Medium", color: "bg-amber-400" },
                 { value: "high", label: "High", color: "bg-orange-500" },
                 { value: "critical", label: "Critical", color: "bg-red-500" },
               ].map((p) => (
-                <SelectItem key={p.value} value={p.value}>
+                <SelectItem key={p.value} value={p.value} className="text-xs font-semibold">
                   <div className="flex items-center gap-2">
                     <span className={cn("h-2 w-2 rounded-full", p.color)} />
                     {p.label}
@@ -396,7 +394,7 @@ export function TabDetail({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-auto min-h-8 px-2 text-xs font-normal flex-wrap gap-1 justify-start"
+                className="h-auto min-h-8 px-2.5 text-xs font-medium flex-wrap gap-1.5 justify-start rounded-xl border border-border/80 bg-background/80 hover:bg-muted/40"
                 disabled={!canManage}
               >
                 {assigneeIds.length === 0 ? (
@@ -404,7 +402,7 @@ export function TabDetail({
                     Tambah assignee...
                   </span>
                 ) : (
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {(task.assignees || []).map((a) => {
                       const user =
                         typeof a === "string" ? { _id: a, name: "?" } : a;
@@ -412,10 +410,10 @@ export function TabDetail({
                         <Badge
                           key={user._id}
                           variant="secondary"
-                          className="text-[10px] h-5 gap-1 px-1.5"
+                          className="text-[10px] font-semibold h-5.5 gap-1 px-2 rounded-md"
                         >
-                          <Avatar className="h-3.5 w-3.5">
-                            <AvatarFallback className="text-[7px] bg-primary/10 text-primary">
+                          <Avatar className="h-3.5 w-3.5 rounded-sm">
+                            <AvatarFallback className="text-[7px] font-bold bg-primary/10 text-primary">
                               {getInitials(user.name)}
                             </AvatarFallback>
                           </Avatar>
@@ -427,27 +425,27 @@ export function TabDetail({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-56 p-2" align="start">
-              <p className="text-xs font-medium text-muted-foreground px-2 py-1 uppercase tracking-wider">
+            <PopoverContent className="w-56 p-3 rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl" align="start">
+              <p className="text-[10px] font-bold text-muted-foreground px-1 py-1 uppercase tracking-wider">
                 Pilih Assignee
               </p>
-              <Separator className="my-1" />
-              <div className="max-h-48 overflow-y-auto space-y-0.5">
+              <Separator className="my-1.5" />
+              <div className="max-h-48 overflow-y-auto space-y-1">
                 {memberList.map((member) => (
                   <button
                     key={member.id}
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                      assigneeIds.includes(member.id) && "bg-accent",
+                      "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-semibold hover:bg-accent transition-colors",
+                      assigneeIds.includes(member.id) && "bg-accent/80",
                     )}
                     onClick={() => toggleAssignee(member.id)}
                   >
                     <Checkbox
                       checked={assigneeIds.includes(member.id)}
-                      className="h-3.5 w-3.5 pointer-events-none"
+                      className="h-3.5 w-3.5 pointer-events-none rounded-sm"
                     />
-                    <Avatar className="h-5 w-5">
-                      <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                    <Avatar className="h-5 w-5 rounded-md">
+                      <AvatarFallback className="text-[8px] font-bold bg-primary/10 text-primary">
                         {getInitials(member.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -466,13 +464,13 @@ export function TabDetail({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-auto min-h-8 px-2 text-xs font-normal flex-wrap gap-1 justify-start"
+                className="h-auto min-h-8 px-2.5 text-xs font-medium flex-wrap gap-1.5 justify-start rounded-xl border border-border/80 bg-background/80 hover:bg-muted/40"
                 disabled={!canManage}
               >
                 {labelIds.length === 0 ? (
                   <span className="text-muted-foreground">Tambah label...</span>
                 ) : (
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {(task.labels || []).map((l) => {
                       const label =
                         typeof l === "string"
@@ -482,7 +480,7 @@ export function TabDetail({
                         <Badge
                           key={label._id}
                           variant="outline"
-                          className="text-[10px] h-5 gap-1 px-1.5"
+                          className="text-[10px] font-semibold h-5.5 gap-1 px-2 rounded-md"
                         >
                           <span
                             className="h-2 w-2 rounded-full"
@@ -496,27 +494,27 @@ export function TabDetail({
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-56 p-2" align="start">
-              <p className="text-xs font-medium text-muted-foreground px-2 py-1 uppercase tracking-wider">
+            <PopoverContent className="w-56 p-3 rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl" align="start">
+              <p className="text-[10px] font-bold text-muted-foreground px-1 py-1 uppercase tracking-wider">
                 Pilih Label
               </p>
-              <Separator className="my-1" />
-              <div className="max-h-48 overflow-y-auto space-y-0.5">
+              <Separator className="my-1.5" />
+              <div className="max-h-48 overflow-y-auto space-y-1">
                 {(labels || []).map((label) => (
                   <button
                     key={label._id}
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent transition-colors",
-                      labelIds.includes(label._id) && "bg-accent",
+                      "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-semibold hover:bg-accent transition-colors",
+                      labelIds.includes(label._id) && "bg-accent/80",
                     )}
                     onClick={() => toggleLabel(label._id)}
                   >
                     <Checkbox
                       checked={labelIds.includes(label._id)}
-                      className="h-3.5 w-3.5 pointer-events-none"
+                      className="h-3.5 w-3.5 pointer-events-none rounded-sm"
                     />
                     <span
-                      className="h-3 w-3 rounded-full shrink-0"
+                      className="h-2.5 w-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: label.color }}
                     />
                     <span className="truncate text-xs">{label.name}</span>
@@ -540,8 +538,8 @@ export function TabDetail({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8 text-xs font-normal justify-start px-2",
-                  !task.startDate && "text-muted-foreground",
+                  "h-8 text-xs font-semibold justify-start px-2.5 rounded-xl border border-border/80 bg-background/80 hover:bg-muted/40",
+                  !task.startDate && "text-muted-foreground font-normal",
                 )}
                 disabled={!canManage}
               >
@@ -552,7 +550,7 @@ export function TabDetail({
                   : "Belum ditentukan"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 rounded-2xl border-border/80 shadow-2xl" align="start">
               <Calendar
                 mode="single"
                 selected={task.startDate ? new Date(task.startDate) : undefined}
@@ -572,8 +570,8 @@ export function TabDetail({
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "h-8 text-xs font-normal justify-start px-2",
-                  !task.dueDate && "text-muted-foreground",
+                  "h-8 text-xs font-semibold justify-start px-2.5 rounded-xl border border-border/80 bg-background/80 hover:bg-muted/40",
+                  !task.dueDate && "text-muted-foreground font-normal",
                 )}
                 disabled={!canManage}
               >
@@ -584,7 +582,7 @@ export function TabDetail({
                   : "Belum ditentukan"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 rounded-2xl border-border/80 shadow-2xl" align="start">
               <Calendar
                 mode="single"
                 selected={task.dueDate ? new Date(task.dueDate) : undefined}
@@ -610,17 +608,17 @@ export function TabDetail({
               onUpdate({ eventId: val === "none" ? null : val })
             }
           >
-            <SelectTrigger className="h-8 text-xs w-auto min-w-[160px]">
+            <SelectTrigger className="h-8 text-xs font-semibold w-auto min-w-[160px] rounded-xl border-border/80 bg-background/80">
               <SelectValue placeholder="Tidak terkait event" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border-border/80 shadow-xl">
               <SelectItem value="none">
                 <span className="text-muted-foreground">
                   Tidak terkait event
                 </span>
               </SelectItem>
               {(events || []).map((evt) => (
-                <SelectItem key={evt._id} value={evt._id}>
+                <SelectItem key={evt._id} value={evt._id} className="text-xs font-semibold">
                   <div className="flex items-center gap-2">
                     <span
                       className="h-2 w-2 rounded-full shrink-0"
@@ -631,13 +629,13 @@ export function TabDetail({
                       <Badge
                         variant="outline"
                         className={cn(
-                          "text-[9px] h-4 px-1 ml-auto shrink-0",
+                          "text-[9px] font-bold h-4 px-1 ml-auto shrink-0 rounded",
                           evt.status === "ongoing" &&
-                            "border-green-300 text-green-600",
+                            "border-green-300 text-green-600 bg-green-500/10",
                           evt.status === "upcoming" &&
-                            "border-blue-300 text-blue-600",
+                            "border-blue-300 text-blue-600 bg-blue-500/10",
                           evt.status === "completed" &&
-                            "border-gray-300 text-gray-500",
+                            "border-gray-300 text-gray-500 bg-muted",
                         )}
                       >
                         {evt.status}
@@ -700,15 +698,15 @@ export function TabDetail({
               }}
               disabled={!!task.eventId || !canManageCoordination}
             >
-              <SelectTrigger className="h-8 text-xs w-auto min-w-[160px]">
+              <SelectTrigger className="h-8 text-xs font-semibold w-auto min-w-[160px] rounded-xl border-border/80 bg-background/80">
                 <SelectValue placeholder="Tanpa Divisi" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl border-border/80 shadow-xl">
                 <SelectItem value="none">
                   <span className="text-muted-foreground">Tanpa Divisi</span>
                 </SelectItem>
                 {(divisions || []).map((div) => (
-                  <SelectItem key={div._id} value={div._id.toString()}>
+                  <SelectItem key={div._id} value={div._id.toString()} className="text-xs font-semibold">
                     <span className="flex items-center gap-2">
                       {div.color && (
                         <span
@@ -725,7 +723,7 @@ export function TabDetail({
           </FieldRow>
         )}
         {task.eventId && (divisions || []).length > 0 && (
-          <p className="-mt-2 text-[11px] text-muted-foreground pl-8">
+          <p className="-mt-1 text-[11px] text-muted-foreground pl-31">
             Divisi utama mengikuti event terkait.
           </p>
         )}
@@ -738,10 +736,10 @@ export function TabDetail({
                 <Badge
                   key={leader._id}
                   variant="secondary"
-                  className="text-xs h-6 gap-1 px-2 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/25"
+                  className="text-xs h-6 gap-1 px-2.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/25 rounded-lg"
                 >
                   <Crown className="h-3 w-3 text-amber-500 shrink-0" />
-                  <span className="font-medium">{leader.name}</span>
+                  <span className="font-semibold">{leader.name}</span>
                 </Badge>
               ))}
             </div>
@@ -751,7 +749,7 @@ export function TabDetail({
         {/* Dependencies (read-only display) */}
         {task.blockedBy && task.blockedBy.length > 0 && (
           <FieldRow icon={Lock} label="Diblokir oleh">
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {task.blockedBy.map((dep) => {
                 const d =
                   typeof dep === "string" ? { _id: dep, title: "Task" } : dep;
@@ -759,7 +757,7 @@ export function TabDetail({
                   <Badge
                     key={d._id}
                     variant="outline"
-                    className="text-[10px] h-5 gap-1"
+                    className="text-[10px] font-semibold h-5.5 gap-1 px-2 rounded-md border-amber-500/30 text-amber-600 bg-amber-500/10"
                   >
                     <Lock className="h-2.5 w-2.5" />
                     {d.title}
@@ -779,36 +777,36 @@ export function TabDetail({
         readOnly={memberRole === "guest"}
       />
 
-      <Separator />
+      <Separator className="my-2 opacity-50" />
 
       {/* ── Description (BlockNote WYSIWYG) ────────── */}
-      <div className="px-1 py-3">
+      <div className="py-2">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <AlignLeft className="h-3.5 w-3.5 text-muted-foreground" />
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
-              Deskripsi
+            <AlignLeft className="h-3.5 w-3.5 text-primary" />
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+              Deskripsi Task
             </h4>
           </div>
           {editingDesc && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 text-[10px] px-2"
+              className="h-6 text-[11px] font-semibold px-2.5 rounded-lg text-primary hover:bg-primary/10"
               onClick={saveDescAndClose}
             >
-              Selesai
+              Selesai Edit
             </Button>
           )}
         </div>
 
         {editingDesc ? (
-          <div className="rounded-md border bg-background focus-within:ring-1 focus-within:ring-ring transition-shadow py-2 px-6">
+          <div className="rounded-2xl border border-border/80 bg-background/80 focus-within:ring-2 focus-within:ring-primary/20 transition-all py-3 px-5 shadow-2xs">
             <Suspense
               fallback={
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  <span className="text-xs">Memuat editor...</span>
+                  <span className="text-xs font-medium">Memuat editor...</span>
                 </div>
               }
             >
@@ -824,8 +822,8 @@ export function TabDetail({
         ) : (
           <div
             className={cn(
-              "rounded p-2 min-h-[40px] transition-colors",
-              canManage && "cursor-pointer hover:bg-accent/50",
+              "rounded-2xl border border-border/60 bg-background/50 p-3.5 min-h-[50px] transition-all",
+              canManage && "cursor-pointer hover:bg-muted/40 hover:border-border",
             )}
             onClick={() => {
               if (!canManage) return;
@@ -837,8 +835,8 @@ export function TabDetail({
             {!isBlockNoteEmpty(task.description) ? (
               <Suspense
                 fallback={
-                  <div className="text-sm text-muted-foreground">
-                    Loading...
+                  <div className="text-xs text-muted-foreground">
+                    Memuat tampilan...
                   </div>
                 }
               >
@@ -848,18 +846,18 @@ export function TabDetail({
                 />
               </Suspense>
             ) : (
-              <span className="text-sm text-muted-foreground italic">
-                Klik untuk menambahkan deskripsi...
+              <span className="text-xs text-muted-foreground italic">
+                Klik untuk menambahkan deskripsi atau catatan task...
               </span>
             )}
           </div>
         )}
       </div>
 
-      <Separator />
+      <Separator className="my-2 opacity-50" />
 
       {/* ── Subtasks ───────────────────────────────── */}
-      <div className="px-1 py-3">
+      <div className="py-2">
         <SubtaskChecklist
           subtasks={task.subtasks || []}
           onChange={(subtasks) =>
@@ -875,10 +873,10 @@ export function TabDetail({
         />
       </div>
 
-      <Separator />
+      <Separator className="my-2 opacity-50" />
 
       {/* ── Attachments ────────────────────────────── */}
-      <div className="px-1 py-3">
+      <div className="py-2">
         <AttachmentSection
           attachments={task.attachments || []}
           workspaceId={workspaceId}

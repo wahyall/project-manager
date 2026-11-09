@@ -71,9 +71,9 @@ function CoordinationField({
   };
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-        <Icon className="h-3 w-3" />
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+        <Icon className="h-3 w-3 text-primary" />
         {label}
       </div>
       <textarea
@@ -85,8 +85,8 @@ function CoordinationField({
         rows={2}
         maxLength={2000}
         className={cn(
-          "w-full resize-y rounded-md border bg-background px-2.5 py-2 text-xs leading-relaxed outline-none transition-colors",
-          "placeholder:text-muted-foreground/70 focus-visible:ring-1 focus-visible:ring-ring",
+          "w-full resize-none rounded-xl border border-border/80 bg-background/80 px-3 py-2 text-xs leading-relaxed outline-none transition-all",
+          "placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary/20 focus:border-primary/40",
           readOnly && "cursor-default bg-muted/40 text-muted-foreground",
         )}
       />
@@ -213,23 +213,23 @@ export function CoordinationSection({
   const coordination = task.coordination || {};
 
   return (
-    <div className="mx-1 my-2 space-y-3 rounded-lg border bg-muted/20 p-3">
+    <div className="mx-1 my-3 space-y-3.5 rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs p-4 shadow-xs">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <Users className="h-3.5 w-3.5 text-primary" />
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <Users className="h-4 w-4 text-primary" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
               Koordinasi Antar-Divisi
             </h4>
           </div>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
-            Satu PIC untuk setiap divisi yang terlibat.
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            Satu PIC penanggung jawab untuk setiap divisi yang terlibat.
           </p>
         </div>
         {involvedDivisions.length > 1 && (
           <Badge
             variant="outline"
-            className="shrink-0 border-primary/30 bg-primary/5 text-[10px] text-primary"
+            className="shrink-0 border-primary/30 bg-primary/5 text-[10px] font-bold text-primary rounded-lg"
           >
             {involvedDivisions.length} divisi
           </Badge>
@@ -237,7 +237,7 @@ export function CoordinationSection({
       </div>
 
       <div className="space-y-1.5">
-        <div className="text-[11px] font-medium text-muted-foreground">
+        <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
           Divisi Terlibat
         </div>
         <Popover>
@@ -247,7 +247,7 @@ export function CoordinationSection({
               variant="outline"
               size="sm"
               disabled={!canManage || readOnly}
-              className="h-auto min-h-8 w-full justify-start gap-1.5 px-2 py-1.5 text-xs font-normal"
+              className="h-auto min-h-9 w-full justify-start gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border-border/80 bg-background/80 hover:bg-muted/40"
             >
               {involvedDivisions.length === 0 ? (
                 <span className="flex items-center gap-1.5 text-muted-foreground">
@@ -255,7 +255,7 @@ export function CoordinationSection({
                   Tambah divisi terlibat...
                 </span>
               ) : (
-                <span className="flex flex-wrap gap-1">
+                <span className="flex flex-wrap gap-1.5">
                   {involvedDivisions.map((division) => {
                     const id = toId(division);
                     const isPrimary = id === primaryDivisionId;
@@ -263,7 +263,7 @@ export function CoordinationSection({
                       <Badge
                         key={id}
                         variant="secondary"
-                        className="h-5 gap-1 px-1.5 text-[10px]"
+                        className="h-5.5 gap-1 px-2 text-[10px] font-semibold rounded-md"
                       >
                         <span
                           className="h-2 w-2 shrink-0 rounded-full"
@@ -272,7 +272,7 @@ export function CoordinationSection({
                           }}
                         />
                         {division.name || "Divisi"}
-                        {isPrimary && <Lock className="h-2.5 w-2.5" />}
+                        {isPrimary && <Lock className="h-2.5 w-2.5 ml-0.5 text-muted-foreground" />}
                       </Badge>
                     );
                   })}
@@ -280,12 +280,12 @@ export function CoordinationSection({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 p-2" align="start">
-            <p className="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Pilih Divisi
+          <PopoverContent className="w-64 p-3 rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl" align="start">
+            <p className="px-1 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              Pilih Divisi Terlibat
             </p>
-            <Separator className="my-1" />
-            <div className="max-h-56 space-y-0.5 overflow-y-auto">
+            <Separator className="my-1.5" />
+            <div className="max-h-56 space-y-1 overflow-y-auto">
               {(divisions || []).map((division) => {
                 const divisionId = toId(division);
                 const checked = involvedIds.includes(divisionId);
@@ -297,15 +297,15 @@ export function CoordinationSection({
                     disabled={isPrimary && eventLocked}
                     onClick={() => toggleDivision(divisionId)}
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent",
-                      checked && "bg-accent",
-                      isPrimary && eventLocked && "cursor-not-allowed",
+                      "flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs font-semibold transition-colors hover:bg-accent",
+                      checked && "bg-accent/80",
+                      isPrimary && eventLocked && "cursor-not-allowed opacity-60",
                     )}
                   >
                     <Checkbox
                       checked={checked}
                       disabled={isPrimary && eventLocked}
-                      className="pointer-events-none h-3.5 w-3.5"
+                      className="pointer-events-none h-3.5 w-3.5 rounded-sm"
                     />
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -329,7 +329,7 @@ export function CoordinationSection({
               )}
             </div>
             {eventLocked && (
-              <p className="mt-1 px-2 text-[10px] text-muted-foreground">
+              <p className="mt-2 px-1 text-[10px] text-muted-foreground">
                 Divisi utama terkunci mengikuti event.
               </p>
             )}
@@ -339,10 +339,10 @@ export function CoordinationSection({
 
       {involvedDivisions.length > 0 && (
         <div className="space-y-1.5">
-          <div className="text-[11px] font-medium text-muted-foreground">
+          <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
             PIC per Divisi
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {involvedDivisions.map((division) => {
               const divisionId = toId(division);
               const selectedPic = picByDivision.get(divisionId) || "none";
@@ -350,7 +350,7 @@ export function CoordinationSection({
               return (
                 <div
                   key={divisionId}
-                  className="flex items-center gap-2 rounded-md border bg-background/70 px-2 py-1.5"
+                  className="flex items-center gap-2 rounded-xl border border-border/80 bg-background/80 px-3 py-2 shadow-2xs"
                 >
                   <span
                     className="h-2 w-2 shrink-0 rounded-full"
@@ -358,7 +358,7 @@ export function CoordinationSection({
                       backgroundColor: division.color || "#94A3B8",
                     }}
                   />
-                  <span className="min-w-0 flex-1 truncate text-xs">
+                  <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">
                     {division.name || "Divisi"}
                   </span>
                   <Select
@@ -366,10 +366,10 @@ export function CoordinationSection({
                     onValueChange={(value) => setPic(divisionId, value)}
                     disabled={!canManage || readOnly}
                   >
-                    <SelectTrigger className="h-7 w-[150px] text-[11px]">
+                    <SelectTrigger className="h-7 w-[150px] text-[11px] rounded-lg border-border/80 font-medium">
                       <SelectValue placeholder="Pilih PIC" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-xl border-border/80 shadow-xl">
                       <SelectItem value="none">
                         <span className="text-muted-foreground">
                           Belum ada PIC
@@ -377,9 +377,9 @@ export function CoordinationSection({
                       </SelectItem>
                       {options.map((member) => (
                         <SelectItem key={member.id} value={member.id}>
-                          <span className="flex items-center gap-1.5">
-                            <Avatar className="h-4 w-4">
-                              <AvatarFallback className="bg-primary/10 text-[7px] text-primary">
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <Avatar className="h-4 w-4 rounded-md">
+                              <AvatarFallback className="bg-primary/10 text-[7px] text-primary font-bold">
                                 {getInitials(member.name)}
                               </AvatarFallback>
                             </Avatar>
@@ -403,9 +403,9 @@ export function CoordinationSection({
         </div>
       )}
 
-      <Separator />
+      <Separator className="my-2 opacity-50" />
 
-      <div className="grid gap-2 sm:grid-cols-1">
+      <div className="grid gap-2.5 sm:grid-cols-1">
         <CoordinationField
           icon={AlertTriangle}
           label="Kendala"

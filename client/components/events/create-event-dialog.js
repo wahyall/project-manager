@@ -16,8 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 // Lazy-load MentionEditor to avoid SSR issues and reduce initial bundle.
-// Dipakai (bukan BlockNoteEditor polos) supaya @mention bisa disisipkan
-// sejak event dibuat.
 const MentionEditor = lazy(() =>
   import("@/components/mention-editor").then((m) => ({
     default: m.MentionEditor,
@@ -139,52 +137,53 @@ export function CreateEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[780px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[760px] max-h-[90vh] overflow-y-auto rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
+          <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-foreground">
             <div
-              className="h-3 w-3 rounded-full shrink-0"
+              className="h-3.5 w-3.5 rounded-full shrink-0 shadow-2xs"
               style={{ backgroundColor: color }}
             />
             Buat Event Baru
           </DialogTitle>
-          <DialogDescription>
-            Buat event baru untuk workspace ini
+          <DialogDescription className="text-xs text-muted-foreground">
+            Rencanakan agenda, kajian, atau kegiatan baru di workspace ini.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
+        <div className="space-y-4 py-2">
           {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="event-title">
+          <div className="space-y-1.5">
+            <Label htmlFor="event-title" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Judul Event <span className="text-destructive">*</span>
             </Label>
             <Input
               id="event-title"
-              placeholder="Contoh: Sprint Planning Q1"
+              placeholder="Contoh: Kajian Akbar Akhir Pekan"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={100}
-              className={errors.title ? "border-destructive" : ""}
+              className={cn("h-9 text-xs font-semibold rounded-xl border-border/80 bg-background/80", errors.title && "border-destructive")}
               autoFocus
             />
             {errors.title && (
-              <p className="text-xs text-destructive">{errors.title}</p>
+              <p className="text-[11px] text-destructive font-medium">{errors.title}</p>
             )}
           </div>
 
           {/* Description — BlockNote WYSIWYG */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <AlignLeft className="h-3 w-3" />
-              Deskripsi
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <AlignLeft className="h-3 w-3 text-primary" />
+              Deskripsi & Rincian
             </Label>
-            <div className="py-2 px-6 rounded-md border border-input">
+            <div className="py-2 px-5 rounded-2xl border border-border/80 bg-background/80 focus-within:ring-2 focus-within:ring-primary/20 transition-all shadow-2xs">
               {open && (
                 <Suspense
                   fallback={
                     <div className="flex items-center justify-center py-6 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin text-primary mr-2" />
+                      <span className="text-xs">Memuat editor...</span>
                     </div>
                   }
                 >
@@ -193,7 +192,7 @@ export function CreateEventDialog({
                     workspaceId={workspaceId}
                     initialContent={null}
                     onChange={setDescription}
-                    placeholder="Jelaskan tentang event ini... ketik @ untuk mention"
+                    placeholder="Jelaskan tujuan, rundown, atau konsep event... ketik @ untuk mention"
                     className="blocknote-compact"
                   />
                 </Suspense>
@@ -202,10 +201,10 @@ export function CreateEventDialog({
           </div>
 
           {/* Dates Row */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Start Date */}
-            <div className="space-y-2">
-              <Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Tanggal Mulai <span className="text-destructive">*</span>
               </Label>
               <Popover>
@@ -213,18 +212,18 @@ export function CreateEventDialog({
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal h-9",
-                      !startDate && "text-muted-foreground",
+                      "w-full justify-start text-left text-xs font-semibold h-9 rounded-xl border-border/80 bg-background/80",
+                      !startDate && "text-muted-foreground font-normal",
                       errors.startDate && "border-destructive",
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
                     {startDate
                       ? format(startDate, "dd MMM yyyy", { locale: localeId })
-                      : "Pilih tanggal"}
+                      : "Pilih tanggal mulai"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 rounded-2xl border-border/80 shadow-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={startDate}
@@ -239,13 +238,13 @@ export function CreateEventDialog({
                 </PopoverContent>
               </Popover>
               {errors.startDate && (
-                <p className="text-xs text-destructive">{errors.startDate}</p>
+                <p className="text-[11px] text-destructive font-medium">{errors.startDate}</p>
               )}
             </div>
 
             {/* End Date */}
-            <div className="space-y-2">
-              <Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Tanggal Selesai <span className="text-destructive">*</span>
               </Label>
               <Popover>
@@ -253,18 +252,18 @@ export function CreateEventDialog({
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal h-9",
-                      !endDate && "text-muted-foreground",
+                      "w-full justify-start text-left text-xs font-semibold h-9 rounded-xl border-border/80 bg-background/80",
+                      !endDate && "text-muted-foreground font-normal",
                       errors.endDate && "border-destructive",
                     )}
                   >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
                     {endDate
                       ? format(endDate, "dd MMM yyyy", { locale: localeId })
-                      : "Pilih tanggal"}
+                      : "Pilih tanggal selesai"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 rounded-2xl border-border/80 shadow-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={endDate}
@@ -275,35 +274,35 @@ export function CreateEventDialog({
                 </PopoverContent>
               </Popover>
               {errors.endDate && (
-                <p className="text-xs text-destructive">{errors.endDate}</p>
+                <p className="text-[11px] text-destructive font-medium">{errors.endDate}</p>
               )}
             </div>
           </div>
 
           {/* Color & Status Row */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Color Picker */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Palette className="h-3.5 w-3.5" />
-                Warna Label
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                <Palette className="h-3.5 w-3.5 text-primary" />
+                Warna Tema
               </Label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
                 {EVENT_COLORS.map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setColor(c)}
                     className={cn(
-                      "h-7 w-7 rounded-full transition-all border-2 flex items-center justify-center",
+                      "h-6 w-6 rounded-full transition-all border-2 flex items-center justify-center shadow-2xs",
                       color === c
-                        ? "border-foreground scale-110"
+                        ? "border-foreground scale-110 ring-2 ring-primary/20"
                         : "border-transparent hover:scale-105",
                     )}
                     style={{ backgroundColor: c }}
                   >
                     {color === c && (
-                      <Check className="h-3.5 w-3.5 text-white" />
+                      <Check className="h-3 w-3 text-white" />
                     )}
                   </button>
                 ))}
@@ -311,26 +310,26 @@ export function CreateEventDialog({
             </div>
 
             {/* Status */}
-            <div className="space-y-2">
-              <Label>Status</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Status Awal</Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 text-xs font-semibold rounded-xl border-border/80 bg-background/80">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="upcoming">
+                <SelectContent className="rounded-xl border-border/80 shadow-xl">
+                  <SelectItem value="upcoming" className="text-xs font-semibold">
                     <span className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-blue-500" />
                       Upcoming
                     </span>
                   </SelectItem>
-                  <SelectItem value="ongoing">
+                  <SelectItem value="ongoing" className="text-xs font-semibold">
                     <span className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
                       Ongoing
                     </span>
                   </SelectItem>
-                  <SelectItem value="completed">
+                  <SelectItem value="completed" className="text-xs font-semibold">
                     <span className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-gray-400" />
                       Completed
@@ -342,11 +341,11 @@ export function CreateEventDialog({
           </div>
 
           {/* Relasi Bank Ide */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <Sprout className="h-3.5 w-3.5" />
-              Realisasi dari Ide
-              <span className="font-normal text-muted-foreground">
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <Sprout className="h-3.5 w-3.5 text-emerald-500" />
+              Realisasi dari Bank Ide
+              <span className="font-normal text-muted-foreground lowercase">
                 (opsional)
               </span>
             </Label>
@@ -359,23 +358,23 @@ export function CreateEventDialog({
 
           {/* Divisi Workspace */}
           {(divisions || []).length > 0 && (
-            <div className="space-y-2">
-              <Label>Divisi</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Divisi Penanggung Jawab</Label>
               <Select
                 value={divisionId || "none"}
                 onValueChange={(val) =>
                   setDivisionId(val === "none" ? "" : val)
                 }
               >
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 text-xs font-semibold rounded-xl border-border/80 bg-background/80">
                   <SelectValue placeholder="Tanpa Divisi" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">
+                <SelectContent className="rounded-xl border-border/80 shadow-xl">
+                  <SelectItem value="none" className="text-xs font-semibold">
                     <span className="text-muted-foreground">Tanpa Divisi</span>
                   </SelectItem>
                   {(divisions || []).map((div) => (
-                    <SelectItem key={div._id} value={div._id.toString()}>
+                    <SelectItem key={div._id} value={div._id.toString()} className="text-xs font-semibold">
                       <span className="flex items-center gap-2">
                         {div.color && (
                           <span
@@ -394,23 +393,24 @@ export function CreateEventDialog({
 
           {/* Submit Error */}
           {errors.submit && (
-            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+            <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 p-2.5 rounded-xl font-medium">
               {errors.submit}
-            </p>
+            </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="pt-2">
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={loading}
+            className="h-9 rounded-xl text-xs font-semibold"
           >
             Batal
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button onClick={handleSubmit} disabled={loading} className="h-9 rounded-xl text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs">
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Buat Event
+            Buat Event Sekarang
           </Button>
         </DialogFooter>
       </DialogContent>

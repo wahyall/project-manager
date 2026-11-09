@@ -12,11 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlignLeft, Loader2, Sprout } from "lucide-react";
+import { AlignLeft, Lightbulb, Loader2, Sprout } from "lucide-react";
 
-// MentionEditor di-lazy-load untuk menghindari masalah SSR, sama seperti
-// yang dilakukan create-event-dialog. Dipakai (bukan BlockNoteEditor polos)
-// supaya @mention bisa disisipkan sejak ide dibuat.
 const MentionEditor = lazy(() =>
   import("@/components/mention-editor").then((m) => ({
     default: m.MentionEditor,
@@ -64,46 +61,54 @@ export function CreateIdeaDialog({ open, onOpenChange, onCreate, workspaceId }) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[680px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Sprout className="h-5 w-5 text-amber-500" />
-            Tulis Ide
-          </DialogTitle>
-          <DialogDescription>
-            Cukup judul dan sedikit penjelasan. Sisanya bisa dilengkapi nanti.
-          </DialogDescription>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[680px] rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-2xl p-6">
+        <DialogHeader className="pb-3 border-b border-border/60">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 shadow-2xs">
+              <Lightbulb className="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-bold tracking-tight text-foreground">
+                Tulis Ide Baru
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Cukup judul dan penjelasan ringkas. Ide bisa diperkaya bersama tim nanti.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="idea-title">
+        <div className="space-y-4 py-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="idea-title" className="text-xs font-semibold text-foreground">
               Judul Ide <span className="text-destructive">*</span>
             </Label>
             <Input
               id="idea-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Contoh: Festival literasi kampus"
+              placeholder="Contoh: Kajian Tematik Pemuda Hijrah Surabaya"
               maxLength={120}
-              className={errors.title ? "border-destructive" : ""}
+              className={`h-10 rounded-xl border-border/80 bg-background/80 shadow-2xs text-sm transition-all focus-visible:ring-2 focus-visible:ring-primary/20 ${
+                errors.title ? "border-destructive focus-visible:ring-destructive/20" : ""
+              }`}
               autoFocus
             />
             {errors.title && (
-              <p className="text-xs text-destructive">{errors.title}</p>
+              <p className="text-xs text-destructive font-medium">{errors.title}</p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <AlignLeft className="h-3 w-3" />
-              Penjelasan
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <AlignLeft className="h-3.5 w-3.5 text-muted-foreground" />
+              Penjelasan / Latar Belakang
             </Label>
-            <div className="rounded-md border border-input px-6 py-2">
+            <div className="rounded-xl border border-border/80 bg-background/80 p-3 shadow-2xs transition-shadow focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50">
               {open && (
                 <Suspense
                   fallback={
-                    <div className="flex items-center justify-center py-6 text-muted-foreground">
+                    <div className="flex items-center justify-center py-8 text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
                   }
@@ -113,8 +118,8 @@ export function CreateIdeaDialog({ open, onOpenChange, onCreate, workspaceId }) 
                     workspaceId={workspaceId}
                     initialContent={null}
                     onChange={setDescription}
-                    placeholder="Kenapa ide ini layak dikerjakan? Ketik @ untuk mention"
-                    className="blocknote-compact"
+                    placeholder="Kenapa ide ini layak diwujudkan? Ketik @ untuk mention anggota..."
+                    className="blocknote-compact min-h-[120px]"
                   />
                 </Suspense>
               )}
@@ -122,22 +127,33 @@ export function CreateIdeaDialog({ open, onOpenChange, onCreate, workspaceId }) 
           </div>
 
           {errors.submit && (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive font-medium">
               {errors.submit}
-            </p>
+            </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="pt-3 border-t border-border/60 gap-2 sm:gap-0">
           <Button
+            type="button"
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={loading}
+            className="rounded-xl"
           >
             Batal
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="rounded-xl shadow-xs gap-2 font-medium"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sprout className="h-4 w-4" />
+            )}
             Simpan Ide
           </Button>
         </DialogFooter>

@@ -147,17 +147,17 @@ export const CalendarView = forwardRef(function CalendarView(
     <div
       ref={wrapperRef}
       className={cn(
-        "calendar-wrapper relative",
+        "calendar-wrapper relative rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xs shadow-2xs p-3 sm:p-5 overflow-hidden transition-all",
         loading && "opacity-60 pointer-events-none"
       )}
     >
       {/* Loading overlay */}
       {loading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/30 backdrop-blur-[1px] rounded-lg">
-          <div className="flex items-center gap-2 bg-background/90 px-4 py-2 rounded-full shadow-sm border">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 backdrop-blur-xs rounded-2xl">
+          <div className="flex items-center gap-2.5 bg-card/95 px-4 py-2.5 rounded-2xl shadow-xl border border-border/80">
             <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs text-muted-foreground font-medium">
-              Memuat...
+            <span className="text-xs text-foreground font-semibold">
+              Memuat kalender...
             </span>
           </div>
         </div>

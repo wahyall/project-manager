@@ -17,8 +17,8 @@ const ExcalidrawEditor = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full h-full flex flex-col items-center justify-center bg-background text-muted-foreground gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="text-sm font-medium">Memuat Editor Excalidraw...</span>
+        <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+        <span className="text-xs font-semibold text-foreground/80">Memuat Editor Excalidraw...</span>
       </div>
     ),
   },
@@ -35,7 +35,7 @@ export function DiagramFullscreenModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="sm:max-w-[96vw] w-[96vw] h-[94vh] flex flex-col p-0 overflow-hidden border shadow-2xl rounded-xl"
+        className="sm:max-w-[96vw] w-[96vw] h-[94vh] flex flex-col p-0 overflow-hidden border border-border/80 shadow-2xl rounded-2xl bg-card/95 backdrop-blur-md"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Editor Diagram Excalidraw</DialogTitle>

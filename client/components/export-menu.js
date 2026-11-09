@@ -15,18 +15,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-/**
- * Reusable Export Menu dropdown.
- *
- * @param {Object} props
- * @param {boolean} props.exporting - Whether an export is in progress
- * @param {Function} props.onExportCSV - Handler for CSV export (optional)
- * @param {Function} props.onExportXLSX - Handler for XLSX export (optional)
- * @param {Function} props.onExportPDF - Handler for PDF export (optional)
- * @param {string} props.pdfLabel - Custom label for PDF option (default: "Export PDF")
- * @param {string} props.variant - Button variant (default: "outline")
- * @param {string} props.size - Button size (default: "sm")
- */
 export function ExportMenu({
   exporting = false,
   onExportCSV,
@@ -48,31 +36,33 @@ export function ExportMenu({
               variant={variant}
               size={size}
               disabled={exporting}
-              className="gap-1.5"
+              className="gap-1.5 rounded-xl border-border/80 bg-background/80 shadow-2xs text-xs font-medium"
               id="export-menu-trigger"
             >
               {exporting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Download className="h-4 w-4" />
+                <Download className="h-3.5 w-3.5" />
               )}
               <span className="hidden sm:inline">Export</span>
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent>Export data</TooltipContent>
+        <TooltipContent className="rounded-xl border-border/80 text-xs">Export data</TooltipContent>
       </Tooltip>
 
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-48 rounded-2xl border-border/80 shadow-xl p-1">
         {onExportCSV && (
           <DropdownMenuItem
             onClick={onExportCSV}
             disabled={exporting}
-            className="gap-2 cursor-pointer"
+            className="gap-2.5 rounded-xl text-xs cursor-pointer py-2"
             id="export-csv-item"
           >
-            <FileText className="h-4 w-4 text-green-600" />
-            Export CSV
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-500/10 text-green-600 dark:text-green-400">
+              <FileText className="h-3.5 w-3.5" />
+            </div>
+            <span>Export CSV</span>
           </DropdownMenuItem>
         )}
 
@@ -80,27 +70,31 @@ export function ExportMenu({
           <DropdownMenuItem
             onClick={onExportXLSX}
             disabled={exporting}
-            className="gap-2 cursor-pointer"
+            className="gap-2.5 rounded-xl text-xs cursor-pointer py-2"
             id="export-xlsx-item"
           >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-            Export Excel
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+            </div>
+            <span>Export Excel</span>
           </DropdownMenuItem>
         )}
 
         {(onExportCSV || onExportXLSX) && onExportPDF && (
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="my-1" />
         )}
 
         {onExportPDF && (
           <DropdownMenuItem
             onClick={onExportPDF}
             disabled={exporting}
-            className="gap-2 cursor-pointer"
+            className="gap-2.5 rounded-xl text-xs cursor-pointer py-2"
             id="export-pdf-item"
           >
-            <FileText className="h-4 w-4 text-red-600" />
-            {pdfLabel}
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
+              <FileText className="h-3.5 w-3.5" />
+            </div>
+            <span>{pdfLabel}</span>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

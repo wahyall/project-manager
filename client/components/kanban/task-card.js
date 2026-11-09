@@ -87,7 +87,7 @@ function SubtaskProgress({ subtasks }) {
           <span className="font-semibold text-foreground/80">
             {completed}/{total}
           </span>
-          <Progress value={percent} className="h-1 w-10 bg-muted" />
+          <Progress value={percent} className="h-1 w-10 bg-muted rounded-full" />
         </div>
       </TooltipTrigger>
       <TooltipContent>
@@ -252,7 +252,7 @@ function TaskCardInner({
       {...(provided.draggableProps || {})}
       {...(provided.dragHandleProps || {})}
       className={cn(
-        "group relative rounded-xl border border-border/80 bg-card/95 p-3.5 shadow-2xs transition-all duration-200 cursor-pointer",
+        "group relative rounded-2xl border border-border/80 bg-card/95 p-3.5 shadow-2xs transition-all duration-200 cursor-pointer",
         "border-l-[3.5px]",
         priority.border,
         "hover:shadow-md hover:border-border hover:-translate-y-0.5",
@@ -278,7 +278,7 @@ function TaskCardInner({
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => onToggleSelect?.(task._id)}
-          className="h-4 w-4 bg-background shadow-sm rounded-md"
+          className="h-4 w-4 bg-background shadow-xs rounded-md"
         />
       </div>
 

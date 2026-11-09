@@ -31,24 +31,28 @@ const WIDGET_TYPES = [
     label: "Widget Task",
     icon: ListTodo,
     color: "text-blue-500",
+    bg: "bg-blue-500/10",
   },
   {
     type: "diagram",
     label: "Widget Diagram",
     icon: BrainCircuit,
     color: "text-purple-500",
+    bg: "bg-purple-500/10",
   },
   {
     type: "image",
     label: "Widget Gambar",
     icon: Image,
-    color: "text-green-500",
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
   },
   {
     type: "text",
     label: "Widget Teks",
     icon: FileText,
-    color: "text-orange-500",
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
   },
 ];
 
@@ -63,30 +67,35 @@ export function CanvasToolbar({
   zoom = 1,
 }) {
   return (
-    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-background/90 backdrop-blur-md border rounded-lg shadow-lg px-2 py-1.5">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-2xl border border-border/80 bg-background/90 px-3 py-1.5 shadow-xl backdrop-blur-md">
       {/* Add Widget */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-1.5 h-8">
+          <Button
+            size="sm"
+            className="h-8 rounded-xl gap-1.5 px-3 text-xs font-semibold shadow-2xs"
+          >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline text-xs">Tambah Widget</span>
+            <span className="hidden sm:inline">Tambah Widget</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          {WIDGET_TYPES.map(({ type, label, icon: Icon, color }) => (
+        <DropdownMenuContent align="start" className="w-48 rounded-xl border-border/80 shadow-lg p-1">
+          {WIDGET_TYPES.map(({ type, label, icon: Icon, color, bg }) => (
             <DropdownMenuItem
               key={type}
               onClick={() => onAddWidget(type)}
-              className="gap-2"
+              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium cursor-pointer"
             >
-              <Icon className={`h-4 w-4 ${color}`} />
-              {label}
+              <div className={`flex h-6 w-6 items-center justify-center rounded-md ${bg} ${color}`}>
+                <Icon className="h-3.5 w-3.5" />
+              </div>
+              <span>{label}</span>
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <div className="w-px h-5 bg-border mx-1" />
+      <div className="h-5 w-px bg-border/70 mx-0.5" />
 
       {/* Zoom controls */}
       <Tooltip>
@@ -94,34 +103,36 @@ export function CanvasToolbar({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-xl hover:bg-muted/60"
             onClick={onZoomOut}
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Zoom Out</TooltipContent>
+        <TooltipContent className="rounded-xl border-border/80 text-xs">Zoom Out</TooltipContent>
       </Tooltip>
 
-      <span className="text-xs text-muted-foreground w-10 text-center tabular-nums">
-        {Math.round(zoom * 100)}%
-      </span>
+      <div className="flex h-7 items-center justify-center rounded-lg bg-muted/50 px-2 min-w-11">
+        <span className="text-xs font-semibold tabular-nums text-foreground/80">
+          {Math.round(zoom * 100)}%
+        </span>
+      </div>
 
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-xl hover:bg-muted/60"
             onClick={onZoomIn}
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Zoom In</TooltipContent>
+        <TooltipContent className="rounded-xl border-border/80 text-xs">Zoom In</TooltipContent>
       </Tooltip>
 
-      <div className="w-px h-5 bg-border mx-1" />
+      <div className="h-5 w-px bg-border/70 mx-0.5" />
 
       {/* Fit to screen */}
       <Tooltip>
@@ -129,13 +140,13 @@ export function CanvasToolbar({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-xl hover:bg-muted/60"
             onClick={onFitView}
           >
             <Maximize className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Fit to Screen</TooltipContent>
+        <TooltipContent className="rounded-xl border-border/80 text-xs">Pas ke Layar</TooltipContent>
       </Tooltip>
 
       {/* Toggle minimap */}
@@ -144,18 +155,20 @@ export function CanvasToolbar({
           <Button
             variant={showMinimap ? "secondary" : "ghost"}
             size="icon"
-            className="h-8 w-8"
+            className={`h-8 w-8 rounded-xl transition-colors ${
+              showMinimap ? "bg-primary/10 text-primary border border-primary/20" : "hover:bg-muted/60"
+            }`}
             onClick={onToggleMinimap}
           >
             <Map className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent className="rounded-xl border-border/80 text-xs">
           {showMinimap ? "Sembunyikan" : "Tampilkan"} Minimap
         </TooltipContent>
       </Tooltip>
 
-      <div className="w-px h-5 bg-border mx-1" />
+      <div className="h-5 w-px bg-border/70 mx-0.5" />
 
       {/* Export */}
       <Tooltip>
@@ -163,13 +176,13 @@ export function CanvasToolbar({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-xl hover:bg-muted/60"
             onClick={onExport}
           >
             <Download className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Export</TooltipContent>
+        <TooltipContent className="rounded-xl border-border/80 text-xs">Ekspor Gambar</TooltipContent>
       </Tooltip>
     </div>
   );

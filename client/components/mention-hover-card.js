@@ -13,28 +13,28 @@ export function MentionHoverCard({ user, children }) {
   return (
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      <HoverCardContent side="top" align="start" className="w-80 p-0 shadow-md">
+      <HoverCardContent side="top" align="start" className="w-80 p-0 rounded-2xl border-border/80 bg-card/95 backdrop-blur-md shadow-xl overflow-hidden">
         <div className="flex flex-col gap-3 p-4">
-          <div className="flex items-start gap-4">
-            <Avatar className="h-12 w-12 border-2 border-background shadow-sm">
+          <div className="flex items-start gap-3.5">
+            <Avatar className="h-12 w-12 rounded-2xl border-2 border-background shadow-2xs">
               <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+              <AvatarFallback className="rounded-2xl bg-primary/10 text-primary font-bold text-sm">
                 {getInitials(user.name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col gap-1 min-w-0">
-              <h4 className="text-sm font-semibold truncate flex items-center gap-2">
+              <h4 className="text-sm font-bold text-foreground truncate flex items-center gap-2">
                 {user.name}
                 {user.isOnline && (
                   <span
-                    className="h-2 w-2 rounded-full bg-green-500 shrink-0"
+                    className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-emerald-500/20"
                     title="Online"
                   />
                 )}
               </h4>
               <Badge
                 variant="outline"
-                className="w-fit text-[10px] h-5 uppercase tracking-wider"
+                className="w-fit text-[10px] h-5 rounded-md px-1.5 uppercase font-semibold tracking-wider border-border/80"
               >
                 {user.role || "Member"}
               </Badge>
