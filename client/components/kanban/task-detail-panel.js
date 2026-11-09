@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import {
@@ -52,8 +52,9 @@ import { canManageTask } from "@/lib/permissions";
 import api from "@/lib/api";
 
 export function TaskDetailPanel({
-  task,
-  open,
+  task: initialTask,
+  taskId,
+  open: openProp,
   onClose,
   columns,
   members,
@@ -74,6 +75,44 @@ export function TaskDetailPanel({
   const [activeTab, setActiveTab] = useState("detail");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const isMobile = useIsMobile();
+  const [fetchedTask, setFetchedTask] = useState(null);
+  const [loadingTask, setLoadingTask] = useState(false);
+
+  // If initialTask is provided, use it; otherwise use fetchedTask
+  const task = initialTask || fetchedTask;
+  const isOpen =
+    openProp !== undefined ? openProp : Boolean(initialTask || taskId);
+
+  useEffect(() => {
+    // If panel is open and taskId provided, but no initialTask (or id mismatch), fetch it
+    if (
+      isOpen &&
+      taskId &&
+      (!initialTask || initialTask._id !== taskId) &&
+      workspaceId
+    ) {
+      let isMounted = true;
+      setLoadingTask(true);
+      api
+        .get(`/workspaces/${workspaceId}/tasks/${taskId}`)
+        .then((res) => {
+          if (isMounted) {
+            setFetchedTask(res.data?.data?.task || null);
+          }
+        })
+        .catch((err) => {
+          console.error("Gagal mengambil detail task:", err);
+        })
+        .finally(() => {
+          if (isMounted) setLoadingTask(false);
+        });
+      return () => {
+        isMounted = false;
+      };
+    } else if (!isOpen) {
+      setFetchedTask(null);
+    }
+  }, [isOpen, taskId, initialTask, workspaceId]);
 
   const handleUpdate = useCallback(
     async (updates) => {
@@ -117,7 +156,27 @@ export function TaskDetailPanel({
     [task, workspaceId, onUpdate],
   );
 
-  if (!task) return null;
+  if (!isOpen) return null;
+
+  if (!task) {
+    return (
+      <Sheet open={isOpen} onOpenChange={(val) => !val && onClose?.()}>
+        <SheetContent
+          side="right"
+          showCloseButton={false}
+          className={cn(
+            "w-full p-0 flex flex-col items-center justify-center",
+            isMobile ? "h-full sm:h-auto border-none" : "sm:max-w-2xl",
+          )}
+        >
+          <div className="flex flex-col items-center justify-center p-8 gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-xs text-muted-foreground">Memuat detail task...</p>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   const canManage = canManageTask({
     task,
@@ -130,7 +189,7 @@ export function TaskDetailPanel({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={(val) => !val && onClose?.()}>
+      <Sheet open={isOpen} onOpenChange={(val) => !val && onClose?.()}>
         <SheetContent
           side="right"
           showCloseButton={false}

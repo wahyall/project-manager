@@ -572,7 +572,7 @@
     0 0 0 1px rgba(0, 0, 0, 0.04);
   max-width: 280px;
   min-width: 220px;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -779,6 +779,7 @@
   left: 50%;
   bottom: 0;
   transform: translateX(-50%) translateY(100%);
+  pointer-events: none;
 }
 
 .cal-tooltip__caret-inner {
@@ -789,6 +790,20 @@
   border-bottom: 1px solid var(--border);
   transform: rotate(45deg);
   margin-top: -4px;
+}
+
+.cal-tooltip__caret--top {
+  bottom: auto;
+  top: 0;
+  transform: translateX(-50%) translateY(-100%);
+}
+
+.cal-tooltip__caret--top .cal-tooltip__caret-inner {
+  border-right: none;
+  border-bottom: none;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
 }
 
 /* More link */

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { format, isPast, isToday } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -70,10 +71,15 @@ const EVENT_STATUS_CONFIG = {
  */
 export function CalendarTooltip({ calendarRef }) {
   const [tooltip, setTooltip] = useState(null);
+  const [mounted, setMounted] = useState(false);
   const tooltipRef = useRef(null);
   const hideTimeoutRef = useRef(null);
 
-  const showTooltip = useCallback((event, rect) => {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const showTooltip = useCallback((event, rect, clientX) => {
     clearTimeout(hideTimeoutRef.current);
     const isEvent = Boolean(event.extendedProps?.isEvent);
     const task = event.extendedProps?.task;
@@ -81,13 +87,24 @@ export function CalendarTooltip({ calendarRef }) {
 
     if (!task && !isEvent && !eventData) return;
 
+    // Anchor X: For wide bars, align with where the user's cursor is
+    let anchorX = rect.left + rect.width / 2;
+    if (rect.width > 160 && typeof clientX === "number") {
+      anchorX = Math.max(rect.left + 50, Math.min(rect.right - 50, clientX));
+    }
+
+    // Place below if near the top of the viewport
+    const placeBelow = rect.top < 220;
+    const anchorY = placeBelow ? rect.bottom + 10 : rect.top - 10;
+
     setTooltip({
       isEvent,
       task,
       eventData: eventData || (isEvent ? event.extendedProps : null),
       event,
-      x: rect.left + rect.width / 2,
-      y: rect.top,
+      x: anchorX,
+      y: anchorY,
+      placeBelow,
     });
   }, []);
 
@@ -109,7 +126,7 @@ export function CalendarTooltip({ calendarRef }) {
       const rect = el.getBoundingClientRect();
       const tooltipData = el.__tooltipData;
       if (tooltipData) {
-        showTooltip(tooltipData, rect);
+        showTooltip(tooltipData, rect, e.clientX);
       }
     };
 
@@ -118,42 +135,71 @@ export function CalendarTooltip({ calendarRef }) {
       if (el) hideTooltip();
     };
 
+    const handleScroll = () => {
+      hideTooltip();
+    };
+
     container.addEventListener("mouseenter", handleMouseEnter, true);
     container.addEventListener("mouseleave", handleMouseLeave, true);
+    window.addEventListener("scroll", handleScroll, true);
 
     return () => {
       container.removeEventListener("mouseenter", handleMouseEnter, true);
       container.removeEventListener("mouseleave", handleMouseLeave, true);
+      window.removeEventListener("scroll", handleScroll, true);
       clearTimeout(hideTimeoutRef.current);
     };
   }, [calendarRef, showTooltip, hideTooltip]);
 
-  if (!tooltip) return null;
+  if (!mounted || !tooltip) return null;
 
-  const { isEvent, task, eventData, event } = tooltip;
+  const { isEvent, task, eventData, event, placeBelow } = tooltip;
 
-  return (
+  const viewportWidth =
+    typeof window !== "undefined" ? window.innerWidth : 1200;
+  const halfWidth = 140;
+  const padding = 16;
+  const clampedX = Math.max(
+    halfWidth + padding,
+    Math.min(viewportWidth - halfWidth - padding, tooltip.x),
+  );
+  const caretOffset = Math.max(-100, Math.min(100, tooltip.x - clampedX));
+
+  return createPortal(
     <div
       ref={tooltipRef}
-      className="fixed z-[9999] pointer-events-none"
+      className="fixed z-[9999] pointer-events-none transition-opacity duration-150"
       style={{
-        left: tooltip.x,
-        top: tooltip.y - 10,
-        transform: "translate(-50%, -100%)",
+        left: clampedX,
+        top: tooltip.y,
+        transform: placeBelow
+          ? "translate(-50%, 0)"
+          : "translate(-50%, -100%)",
       }}
       onMouseEnter={() => clearTimeout(hideTimeoutRef.current)}
       onMouseLeave={hideTooltip}
     >
       {isEvent ? (
-        <EventTooltipContent eventData={eventData} event={event} />
+        <EventTooltipContent
+          eventData={eventData}
+          event={event}
+          placeBelow={placeBelow}
+          caretOffset={caretOffset}
+        />
       ) : (
-        <TaskTooltipContent task={task} event={event} />
+        <TaskTooltipContent
+          task={task}
+          event={event}
+          placeBelow={placeBelow}
+          caretOffset={caretOffset}
+        />
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 
-function EventTooltipContent({ eventData, event }) {
+function EventTooltipContent({ eventData, event, placeBelow, caretOffset = 0 }) {
   const status = eventData?.status || "upcoming";
   const statusCfg = EVENT_STATUS_CONFIG[status] || EVENT_STATUS_CONFIG.upcoming;
   const eventColor = eventData?.color || "#8B5CF6";
@@ -272,14 +318,25 @@ function EventTooltipContent({ eventData, event }) {
       </div>
 
       {/* Caret */}
-      <div className="cal-tooltip__caret">
+      <div
+        className={cn(
+          "cal-tooltip__caret",
+          placeBelow && "cal-tooltip__caret--top",
+        )}
+        style={{ left: `calc(50% + ${caretOffset}px)` }}
+      >
         <div className="cal-tooltip__caret-inner" />
       </div>
     </div>
   );
 }
 
-function TaskTooltipContent({ task, event }) {
+function TaskTooltipContent({
+  task,
+  event,
+  placeBelow = false,
+  caretOffset = 0,
+}) {
   const priorityConfig = PRIORITY_CONFIG[task?.priority] || PRIORITY_CONFIG.medium;
   const dueDate = task?.dueDate ? new Date(task.dueDate) : null;
   const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate);
@@ -392,7 +449,13 @@ function TaskTooltipContent({ task, event }) {
       </div>
 
       {/* Caret */}
-      <div className="cal-tooltip__caret">
+      <div
+        className={cn(
+          "cal-tooltip__caret",
+          placeBelow && "cal-tooltip__caret--top",
+        )}
+        style={{ left: `calc(50% + ${caretOffset}px)` }}
+      >
         <div className="cal-tooltip__caret-inner" />
       </div>
     </div>

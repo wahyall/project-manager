@@ -381,6 +381,59 @@ function hexToRgba(hex, alpha = 0.12) {
     };
   }, [fetchCalendarData]);
 
+  // ── Event click helper (handles both raw ID or FullCalendar clickInfo) ──
+  const handleEventClick = useCallback((clickInfo) => {
+    if (!clickInfo) return;
+    const id =
+      typeof clickInfo === "string"
+        ? clickInfo
+        : clickInfo?.event?.id || clickInfo?.id;
+    if (!id) return;
+    if (id.startsWith("event-")) {
+      setActiveEventId(id.replace("event-", ""));
+    } else {
+      setActiveTaskId(id);
+    }
+  }, []);
+
+  // ── Event drop helper (handles both (taskId, start, end) and FullCalendar dropInfo) ──
+  const handleEventDrop = useCallback(
+    async (dropInfo, start, end) => {
+      let taskId = dropInfo;
+      let newStart = start;
+      let newEnd = end;
+      if (dropInfo && typeof dropInfo === "object" && dropInfo.event) {
+        taskId = dropInfo.event.id;
+        newStart = dropInfo.event.start;
+        newEnd = dropInfo.event.end;
+      }
+      if (!taskId || (typeof taskId === "string" && taskId.startsWith("event-"))) {
+        return false;
+      }
+      return updateTaskDates(taskId, newStart, newEnd);
+    },
+    [updateTaskDates]
+  );
+
+  // ── Event resize helper (handles both (taskId, start, end) and FullCalendar resizeInfo) ──
+  const handleEventResize = useCallback(
+    async (resizeInfo, start, end) => {
+      let taskId = resizeInfo;
+      let newStart = start;
+      let newEnd = end;
+      if (resizeInfo && typeof resizeInfo === "object" && resizeInfo.event) {
+        taskId = resizeInfo.event.id;
+        newStart = resizeInfo.event.start;
+        newEnd = resizeInfo.event.end;
+      }
+      if (!taskId || (typeof taskId === "string" && taskId.startsWith("event-"))) {
+        return false;
+      }
+      return updateTaskDates(taskId, newStart, newEnd);
+    },
+    [updateTaskDates]
+  );
+
   return {
     // Data
     tasks: filteredTasks,
@@ -402,6 +455,9 @@ function hexToRgba(hex, alpha = 0.12) {
 
     // Actions
     updateTaskDates,
+    handleEventClick,
+    handleEventDrop,
+    handleEventResize,
     refetch: () => {
       if (dateRange.start && dateRange.end) {
         fetchCalendarData(dateRange.start, dateRange.end);

@@ -94,13 +94,18 @@ export default function TasksPage({ params }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const qs = new URLSearchParams(window.location.search);
-    if (qs.get("view") === "calendar") {
+    const isCalendarView = qs.get("view") === "calendar";
+    if (isCalendarView) {
       setViewMode("calendar");
     }
     const deepTaskId = qs.get("taskId") || qs.get("task");
     if (deepTaskId) {
-      setViewMode("kanban");
-      kanban.setActiveTaskId(deepTaskId);
+      if (isCalendarView) {
+        calendar.setActiveTaskId(deepTaskId);
+      } else {
+        setViewMode("kanban");
+        kanban.setActiveTaskId(deepTaskId);
+      }
     } else if (qs.get("newTask") === "true") {
       setViewMode("kanban");
       setQuickCreateDefaultEventId(qs.get("eventId") || null);
@@ -173,24 +178,66 @@ export default function TasksPage({ params }) {
     [userCanCreateTask, kanban.columns, calendar.columns],
   );
 
-  // ── Event click in calendar: open task detail panel ──
+  // ── Event click in calendar: open task detail panel or event detail ──
   const handleCalendarEventClick = useCallback(
     (clickInfo) => {
-      calendar.handleEventClick(clickInfo);
+      const id =
+        typeof clickInfo === "string"
+          ? clickInfo
+          : clickInfo?.event?.id || clickInfo?.id;
+      if (!id) return;
+      if (id.startsWith("event-")) {
+        const eventId = id.replace("event-", "");
+        router.push(`/workspace/${workspaceId}/events/${eventId}`);
+        return;
+      }
+      calendar.setActiveTaskId(id);
     },
-    [calendar],
+    [calendar, router, workspaceId],
   );
 
   // ── Event drag & drop in calendar ────────────────
   const handleEventDrop = useCallback(
-    async (dropInfo) => {
+    async (taskIdOrInfo, start, end) => {
+      let taskId = taskIdOrInfo;
+      let newStart = start;
+      let newEnd = end;
+      let revertFn = null;
+
+      if (
+        taskIdOrInfo &&
+        typeof taskIdOrInfo === "object" &&
+        taskIdOrInfo.event
+      ) {
+        taskId = taskIdOrInfo.event.id;
+        newStart = taskIdOrInfo.event.start;
+        newEnd = taskIdOrInfo.event.end;
+        revertFn = taskIdOrInfo.revert;
+      }
+
+      if (
+        !taskId ||
+        (typeof taskId === "string" && taskId.startsWith("event-"))
+      ) {
+        revertFn?.();
+        return false;
+      }
+
       try {
-        await calendar.handleEventDrop(dropInfo);
-        kanban.fetchTasks();
-        toast.success("Tenggat waktu task diperbarui");
+        const ok = await calendar.updateTaskDates(taskId, newStart, newEnd);
+        if (ok) {
+          kanban.fetchTasks();
+          toast.success("Tenggat waktu task diperbarui");
+          return true;
+        } else {
+          revertFn?.();
+          toast.error("Gagal memindahkan task");
+          return false;
+        }
       } catch (err) {
-        dropInfo.revert();
+        revertFn?.();
         toast.error("Gagal memindahkan task");
+        return false;
       }
     },
     [calendar, kanban],
@@ -198,14 +245,46 @@ export default function TasksPage({ params }) {
 
   // ── Event resize in calendar ─────────────────────
   const handleEventResize = useCallback(
-    async (resizeInfo) => {
+    async (taskIdOrInfo, start, end) => {
+      let taskId = taskIdOrInfo;
+      let newStart = start;
+      let newEnd = end;
+      let revertFn = null;
+
+      if (
+        taskIdOrInfo &&
+        typeof taskIdOrInfo === "object" &&
+        taskIdOrInfo.event
+      ) {
+        taskId = taskIdOrInfo.event.id;
+        newStart = taskIdOrInfo.event.start;
+        newEnd = taskIdOrInfo.event.end;
+        revertFn = taskIdOrInfo.revert;
+      }
+
+      if (
+        !taskId ||
+        (typeof taskId === "string" && taskId.startsWith("event-"))
+      ) {
+        revertFn?.();
+        return false;
+      }
+
       try {
-        await calendar.handleEventResize(resizeInfo);
-        kanban.fetchTasks();
-        toast.success("Tenggat waktu task diperbarui");
+        const ok = await calendar.updateTaskDates(taskId, newStart, newEnd);
+        if (ok) {
+          kanban.fetchTasks();
+          toast.success("Tenggat waktu task diperbarui");
+          return true;
+        } else {
+          revertFn?.();
+          toast.error("Gagal mengubah durasi task");
+          return false;
+        }
       } catch (err) {
-        resizeInfo.revert();
+        revertFn?.();
         toast.error("Gagal mengubah durasi task");
+        return false;
       }
     },
     [calendar, kanban],
@@ -213,8 +292,11 @@ export default function TasksPage({ params }) {
 
   // ── Task click (kanban): open detail panel ───────
   const handleTaskClick = useCallback(
-    (task) => {
-      kanban.setActiveTaskId(task._id);
+    (taskOrId) => {
+      const taskId = typeof taskOrId === "object" ? taskOrId?._id : taskOrId;
+      if (taskId) {
+        kanban.setActiveTaskId(taskId);
+      }
     },
     [kanban],
   );
@@ -502,29 +584,46 @@ export default function TasksPage({ params }) {
             {/* Keyboard shortcuts hint */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8.5 w-8.5 rounded-xl text-muted-foreground">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8.5 w-8.5 rounded-xl text-muted-foreground"
+                >
                   <Keyboard className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs max-w-[200px] rounded-xl p-3 shadow-lg">
-                <p className="font-semibold mb-1 text-foreground">Pintasan Keyboard</p>
+              <TooltipContent
+                side="bottom"
+                className="text-xs max-w-[200px] rounded-xl p-3 shadow-lg"
+              >
+                <p className="font-semibold mb-1 text-foreground">
+                  Pintasan Keyboard
+                </p>
                 <p className="flex justify-between py-0.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">N</kbd>{" "}
+                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">
+                    N
+                  </kbd>{" "}
                   <span>Buat task baru</span>
                 </p>
                 {viewMode === "kanban" ? (
                   <p className="flex justify-between py-0.5">
-                    <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">F</kbd>{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">
+                      F
+                    </kbd>{" "}
                     <span>Fokus pencarian</span>
                   </p>
                 ) : (
                   <p className="flex justify-between py-0.5">
-                    <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">T</kbd>{" "}
+                    <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">
+                      T
+                    </kbd>{" "}
                     <span>Ke hari ini</span>
                   </p>
                 )}
                 <p className="flex justify-between py-0.5">
-                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">Esc</kbd>{" "}
+                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-2xs font-mono">
+                    Esc
+                  </kbd>{" "}
                   <span>Tutup panel</span>
                 </p>
               </TooltipContent>
@@ -734,7 +833,8 @@ export default function TasksPage({ params }) {
             <Separator orientation="vertical" className="h-3 hidden sm:block" />
 
             <span className="text-2xs text-muted-foreground/80">
-              Tarik & letakkan task untuk menggeser deadline &bull; Klik tanggal untuk membuat task cepat
+              Tarik & letakkan task untuk menggeser deadline &bull; Klik tanggal
+              untuk membuat task cepat
             </span>
           </div>
         </div>
@@ -767,10 +867,14 @@ export default function TasksPage({ params }) {
 
       {/* Task Detail Panel (drawer dari kanan) */}
       <TaskDetailPanel
+        task={viewMode === "kanban" ? kanban.activeTask : calendar.activeTask}
         taskId={
+          viewMode === "kanban" ? kanban.activeTaskId : calendar.activeTaskId
+        }
+        open={
           viewMode === "kanban"
-            ? kanban.activeTaskId
-            : calendar.activeTaskId
+            ? !!kanban.activeTaskId
+            : !!calendar.activeTaskId
         }
         onClose={() => {
           if (viewMode === "kanban") {
@@ -784,7 +888,9 @@ export default function TasksPage({ params }) {
         labels={kanban.labels}
         events={events}
         divisions={scope.isLocked ? scope.myDivisions : scope.divisions}
+        allDivisions={scope.divisions}
         currentUserId={user?._id}
+        memberRole={currentWorkspace?.role}
         onUpdate={handleUpdateTask}
         onDelete={handleDeleteTask}
         onArchive={handleArchiveTask}
@@ -801,10 +907,7 @@ export default function TasksPage({ params }) {
           columns={columns}
           onClearSelection={kanban.clearSelection}
           onMoveToColumn={(columnId) =>
-            handleBulkMoveToColumn(
-              Array.from(kanban.selectedTaskIds),
-              columnId,
-            )
+            handleBulkMoveToColumn(Array.from(kanban.selectedTaskIds), columnId)
           }
           onChangePriority={(priority) =>
             handleBulkChangePriority(
@@ -815,9 +918,7 @@ export default function TasksPage({ params }) {
           onArchive={() =>
             handleBulkArchive(Array.from(kanban.selectedTaskIds))
           }
-          onDelete={() =>
-            handleBulkDelete(Array.from(kanban.selectedTaskIds))
-          }
+          onDelete={() => handleBulkDelete(Array.from(kanban.selectedTaskIds))}
         />
       )}
     </div>
